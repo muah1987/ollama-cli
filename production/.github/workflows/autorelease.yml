@@ -1,0 +1,40 @@
+name: Auto Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'cmd/**'
+      - 'api/**'
+      - 'model/**'
+      - 'server/**'
+      - 'runner/**'
+      - 'pyproject.toml'
+
+jobs:
+  autorelease:
+    runs-on: ubuntu-latest
+    if: "contains(github.event.head_commit.message, 'release:')"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install uv
+        run: |
+          pip install uv
+
+      - name: Install python-semantic-release
+        run: |
+          uv pip install python-semantic-release[toml]
+
+      - name: Run semantic release
+        run: |
+          uv run semantic-release publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
