@@ -28,7 +28,39 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --dev
+          uv sync --all-extras
+
+      - name: Verify pytest installation
+        run: |
+          uv run pytest --version
+
+      - name: Validate documentation
+        run: |
+          echo "Checking required documentation files..."
+          files=("README.md" "CONTRIBUTING.md" "SECURITY.md" "OLLAMA.md")
+          for file in "${files[@]}"; do
+            if [ -f "$file" ]; then
+              echo "✓ $file exists"
+            else
+              echo "✗ $file is missing"
+              exit 1
+            fi
+          done
+          echo "✓ All required documentation files are present"
+
+      - name: Validate codebase structure
+        run: |
+          echo "Validating codebase structure..."
+          dirs=("cmd" "api" "model" "server" "runner" "tests" "docs")
+          for dir in "${dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              echo "✓ $dir/ directory exists"
+            else
+              echo "✗ $dir/ directory is missing"
+              exit 1
+            fi
+          done
+          echo "✓ All required directories are present"
 
       - name: Run tests
         run: |
