@@ -1,108 +1,69 @@
-# Ollama CLI
+# Ollama CLI Documentation
 
-**A full-featured AI coding assistant powered by Ollama with multi-provider support.**
-
-[![PyPI version](https://badge.fury.io/py/ollama-cli.svg)](https://badge.fury.io/py/ollama-cli)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
-Ollama CLI is a local-first AI coding assistant that runs on your machine with Ollama, with optional cloud provider support for Claude, Gemini, and Codex.
+Comprehensive documentation for Ollama CLI - a full-featured AI coding assistant powered by Ollama with multi-provider support.
 
 ---
 
-## Prerequisites
+## Getting Started
 
-- **Python 3.11+**
-- **[Ollama](https://ollama.ai)** installed and running (`ollama serve`)
-- **[uv](https://docs.astral.sh/uv/)** for dependency management
+### Quick Start Guide
 
----
+1. **Install Ollama CLI** (with automatic Ollama installation):
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/muah1987/ollama-cli/main/install.sh | bash
+   ```
 
-## Installation
+2. **Start Ollama server**:
+   ```bash
+   ollama serve
+   ```
 
-### One-Line Install (Recommended)
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/muah1987/ollama-cli/main/install.sh | bash
-```
-
-This script will:
-1. Install `uv` if not present
-2. Clone or update ollama-cli from GitHub
-3. Install Python dependencies
-4. Detect Ollama and install it if missing
-
-### Manual Install
-
-```bash
-# 1. Clone the repository
-git clone https://github.com/muah1987/ollama-cli.git
-cd ollama-cli
-
-# 2. Install dependencies with uv
-uv sync
-
-# 3. Create your environment file
-cp .env.sample .env
-
-# 4. Edit .env with your settings
-#    At minimum, ensure OLLAMA_HOST points to your Ollama instance
-```
+3. **Start chatting**:
+   ```bash
+   ollama-cli interactive
+   ```
 
 ---
 
-## Quick Start
+## Documentation Structure
 
-```bash
-# Start an interactive chat session
-ollama-cli interactive
-
-# Run a one-shot prompt
-ollama-cli run "explain this code"
-
-# List available local models
-ollama-cli list
-
-# Pull a model from registry
-ollama-cli pull llama3.2
-
-# Use a specific model
-ollama-cli --model codellama run "write a fibonacci function"
-
-# Use a cloud provider
-ollama-cli --provider claude run "review this architecture"
-
-# Show version
-ollama-cli version
-```
+| Documentation | Description | Link |
+|-------------|-------------|------|
+| **Getting Started** | Installation and first steps | [`docs/getting_started.md`](getting_started.md) |
+| **Project Overview** | Features, architecture, hooks, status lines, and contributing | [`docs/project_overview.md`](project_overview.md) |
+| **CLI Reference** | All available commands | [`docs/cli_reference.md`](cli_reference.md) |
+| **API Reference** | Ollama and provider APIs | [`docs/api_reference.md`](api_reference.md) |
+| **Configuration** | Environment variables and settings | [`docs/configuration.md`](configuration.md) |
+| **Multi-Provider** | Using Claude, Gemini, Codex | [`docs/multi_provider.md`](multi_provider.md) |
+| **Agent Models** | Agent-specific model assignments | [`docs/agent_model_assignment.md`](agent_model_assignment.md) |
+| **RDMA Support** | High-performance networking | [`docs/rdma.md`](rdma.md) |
+| **Hooks System** | Lifecycle hooks and customization | [`docs/hooks.md`](hooks.md) |
+| **Development** | Contributing and building | [`docs/development.md`](development.md) |
 
 ---
 
-## Documentation
+## Features
 
-For detailed documentation on all features, configuration, and advanced usage, see the [docs](docs/) folder:
-
-| Documentation | Description |
-|--------------|-------------|
-| [Getting Started](docs/getting_started.md) | Installation walkthrough and first steps |
-| [Project Overview](docs/project_overview.md) | Features, architecture, hooks, status lines, and contributing |
-| [CLI Reference](docs/cli_reference.md) | All available commands |
-| [API Reference](docs/api_reference.md) | Ollama and provider APIs |
-| [Configuration](docs/configuration.md) | Environment variables and settings |
-| [Multi-Provider](docs/multi_provider.md) | Using Claude, Gemini, Codex, Hugging Face |
-| [RDMA Support](docs/rdma.md) | High-performance networking |
-| [Hooks System](docs/hooks.md) | Lifecycle hooks and customization |
-| [Development](docs/development.md) | Contributing and building |
+- **Multi-Provider Routing** - Seamlessly switch between Ollama, Claude, Gemini, and Codex
+- **Agent Model Assignment** - Assign specific models to agent types for specialized tasks
+- **Auto-Compact Context** - Automatic context management at 85% threshold
+- **Hook System** - 7 lifecycle hooks for customization
+- **Status Lines** - Real-time token usage and provider health
+- **Interactive REPL** - Full chat mode with streaming responses
+- **Token Tracking** - Token usage and cost estimation across providers
+- **Session Persistence** - Save and resume conversations
+- **RDMA Acceleration** - High-performance networking support (MLX, EXO, RMDA)
 
 ---
 
-## Getting Help
+## Support
 
-- Check the [Documentation Index](docs/README.md)
-- File an issue on [GitHub](https://github.com/muah1987/ollama-cli/issues)
-- Visit the [Ollama documentation](https://ollama.ai/docs)
+- **GitHub Issues**: [Report bugs or request features](https://github.com/muah1987/ollama-cli/issues)
+- **Documentation**: [Full documentation](https://github.com/muah1987/ollama-cli/docs)
+- **Ollama**: [Official Ollama website](https://ollama.ai)
 
 ---
 
 ## License
 
-MIT License. See [LICENSE](LICENSE) for details.
+MIT License - see [LICENSE](../LICENSE) for details.
