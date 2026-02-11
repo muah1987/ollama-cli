@@ -26,10 +26,10 @@ jobs:
           uv build
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: dist/*
           draft: false
           prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          make_latest: true
+          token: ${{ secrets.GH_TOKEN }}
