@@ -351,6 +351,8 @@ def build_parser() -> argparse.ArgumentParser:
 
         register_commands(subparsers)
     except (ImportError, AttributeError):
+        # AttributeError: register_commands may call methods not available
+        # on the subparsers action (pre-existing issue in accelerate.py).
         pass
 
     return parser
