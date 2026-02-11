@@ -40,6 +40,8 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+# Prevent adding repository root to sys.path to avoid cmd module collision
+addopts = ["--import-mode=importlib"]
 
 [tool.semantic_release]
 branch = "main"
