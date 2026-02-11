@@ -5,11 +5,32 @@ description = "Full-featured AI coding assistant powered by Ollama with multi-pr
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
-authors = [{name = "Mohammed Uthmaan Al Hashimi"}]
+authors = [{name = "Mohammed Uthmaan Al Hāshimī"}]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "ruff>=0.6.0",
+    "python-semantic-release>=9.0.0",
+]
+rdma = [
+    "psutil>=5.9.0",
+    "cryptography>=42.0.0",
+]
+mlx = [
+    "psutil>=5.9.0",
+]
+exo = [
+    "psutil>=5.9.0",
+]
+
 dependencies = [
     "httpx>=0.28.1",
     "python-dotenv>=1.2.1",
     "rich>=14.3.2",
+    # RDMA acceleration support
+    "psutil>=5.9.0",
+    "cryptography>=42.0.0",
 ]
 
 [project.scripts]
@@ -26,3 +47,27 @@ packages = ["cmd", "api", "model", "server", "runner"]
 [tool.ruff]
 line-length = 120
 target-version = "py311"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+# Prevent adding repository root to sys.path to avoid cmd module collision
+addopts = ["--import-mode=importlib"]
+
+[tool.semantic_release]
+branch = "main"
+version_toml = "pyproject.toml:project.version"
+version_source = "commit"
+changelog_file = "CHANGELOG.md"
+tag_format = "v{version}"
+tag_commit = true
+commit_parser = "angular"
+commit_author_token = "${GH_TOKEN}"
+commit_message = "chore(release): {version}\n\nAutomatically generated release notes."
+build_command = "uv build --release"
+upload_to_pypi = false
+upload_to_release = true
+remove_dist = false
+assets = []

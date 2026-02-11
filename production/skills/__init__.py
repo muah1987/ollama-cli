@@ -9,10 +9,21 @@ leverage the enhanced token counting and context management systems.
 import json
 import logging
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from context_manager import ContextManager
-from token_counter import TokenCounter
+# Handle both when run as standalone and when imported
+import sys
+_script_dir = Path(__file__).resolve().parent
+if str(_script_dir) not in sys.path:
+    sys.path.insert(0, str(_script_dir))
+
+try:
+    from context_manager import ContextManager
+    from token_counter import TokenCounter
+except ImportError:
+    from runner.context_manager import ContextManager
+    from runner.token_counter import TokenCounter
 
 logger = logging.getLogger(__name__)
 
@@ -192,6 +203,9 @@ class AutoCompactSkill(BaseSkill):
 SKILLS = {
     "token_counter": TokenCountingSkill,
     "auto_compact": AutoCompactSkill,
+    "mlx_acceleration": None,  # Dynamic import from skills.mlx
+    "exo_execution": None,  # Dynamic import from skills.exo
+    "rdma_acceleration": None,  # Dynamic import from skills.rdma
 }
 
 
@@ -208,6 +222,17 @@ def get_skill(skill_name: str, context_manager: Optional[ContextManager] = None)
     Raises:
         ValueError: If the skill name is not recognized
     """
+    # Handle dynamic imports for new skills
+    if skill_name == "mlx_acceleration":
+        from skills.mlx import MLXSkill
+        return MLXSkill()
+    elif skill_name == "exo_execution":
+        from skills.exo import EXOSkill
+        return EXOSkill()
+    elif skill_name == "rdma_acceleration":
+        from skills.rdma import RDMA_skill
+        return RDMA_skill()
+
     if skill_name not in SKILLS:
         raise ValueError(f"Unknown skill: {skill_name}")
 
