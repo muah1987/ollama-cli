@@ -152,6 +152,3 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
-
-# Production directory (embedded git repo)
-production/

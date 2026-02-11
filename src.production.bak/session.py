@@ -11,8 +11,7 @@ Session manager -- GOTCHA Tools layer, ATLAS Assemble phase.
 
 Manages complete CLI sessions with state persistence.  Coordinates the
 ContextManager and TokenCounter, handles OLLAMA.md project context, and
-provides session save/load for continuity across runs. Supports nested
-sub-agent contexts with recursive compression.
+provides session save/load for continuity across runs.
 """
 
 from __future__ import annotations
@@ -28,6 +27,7 @@ from typing import Any
 # ---------------------------------------------------------------------------
 # Ensure sibling modules are importable when run as a script
 # ---------------------------------------------------------------------------
+
 _SCRIPT_DIR = Path(__file__).resolve().parent
 _PACKAGE_DIR = _SCRIPT_DIR.parent
 if str(_SCRIPT_DIR) not in sys.path:
@@ -35,17 +35,19 @@ if str(_SCRIPT_DIR) not in sys.path:
 if str(_PACKAGE_DIR) not in sys.path:
     sys.path.insert(0, str(_PACKAGE_DIR))
 
-from context_manager import ContextManager  # noqa: E402
-from token_counter import TokenCounter  # noqa: E402
+from src.context_manager import ContextManager  # noqa: E402
+from src.token_counter import TokenCounter  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
+
 _SESSIONS_DIR = ".ollama/sessions"
 _OLLAMA_MD = "OLLAMA.md"
 
@@ -92,7 +94,7 @@ class Session:
         self.session_id: str = session_id or uuid.uuid4().hex[:12]
         self.model: str = model
         self.provider: str = provider
-        self.context_manager: ContextManager = context_manager or ContextManager(context_id="main")
+        self.context_manager: ContextManager = context_manager or ContextManager()
         self.token_counter: TokenCounter = token_counter or TokenCounter(provider=provider)
         self.hooks_enabled: bool = hooks_enabled
 
@@ -125,7 +127,7 @@ class Session:
             except OSError:
                 logger.warning("Found OLLAMA.md but failed to read it", exc_info=True)
 
-    async def send(self, message: str, context_id: str | None = None) -> dict[str, Any]:
+    async def send(self, message: str) -> dict[str, Any]:
         """Send a user message and get a response.
 
         This method adds the user message to the context, delegates to the
@@ -136,8 +138,6 @@ class Session:
         ----------
         message:
             The user's input text.
-        context_id:
-            Optional context ID to send message to a specific sub-context.
 
         Returns
         -------
@@ -145,7 +145,7 @@ class Session:
         and ``compacted`` (whether compaction was triggered).
         """
         self._message_count += 1
-        self.context_manager.add_message("user", message, context_id=context_id)
+        self.context_manager.add_message("user", message)
 
         # --- Provider call placeholder ---
         # In production this delegates to OllamaClient.chat() or the
@@ -160,7 +160,7 @@ class Session:
         }
 
         # Record assistant response
-        self.context_manager.add_message("assistant", response_content, context_id=context_id)
+        self.context_manager.add_message("assistant", response_content)
         self.context_manager.update_metrics(response_metrics)
         self.token_counter.update(response_metrics)
 
@@ -220,51 +220,6 @@ class Session:
 
         return result
 
-    def create_sub_context(
-        self,
-        context_id: str,
-        max_context_length: int | None = None,
-        compact_threshold: float | None = None,
-        auto_compact: bool | None = None,
-        keep_last_n: int | None = None,
-    ) -> ContextManager:
-        """Create a new sub-context for nested agent operations.
-
-        Parameters
-        ----------
-        context_id:
-            Unique identifier for the sub-context.
-        max_context_length:
-            Maximum context window size. Inherits from parent if None.
-        compact_threshold:
-            Compaction threshold. Inherits from parent if None.
-        auto_compact:
-            Whether to auto-compact. Inherits from parent if None.
-        keep_last_n:
-            Number of messages to keep. Inherits from parent if None.
-
-        Returns
-        -------
-        New ContextManager instance for the sub-context.
-        """
-        return self.context_manager.create_sub_context(
-            context_id, max_context_length, compact_threshold, auto_compact, keep_last_n
-        )
-
-    def get_sub_context(self, context_id: str) -> ContextManager | None:
-        """Get a sub-context by ID.
-
-        Parameters
-        ----------
-        context_id:
-            The ID of the sub-context to retrieve.
-
-        Returns
-        -------
-        The sub-context if found, otherwise None.
-        """
-        return self.context_manager.get_sub_context(context_id)
-
     # -- status and display --------------------------------------------------
 
     def get_status(self) -> dict[str, Any]:
@@ -321,7 +276,6 @@ class Session:
             "message_count": self._message_count,
             "token_counter": self.token_counter.format_json(),
             "context_manager": {
-                "context_id": self.context_manager.context_id,
                 "system_message": self.context_manager.system_message,
                 "messages": self.context_manager.messages,
                 "max_context_length": self.context_manager.max_context_length,
@@ -331,7 +285,6 @@ class Session:
                 "estimated_context_tokens": self.context_manager._estimated_context_tokens,
                 "total_prompt_tokens": self.context_manager.total_prompt_tokens,
                 "total_completion_tokens": self.context_manager.total_completion_tokens,
-                "sub_contexts": {cid: ctx._to_dict() for cid, ctx in self.context_manager.sub_contexts.items()},
             },
             "saved_at": datetime.now(tz=timezone.utc).isoformat(),
         }
@@ -386,18 +339,12 @@ class Session:
             compact_threshold=cm_data.get("compact_threshold", 0.85),
             auto_compact=cm_data.get("auto_compact", True),
             keep_last_n=cm_data.get("keep_last_n", 4),
-            context_id=cm_data.get("context_id", "main"),
         )
         cm.system_message = cm_data.get("system_message")
         cm.messages = cm_data.get("messages", [])
         cm._estimated_context_tokens = cm_data.get("estimated_context_tokens", 0)
         cm.total_prompt_tokens = cm_data.get("total_prompt_tokens", 0)
         cm.total_completion_tokens = cm_data.get("total_completion_tokens", 0)
-
-        # Load sub-contexts
-        sub_contexts_data = cm_data.get("sub_contexts", {})
-        for cid, ctx_data in sub_contexts_data.items():
-            cm.sub_contexts[cid] = ContextManager._from_dict(ctx_data, cid, cm)
 
         # Rebuild TokenCounter
         tc_data = data.get("token_counter", {})
@@ -540,6 +487,7 @@ class Session:
 # ---------------------------------------------------------------------------
 # Standalone test
 # ---------------------------------------------------------------------------
+
 if __name__ == "__main__":
     import asyncio
 
@@ -559,12 +507,6 @@ if __name__ == "__main__":
         print(f"  Uptime: {status['uptime_str']}")
         print(f"  Messages: {status['messages']}")
         print(f"  Tokens: {status['token_metrics']}")
-
-        # Create and use a sub-context
-        sub_context = session.create_sub_context("test_subagent")
-        sub_context.add_message("user", "Sub-agent task")
-        sub_context.add_message("assistant", "Sub-agent response")
-        print(f"Sub-context tokens: {sub_context.get_total_context_tokens()}")
 
         # Save and reload
         save_path = session.save()

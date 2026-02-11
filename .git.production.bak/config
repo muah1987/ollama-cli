@@ -1,0 +1,15 @@
+[core]
+	repositoryformatversion = 0
+	filemode = false
+	bare = false
+	logallrefupdates = true
+	ignorecase = true
+[remote "origin"]
+	url = https://github.com/muah1987/ollama-cli.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
+[user]
+	email = muah1987@users.noreply.github.com
+	name = muah1987
+[branch "main"]
+	remote = origin
+	merge = refs/heads/main

@@ -11,7 +11,6 @@ Context manager with auto-compact -- GOTCHA Tools layer, ATLAS Architect phase.
 
 Manages conversation history and context window with automatic compaction.
 Tracks token usage from Ollama responses and provides session persistence.
-Supports nested sub-agent contexts with recursive compression.
 """
 
 from __future__ import annotations
@@ -26,6 +25,7 @@ from typing import Any
 # ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -38,7 +38,7 @@ class ContextManager:
 
     Tracks token consumption from Ollama API responses, estimates context
     window fill level, and automatically compacts the conversation when the
-    configured threshold is reached. Supports nested sub-agent contexts.
+    configured threshold is reached.
 
     Parameters
     ----------
@@ -50,10 +50,6 @@ class ContextManager:
         Whether to automatically compact when the threshold is exceeded.
     keep_last_n:
         Number of recent messages to preserve during compaction.
-    context_id:
-        Unique identifier for this context (useful for sub-agent tracking).
-    parent_context:
-        Reference to parent context for hierarchical tracking.
     """
 
     def __init__(
@@ -62,15 +58,11 @@ class ContextManager:
         compact_threshold: float = 0.85,
         auto_compact: bool = True,
         keep_last_n: int = 4,
-        context_id: str = "main",
-        parent_context: ContextManager | None = None,
     ) -> None:
         self.max_context_length = max_context_length
         self.compact_threshold = compact_threshold
         self.auto_compact = auto_compact
         self.keep_last_n = keep_last_n
-        self.context_id = context_id
-        self.parent_context = parent_context
 
         # Conversation state
         self.messages: list[dict[str, Any]] = []
@@ -86,9 +78,6 @@ class ContextManager:
         # Latest generation speed
         self._tokens_per_second: float = 0.0
 
-        # Sub-contexts for nested agents
-        self.sub_contexts: dict[str, ContextManager] = {}
-
     # -- public methods ------------------------------------------------------
 
     def add_message(
@@ -97,7 +86,6 @@ class ContextManager:
         content: str,
         thinking: str | None = None,
         tool_calls: list[Any] | None = None,
-        context_id: str | None = None,
     ) -> None:
         """Add a message to the conversation history.
 
@@ -111,14 +99,7 @@ class ContextManager:
             Optional chain-of-thought text (for assistant messages).
         tool_calls:
             Optional list of tool call objects (for assistant messages).
-        context_id:
-            Optional context ID to add message to a specific sub-context.
         """
-        # If context_id is specified and exists, add to that sub-context
-        if context_id and context_id in self.sub_contexts:
-            self.sub_contexts[context_id].add_message(role, content, thinking, tool_calls)
-            return
-
         message: dict[str, Any] = {"role": role, "content": content}
         if thinking is not None:
             message["thinking"] = thinking
@@ -219,12 +200,11 @@ class ContextManager:
 
         Steps:
         1. Save a snapshot of the pre-compaction state.
-        2. Compact all sub-contexts first (recursive).
-        3. Separate and preserve the system message.
-        4. Keep the last *keep_last_n* messages.
-        5. Summarize older messages (via *summarizer_fn* if provided, otherwise
+        2. Separate and preserve the system message.
+        3. Keep the last *keep_last_n* messages.
+        4. Summarize older messages (via *summarizer_fn* if provided, otherwise
            simple truncation keeping the first message and last N).
-        6. Replace removed messages with a summary message.
+        5. Replace removed messages with a summary message.
 
         Parameters
         ----------
@@ -237,10 +217,6 @@ class ContextManager:
         -------
         Dict with ``before_tokens``, ``after_tokens``, and ``messages_removed``.
         """
-        # First compact all sub-contexts recursively
-        for sub_context in self.sub_contexts.values():
-            await sub_context.compact(summarizer_fn)
-
         before_tokens = self._estimated_context_tokens
         total_messages = len(self.messages)
 
@@ -277,8 +253,7 @@ class ContextManager:
         messages_removed = len(older_messages)
 
         logger.info(
-            "Compacted conversation (context=%s): %d -> %d tokens, %d messages removed",
-            self.context_id,
+            "Compacted conversation: %d -> %d tokens, %d messages removed",
             before_tokens,
             after_tokens,
             messages_removed,
@@ -345,7 +320,6 @@ class ContextManager:
             File path for the session JSON.
         """
         session_data = {
-            "context_id": self.context_id,
             "system_message": self.system_message,
             "messages": self.messages,
             "total_prompt_tokens": self.total_prompt_tokens,
@@ -356,7 +330,6 @@ class ContextManager:
             "compact_threshold": self.compact_threshold,
             "auto_compact": self.auto_compact,
             "keep_last_n": self.keep_last_n,
-            "sub_contexts": {cid: ctx._to_dict() for cid, ctx in self.sub_contexts.items()},
             "saved_at": datetime.now(tz=timezone.utc).isoformat(),
         }
 
@@ -384,7 +357,6 @@ class ContextManager:
             logger.warning("Failed to load session from %s", path, exc_info=True)
             return
 
-        self.context_id = data.get("context_id", "main")
         self.system_message = data.get("system_message")
         self.messages = data.get("messages", [])
         self.total_prompt_tokens = data.get("total_prompt_tokens", 0)
@@ -396,11 +368,6 @@ class ContextManager:
         self.auto_compact = data.get("auto_compact", self.auto_compact)
         self.keep_last_n = data.get("keep_last_n", self.keep_last_n)
 
-        # Load sub-contexts
-        sub_contexts_data = data.get("sub_contexts", {})
-        for cid, ctx_data in sub_contexts_data.items():
-            self.sub_contexts[cid] = self._from_dict(ctx_data, cid, self)
-
         logger.info("Session loaded from %s (%d messages)", path, len(self.messages))
 
     def clear(self) -> None:
@@ -409,76 +376,11 @@ class ContextManager:
         self.total_prompt_tokens = 0
         self.total_completion_tokens = 0
         self._tokens_per_second = 0.0
-        self.sub_contexts.clear()
 
         # Recalculate: only system message tokens remain
         self._estimated_context_tokens = 0
         if self.system_message:
             self._estimated_context_tokens = self._estimate_tokens(self.system_message)
-
-    def create_sub_context(
-        self,
-        context_id: str,
-        max_context_length: int | None = None,
-        compact_threshold: float | None = None,
-        auto_compact: bool | None = None,
-        keep_last_n: int | None = None,
-    ) -> ContextManager:
-        """Create a new sub-context for nested agent operations.
-
-        Parameters
-        ----------
-        context_id:
-            Unique identifier for the sub-context.
-        max_context_length:
-            Maximum context window size. Inherits from parent if None.
-        compact_threshold:
-            Compaction threshold. Inherits from parent if None.
-        auto_compact:
-            Whether to auto-compact. Inherits from parent if None.
-        keep_last_n:
-            Number of messages to keep. Inherits from parent if None.
-
-        Returns
-        -------
-        New ContextManager instance for the sub-context.
-        """
-        sub_context = ContextManager(
-            max_context_length=max_context_length or self.max_context_length,
-            compact_threshold=compact_threshold or self.compact_threshold,
-            auto_compact=auto_compact if auto_compact is not None else self.auto_compact,
-            keep_last_n=keep_last_n or self.keep_last_n,
-            context_id=context_id,
-            parent_context=self,
-        )
-        self.sub_contexts[context_id] = sub_context
-        return sub_context
-
-    def get_sub_context(self, context_id: str) -> ContextManager | None:
-        """Get a sub-context by ID.
-
-        Parameters
-        ----------
-        context_id:
-            The ID of the sub-context to retrieve.
-
-        Returns
-        -------
-        The sub-context if found, otherwise None.
-        """
-        return self.sub_contexts.get(context_id)
-
-    def get_total_context_tokens(self) -> int:
-        """Calculate total tokens across main context and all sub-contexts.
-
-        Returns
-        -------
-        Total estimated token count across all contexts.
-        """
-        total = self._estimated_context_tokens
-        for sub_context in self.sub_contexts.values():
-            total += sub_context.get_total_context_tokens()
-        return total
 
     # -- private helpers -----------------------------------------------------
 
@@ -545,53 +447,11 @@ class ContextManager:
 
         return " | ".join(parts)
 
-    def _to_dict(self) -> dict[str, Any]:
-        """Convert context to dictionary for serialization."""
-        return {
-            "context_id": self.context_id,
-            "system_message": self.system_message,
-            "messages": self.messages,
-            "total_prompt_tokens": self.total_prompt_tokens,
-            "total_completion_tokens": self.total_completion_tokens,
-            "estimated_context_tokens": self._estimated_context_tokens,
-            "tokens_per_second": self._tokens_per_second,
-            "max_context_length": self.max_context_length,
-            "compact_threshold": self.compact_threshold,
-            "auto_compact": self.auto_compact,
-            "keep_last_n": self.keep_last_n,
-            "sub_contexts": {cid: ctx._to_dict() for cid, ctx in self.sub_contexts.items()},
-        }
-
-    @classmethod
-    def _from_dict(cls, data: dict[str, Any], context_id: str, parent_context: ContextManager | None = None) -> ContextManager:
-        """Create ContextManager from dictionary data."""
-        context = cls(
-            max_context_length=data.get("max_context_length", 4096),
-            compact_threshold=data.get("compact_threshold", 0.85),
-            auto_compact=data.get("auto_compact", True),
-            keep_last_n=data.get("keep_last_n", 4),
-            context_id=context_id,
-            parent_context=parent_context,
-        )
-
-        context.system_message = data.get("system_message")
-        context.messages = data.get("messages", [])
-        context.total_prompt_tokens = data.get("total_prompt_tokens", 0)
-        context.total_completion_tokens = data.get("total_completion_tokens", 0)
-        context._estimated_context_tokens = data.get("estimated_context_tokens", 0)
-        context._tokens_per_second = data.get("tokens_per_second", 0.0)
-
-        # Load sub-contexts
-        sub_contexts_data = data.get("sub_contexts", {})
-        for cid, ctx_data in sub_contexts_data.items():
-            context.sub_contexts[cid] = cls._from_dict(ctx_data, cid, context)
-
-        return context
-
 
 # ---------------------------------------------------------------------------
 # Standalone test
 # ---------------------------------------------------------------------------
+
 if __name__ == "__main__":
     import asyncio
 
