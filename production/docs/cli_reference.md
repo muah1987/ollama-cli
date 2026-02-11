@@ -26,6 +26,46 @@ All available commands in Ollama CLI.
 | `accelerate` | Hardware acceleration | `ollama-cli accelerate check` |
 
 ---
+## Agent Commands
+
+In interactive mode, you can use these features to assign specific models to agents:
+
+| Feature | Description | Example |
+|--------|-------------|---------|
+| `@agent_type` | Prefix any message with @agent_type to use that agent's model | `@code write a Python function` |
+| `/set-agent-model` | Assign a provider and model to an agent type | `/set-agent-model code:hf:mistralai/Mistral-7B-Instruct-v0.3` |
+| `/list-agent-models` | Show all agent model assignments | `/list-agent-models` |
+
+Examples:
+- `@code Write a function to calculate Fibonacci numbers`
+- `@research Find papers about transformer architectures`
+- `@writer Compose a professional email to a client`
+
+Setting agent models for subsequent sessions:
+```bash
+export OLLAMA_CLI_AGENT_CODE_PROVIDER=hf
+export OLLAMA_CLI_AGENT_CODE_MODEL=mistralai/Mistral-7B-Instruct-v0.3
+export OLLAMA_CLI_AGENT_RESEARCH_PROVIDER=claude
+export OLLAMA_CLI_AGENT_RESEARCH_MODEL=claude-sonnet-4-20250514
+```
+
+Or in `.ollama/settings.json`:
+```json
+{
+  "agent_models": {
+    "code": {
+      "model": "mistralai/Mistral-7B-Instruct-v0.3",
+      "provider": "hf"
+    },
+    "research": {
+      "model": "claude-sonnet-4-20250514",
+      "provider": "claude"
+    }
+  }
+}
+```
+
+---
 
 ## Command Options
 

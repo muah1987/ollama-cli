@@ -11,7 +11,8 @@ Ollama CLI gives you a local-first AI coding assistant that runs on your machine
 
 ## Features
 
-- **Multi-Provider Routing** -- Seamlessly switch between Ollama (local/cloud), Claude, Gemini, and Codex with a single flag
+- **Multi-Provider Routing** -- Seamlessly switch between Ollama (local/cloud), Claude, Gemini, Codex, and Hugging Face with a single flag
+- **Agent Model Assignment** -- Assign specific models to agent types for specialized tasks (@code, @research, etc.)
 - **Auto-Compact Context** -- Automatically compacts conversation history at 85% context usage to keep sessions running smoothly
 - **Hook System** -- 7 lifecycle hooks let you extend behavior at every stage of execution
 - **Status Lines** -- Real-time dashboards showing token usage, provider health, and session metrics
@@ -116,7 +117,7 @@ ollama-cli rdma detect
 | [CLI Reference](docs/cli_reference.md) | All available commands |
 | [API Reference](docs/api_reference.md) | Ollama and provider APIs |
 | [Configuration](docs/configuration.md) | Environment variables and settings |
-| [Multi-Provider](docs/multi_provider.md) | Using Claude, Gemini, Codex |
+| [Multi-Provider](docs/multi_provider.md) | Using Claude, Gemini, Codex, Hugging Face |
 | [RDMA Support](docs/rdma.md) | High-performance networking |
 | [Hooks System](docs/hooks.md) | Lifecycle hooks and customization |
 | [Development](docs/development.md) | Contributing and building |
@@ -155,6 +156,16 @@ OPENAI_API_KEY=sk-...
 
 # Use it
 ollama-cli --provider codex run "refactor this function"
+```
+
+### Hugging Face
+
+```bash
+# In your .env file
+HF_TOKEN=your-huggingface-token
+
+# Use it
+ollama-cli --provider hf run "answer this question"
 ```
 
 ### Provider Selection
@@ -248,7 +259,7 @@ ollama-cli/
     stop.py              -- Stop running model
   api/
     ollama_client.py     -- Ollama API client (native + OpenAI-compatible)
-    provider_router.py   -- Multi-provider routing (Ollama/Claude/Gemini/Codex)
+    provider_router.py   -- Multi-provider routing (Ollama/Claude/Gemini/Codex/HuggingFace)
     config.py            -- Configuration management
   model/
     session.py           -- Session state management

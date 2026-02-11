@@ -34,6 +34,7 @@ Comprehensive documentation for Ollama CLI - a full-featured AI coding assistant
 | **API Reference** | Ollama and provider APIs | [`docs/api_reference.md`](api_reference.md) |
 | **Configuration** | Environment variables and settings | [`docs/configuration.md`](configuration.md) |
 | **Multi-Provider** | Using Claude, Gemini, Codex | [`docs/multi_provider.md`](multi_provider.md) |
+| **Agent Models** | Agent-specific model assignments | [`docs/agent_model_assignment.md`](agent_model_assignment.md) |
 | **RDMA Support** | High-performance networking | [`docs/rdma.md`](rdma.md) |
 | **Hooks System** | Lifecycle hooks and customization | [`docs/hooks.md`](hooks.md) |
 | **Development** | Contributing and building | [`docs/development.md`](development.md) |
@@ -43,6 +44,7 @@ Comprehensive documentation for Ollama CLI - a full-featured AI coding assistant
 ## Features
 
 - **Multi-Provider Routing** - Seamlessly switch between Ollama, Claude, Gemini, and Codex
+- **Agent Model Assignment** - Assign specific models to agent types for specialized tasks
 - **Auto-Compact Context** - Automatic context management at 85% threshold
 - **Hook System** - 7 lifecycle hooks for customization
 - **Status Lines** - Real-time token usage and provider health

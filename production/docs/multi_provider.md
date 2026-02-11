@@ -12,6 +12,7 @@ Use Ollama, Claude, Gemini, and Codex with a single CLI.
 | **Claude** | `--provider claude` | `ANTHROPIC_API_KEY` | `claude-sonnet-4`, `claude-opus-4` |
 | **Gemini** | `--provider gemini` | `GEMINI_API_KEY` | `gemini-2.0-flash`, `gemini-1.5-pro` |
 | **Codex** | `--provider codex` | `OPENAI_API_KEY` | `gpt-4.1`, `gpt-3.5-turbo` |
+| **Hugging Face** | `--provider hf` | `HF_TOKEN` | `zai-org/GLM-4.7-Flash:novita`, `mistralai/Mistral-7B-Instruct-v0.3` |
 
 ---
 
@@ -28,6 +29,9 @@ export GEMINI_API_KEY="AI..."
 
 # OpenAI/Codex
 export OPENAI_API_KEY="sk-..."
+
+# Hugging Face
+export HF_TOKEN="your-huggingface-token"
 ```
 
 ### 2. Set Default Provider
@@ -57,6 +61,9 @@ ollama-cli --provider gemini run "Summarize this"
 
 # Use Codex
 ollama-cli --provider codex run "Refactor this"
+
+# Use Hugging Face
+ollama-cli --provider hf run "Answer this question"
 ```
 
 ### Switching Models
@@ -70,13 +77,13 @@ ollama-cli --provider claude --model claude-sonnet-4 run "Hello"
 
 ## Provider Comparison
 
-| Feature | Ollama | Claude | Gemini | Codex |
-|---------|--------|--------|--------|-------|
-| Local | ✅ Yes | ❌ No | ❌ No | ❌ No |
-| Cost | Free* | $/token | $/token | $/token |
-| Speed | Fast | Fast | Fast | Fast |
-| Code | Good | Excellent | Good | Excellent |
-| Chat | Excellent | Excellent | Excellent | Excellent |
+| Feature | Ollama | Claude | Gemini | Codex | Hugging Face |
+|---------|--------|--------|--------|-------|-------------|
+| Local | ✅ Yes | ❌ No | ❌ No | ❌ No | ❌ No |
+| Cost | Free* | $/token | $/token | $/token | $/token |
+| Speed | Fast | Fast | Fast | Fast | Fast |
+| Code | Good | Excellent | Good | Excellent | Good |
+| Chat | Excellent | Excellent | Excellent | Excellent | Good |
 
 *Local models are free, but require hardware
 
@@ -96,6 +103,7 @@ Provider Router
 │ Claude?         │ → Anthropic API
 │ Gemini?         │ → Google API
 │ Codex?          │ → OpenAI API
+│ Hugging Face?   │ → Hugging Face API
 └─────────────────┘
     ↓
 Response
@@ -109,7 +117,7 @@ Set up automatic fallback if a provider is unavailable:
 
 ```python
 # Example fallback chain
-FALLBACK_CHAIN = ["ollama", "codex", "claude", "gemini"]
+FALLBACK_CHAIN = ["ollama", "claude", "gemini", "codex", "hf"]
 ```
 
 ---
@@ -125,6 +133,7 @@ OLLAMA_MODEL=llama3.2
 ANTHROPIC_API_KEY=sk-ant-...
 GEMINI_API_KEY=AI...
 OPENAI_API_KEY=sk-...
+HF_TOKEN=your-huggingface-token
 OLLAMA_CLI_PROVIDER=ollama
 ```
 
@@ -166,6 +175,13 @@ Your `.env` file is in `.gitignore`:
 - Mature ecosystem
 - Best for general tasks
 
+### Hugging Face
+
+- Access to thousands of open-weight models
+- Community-driven model development
+- Cost-effective for experimentation
+- Flexible model selection via router
+
 ---
 
 ## Cost Estimation
@@ -193,6 +209,12 @@ Your `.env` file is in `.gitignore`:
 
 *Ollama local models are free (excluding hardware costs)*
 
+### Hugging Face Pricing (approximate)
+
+Hugging Face pricing varies by model and usage tier. Most models through the router are priced competitively with other providers.
+
+*Hugging Face models require an API token (HF_TOKEN)*
+
 ---
 
 ## Troubleshooting
@@ -214,6 +236,7 @@ curl -X GET https://api.anthropic.com/v1/models
 # Claude: sk-ant-...
 # Gemini: AI...
 # OpenAI: sk-...
+# Hugging Face: hf_...
 ```
 
 ### "Model not found" error?

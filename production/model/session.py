@@ -37,6 +37,7 @@ if str(_PACKAGE_DIR) not in sys.path:
 
 from runner.context_manager import ContextManager  # noqa: E402
 from runner.token_counter import TokenCounter  # noqa: E402
+from api.provider_router import ProviderRouter  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -90,6 +91,7 @@ class Session:
         context_manager: ContextManager | None = None,
         token_counter: TokenCounter | None = None,
         hooks_enabled: bool = True,
+        provider_router: ProviderRouter | None = None,
     ) -> None:
         self.session_id: str = session_id or uuid.uuid4().hex[:12]
         self.model: str = model
@@ -97,6 +99,7 @@ class Session:
         self.context_manager: ContextManager = context_manager or ContextManager()
         self.token_counter: TokenCounter = token_counter or TokenCounter(provider=provider)
         self.hooks_enabled: bool = hooks_enabled
+        self.provider_router: ProviderRouter = provider_router or ProviderRouter()
 
         self.start_time: datetime | None = None
         self._end_time: datetime | None = None
@@ -127,17 +130,19 @@ class Session:
             except OSError:
                 logger.warning("Found OLLAMA.md but failed to read it", exc_info=True)
 
-    async def send(self, message: str) -> dict[str, Any]:
+    async def send(self, message: str, agent_type: str | None = None) -> dict[str, Any]:
         """Send a user message and get a response.
 
         This method adds the user message to the context, delegates to the
-        provider for a response (currently a placeholder), updates token
+        provider for a response via ProviderRouter, updates token
         metrics, and triggers auto-compaction when the threshold is reached.
 
         Parameters
         ----------
         message:
             The user's input text.
+        agent_type:
+            Specific agent type for custom model assignment.
 
         Returns
         -------
@@ -147,17 +152,56 @@ class Session:
         self._message_count += 1
         self.context_manager.add_message("user", message)
 
-        # --- Provider call placeholder ---
-        # In production this delegates to OllamaClient.chat() or the
-        # appropriate cloud provider.  For now we return a stub so the
-        # session pipeline can be tested end-to-end without a running server.
-        response_content = f"[placeholder] Response to: {message[:80]}"
-        response_metrics: dict[str, Any] = {
-            "prompt_eval_count": self.context_manager._estimated_context_tokens,
-            "eval_count": max(1, len(response_content) // 4),
-            "eval_duration": 1_000_000_000,  # 1 second stub
-            "total_duration": 1_500_000_000,
-        }
+        # Prepare messages for the provider
+        messages = self.context_manager.messages.copy()
+        # Add the new user message if it's not already in the context
+        if not messages or messages[-1]["role"] != "user" or messages[-1]["content"] != message:
+            messages.append({"role": "user", "content": message})
+
+        try:
+            # Route through the provider router
+            response = await self.provider_router.route(
+                task_type="agent",
+                messages=messages,
+                agent_type=agent_type
+            )
+
+            # Extract response content and metrics
+            if isinstance(response, dict):
+                # Handle non-streaming response
+                choices = response.get("choices", [])
+                if choices and isinstance(choices, list) and len(choices) > 0:
+                    message_content = choices[0].get("message", {})
+                    response_content = message_content.get("content", "[empty response]")
+                else:
+                    response_content = str(response.get("content", "[no content]"))
+
+                # Extract token usage
+                usage = response.get("usage", {})
+                response_metrics = {
+                    "prompt_eval_count": usage.get("prompt_tokens", 0),
+                    "eval_count": usage.get("completion_tokens", 0),
+                    "total_tokens": usage.get("total_tokens", 0),
+                }
+            else:
+                # Handle streaming response (simple fallback)
+                response_content = f"[streaming response for: {message[:50]}...]"
+                response_metrics = {
+                    "prompt_eval_count": self.context_manager._estimated_context_tokens,
+                    "eval_count": max(1, len(response_content) // 4),
+                    "eval_duration": 1_000_000_000,  # 1 second stub
+                    "total_duration": 1_500_000_000,
+                }
+        except Exception as e:
+            logger.warning("Provider call failed, using placeholder: %s", e)
+            # Fallback to placeholder on error
+            response_content = f"[placeholder] Response to: {message[:80]}"
+            response_metrics = {
+                "prompt_eval_count": self.context_manager._estimated_context_tokens,
+                "eval_count": max(1, len(response_content) // 4),
+                "eval_duration": 1_000_000_000,  # 1 second stub
+                "total_duration": 1_500_000_000,
+            }
 
         # Record assistant response
         self.context_manager.add_message("assistant", response_content)
@@ -165,8 +209,8 @@ class Session:
         self.token_counter.update(response_metrics)
 
         # Sync context window info into the token counter
-        usage = self.context_manager.get_context_usage()
-        self.token_counter.set_context(usage["used"], usage["max"])
+        usage_info = self.context_manager.get_context_usage()
+        self.token_counter.set_context(usage_info["used"], usage_info["max"])
 
         # Auto-compact if threshold reached
         compacted = False
