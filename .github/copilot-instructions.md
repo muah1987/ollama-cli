@@ -9,21 +9,21 @@ Ollama CLI is a full-featured AI coding assistant powered by Ollama with multi-p
 ```
 ollama-cli/
 ├── cmd/           # CLI commands (root.py is the entry point)
-├── api/           # API client, provider router, config
+├── api/           # API client, provider router, RDMA client, config
 ├── model/         # Model management and sessions
 ├── server/        # Server utilities (hook runner)
-├── runner/        # Context manager and token counter
-├── src/           # Alternative/wrapper modules
+├── runner/        # Context manager, token counter, RDMA manager
+├── skills/        # Skill modules (EXO, MLX, RDMA)
+├── specs/         # Integration specifications
 ├── tests/         # Pytest test suite
-├── docs/          # Documentation (development.md, api.md)
+├── docs/          # Documentation (API, CLI, hooks, RDMA, providers, etc.)
 ├── .ollama/       # Hooks, status lines, settings
 │   ├── hooks/     # Pre/post-execution hooks
 │   └── status_lines/  # Status display modules
-├── production/    # Production build variant
 ├── pyproject.toml # Project config, dependencies, ruff, pytest, semantic-release
 ├── uv.lock        # Locked dependency versions
 ├── .env.sample    # Environment variable template
-└── run_tests.py   # Standalone test runner
+└── install.sh     # One-line installer script
 ```
 
 ## How to Run Locally

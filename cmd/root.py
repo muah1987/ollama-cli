@@ -12,6 +12,8 @@ ollama-cli -- Main CLI entry point.
 
 Provides subcommands for chatting, running prompts, listing models, pulling models,
 and managing configuration. Organized to match Ollama's command structure.
+
+Extended with acceleration management (MLX, EXO, RDMA) and installation commands.
 """
 
 from __future__ import annotations
@@ -33,6 +35,14 @@ if str(_SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPT_DIR))
 
 from api.config import get_config  # noqa: E402
+
+# Import new command modules (these add their own subparsers)
+try:
+    from . import install  # noqa: F401
+    from . import rdma  # noqa: F401
+    from . import accelerate  # noqa: F401
+except ImportError:
+    pass  # New commands may not be available in some environments
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -283,6 +293,13 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("ps", help="List running models")
     stop_parser = subparsers.add_parser("stop", help="Stop a running model")
     stop_parser.add_argument("model_name", nargs="?", help="Model to stop (optional)")
+
+    # Acceleration commands
+    try:
+        from .accelerate import register_commands
+        register_commands(subparsers)
+    except ImportError:
+        pass
 
     return parser
 

@@ -107,6 +107,8 @@ class InteractiveMode:
         "/help": "_cmd_help",
         "/quit": "_cmd_quit",
         "/exit": "_cmd_quit",
+        "/set-agent-model": "_cmd_set_agent_model",
+        "/list-agent-models": "_cmd_list_agent_models",
     }
 
     def __init__(self, session: Session) -> None:
@@ -481,6 +483,8 @@ class InteractiveMode:
         print(f"  {_cyan('/save [name]')}      Save session to file")
         print(f"  {_cyan('/load <name>')}      Load session from file")
         print(f"  {_cyan('/history')}          Show conversation history")
+        print(f"  {_cyan('/set-agent-model <type:provider:model>}')}  Assign model to agent type")
+        print(f"  {_cyan('/list-agent-models')} List agent model assignments")
         print(f"  {_cyan('/help')}             Show this help message")
         print(f"  {_cyan('/quit')}             Exit the session")
         print()
@@ -488,6 +492,50 @@ class InteractiveMode:
         self._print_system("Press Ctrl+C to cancel input, Ctrl+D to exit.")
         print()
 
+        return False
+
+    def _cmd_set_agent_model(self, arg: str) -> bool:
+        """Set a specific model for an agent type.
+
+        Parameters
+        ----------
+        arg:
+            Agent type and model specification (format: type:provider:model)
+
+        Returns
+        -------
+        Always ``False`` (continue REPL).
+        """
+        if not arg:
+            self._print_error("Usage: /set-agent-model <type:provider:model>")
+            self._print_system("  Example: /set-agent-model code:hf:mistralai/Mistral-7B-Instruct-v0.3")
+            return False
+
+        parts = arg.split(":")
+        if len(parts) != 3:
+            self._print_error("Invalid format. Use: type:provider:model")
+            return False
+
+        agent_type, provider, model = parts
+        self.session.provider_router.set_agent_model(agent_type, provider, model)
+        self._print_info(f"Agent '{agent_type}' assigned to {provider}:{model}")
+        return False
+
+    def _cmd_list_agent_models(self, _arg: str) -> bool:
+        """List all configured agent model assignments.
+
+        Returns
+        -------
+        Always ``False`` (continue REPL).
+        """
+        from api.provider_router import _AGENT_MODEL_MAP
+
+        if not _AGENT_MODEL_MAP:
+            self._print_system("No agent model assignments configured.")
+        else:
+            self._print_info("Agent Model Assignments:")
+            for agent_type, (provider, model) in _AGENT_MODEL_MAP.items():
+                self._print_system(f"  {agent_type}: {provider}:{model}")
         return False
 
     def _cmd_quit(self, _arg: str) -> bool:
@@ -540,9 +588,18 @@ class InteractiveMode:
                         break
                     continue
 
+                # Check if this is an agent-specific command
+                agent_type = None
+                if stripped.startswith("@"):
+                    # Extract agent type from command (e.g., "@code write a function")
+                    parts = stripped.split(" ", 1)
+                    if len(parts) > 1:
+                        agent_type = parts[0][1:]  # Remove the @ symbol
+                        stripped = parts[1]
+
                 # Regular message -> send to session
                 try:
-                    result = await self.session.send(stripped)
+                    result = await self.session.send(stripped, agent_type=agent_type)
                 except Exception as exc:
                     self._print_error(f"Error: {exc}")
                     logger.exception("Failed to send message")

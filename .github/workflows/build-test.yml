@@ -41,3 +41,16 @@ jobs:
       - name: Type check
         run: |
           uv run ruff check --select I .
+
+      - name: Validate production folder
+        run: |
+          echo "Validating production folder structure..."
+          if [ ! -d "cmd" ]; then echo "ERROR: cmd/ directory missing"; exit 1; fi
+          if [ ! -d "api" ]; then echo "ERROR: api/ directory missing"; exit 1; fi
+          if [ ! -d "model" ]; then echo "ERROR: model/ directory missing"; exit 1; fi
+          if [ ! -d "server" ]; then echo "ERROR: server/ directory missing"; exit 1; fi
+          if [ ! -d "runner" ]; then echo "ERROR: runner/ directory missing"; exit 1; fi
+          if [ ! -d "tests" ]; then echo "ERROR: tests/ directory missing"; exit 1; fi
+          if [ ! -f "ROADMAP.md" ]; then echo "ERROR: ROADMAP.md missing"; exit 1; fi
+          if [ ! -f "TODO.md" ]; then echo "ERROR: TODO.md missing"; exit 1; fi
+          echo "Production folder structure validated successfully!"

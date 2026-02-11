@@ -6,6 +6,10 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [{name = "Mohammed Uthmaan Al Hāshimī"}]
+dependencies = [
+    "httpx>=0.28.1",
+    "python-dotenv>=1.2.1",
+]
 
 [project.optional-dependencies]
 dev = [
@@ -13,11 +17,24 @@ dev = [
     "ruff>=0.6.0",
     "python-semantic-release>=9.0.0",
 ]
+rdma = [
+    "psutil>=5.9.0",
+    "cryptography>=42.0.0",
+]
+mlx = [
+    "psutil>=5.9.0",
+]
+exo = [
+    "psutil>=5.9.0",
+]
 
 dependencies = [
     "httpx>=0.28.1",
     "python-dotenv>=1.2.1",
     "rich>=14.3.2",
+    # RDMA acceleration support
+    "psutil>=5.9.0",
+    "cryptography>=42.0.0",
 ]
 
 [project.scripts]

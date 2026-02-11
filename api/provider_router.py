@@ -73,7 +73,7 @@ class ProviderAuthError(ProviderError):
 _DEFAULT_TIMEOUT = 120.0
 
 # Fallback priority: try these providers in order if the primary is down
-_FALLBACK_CHAIN: list[str] = ["ollama", "codex", "claude", "gemini"]
+_FALLBACK_CHAIN: list[str] = ["ollama", "claude", "gemini", "codex", "hf"]
 
 # Default models per provider (used when no model is specified)
 _DEFAULT_MODELS: dict[str, str] = {
@@ -81,7 +81,61 @@ _DEFAULT_MODELS: dict[str, str] = {
     "claude": "claude-sonnet-4-20250514",
     "gemini": "gemini-2.0-flash",
     "codex": "gpt-4.1",
+    "hf": "zai-org/GLM-4.7-Flash:novita",
 }
+
+# Agent-specific model assignments (agent_type: (provider, model))
+_AGENT_MODEL_MAP: dict[str, tuple[str, str]] = {}
+
+
+def _load_agent_model_config() -> dict[str, tuple[str, str]]:
+    """Load agent model assignments from environment and config."""
+    config = {}
+
+    # Load from environment variables
+    agent_types = ["code", "research", "writer", "analysis", "planning"]
+    for agent_type in agent_types:
+        provider_var = f"OLLAMA_CLI_AGENT_{agent_type.upper()}_PROVIDER"
+        model_var = f"OLLAMA_CLI_AGENT_{agent_type.upper()}_MODEL"
+
+        provider = os.environ.get(provider_var)
+        model = os.environ.get(model_var)
+
+        if provider and model:
+            config[agent_type] = (provider, model)
+
+    # Load from config file
+    config_file = Path(".ollama/settings.json")
+    if config_file.exists():
+        try:
+            with open(config_file) as f:
+                settings = json.load(f)
+                agent_models = settings.get("agent_models", {})
+                for agent_type, config_data in agent_models.items():
+                    config[agent_type] = (
+                        config_data.get("provider", "ollama"),
+                        config_data.get("model", _DEFAULT_MODELS.get("ollama", "llama3.2"))
+                    )
+        except Exception:
+            pass  # Ignore config errors
+
+    return config
+
+
+def initialize_agent_models() -> None:
+    """Initialize agent model assignments at startup."""
+    global _AGENT_MODEL_MAP
+    _AGENT_MODEL_MAP = _load_agent_model_config()
+
+
+def refresh_agent_models() -> None:
+    """Refresh agent model assignments from configuration."""
+    global _AGENT_MODEL_MAP
+    _AGENT_MODEL_MAP.update(_load_agent_model_config())
+
+
+# Initialize agent models at module load
+initialize_agent_models()
 
 
 # ---------------------------------------------------------------------------
@@ -652,6 +706,138 @@ class CodexProvider(BaseProvider):
 
 
 # ---------------------------------------------------------------------------
+# HfProvider -- OpenAI-compatible API via Hugging Face Router
+# ---------------------------------------------------------------------------
+
+
+class HfProvider(BaseProvider):
+    """Provider backed by the Hugging Face Router API.
+
+    Requires ``HF_TOKEN`` in the environment.
+    Uses the OpenAI-compatible API format.
+    """
+
+    name = "hf"
+
+    _BASE_URL = "https://router.huggingface.co/v1"
+
+    def __init__(self, api_key: str | None = None) -> None:
+        self._api_key = api_key or os.environ.get("HF_TOKEN", "")
+        if not self._api_key:
+            raise ProviderAuthError("HF_TOKEN is not set")
+        self._default_model = _DEFAULT_MODELS.get("hf", "zai-org/GLM-4.7-Flash:novita")
+        self._client = httpx.AsyncClient(
+            base_url=self._BASE_URL,
+            timeout=httpx.Timeout(_DEFAULT_TIMEOUT),
+            headers={
+                "Authorization": f"Bearer {self._api_key}",
+                "Content-Type": "application/json",
+            },
+        )
+
+    # -- internal helpers ---------------------------------------------------
+
+    async def _stream_openai(self, response: httpx.Response) -> AsyncIterator[dict[str, Any]]:
+        """Parse OpenAI SSE stream into dicts."""
+        try:
+            async for line in response.aiter_lines():
+                line = line.strip()
+                if not line or not line.startswith("data: "):
+                    continue
+                data_str = line[6:]
+                if data_str == "[DONE]":
+                    break
+                try:
+                    yield json.loads(data_str)
+                except json.JSONDecodeError:
+                    continue
+        finally:
+            await response.aclose()
+
+    # -- BaseProvider implementation ----------------------------------------
+
+    async def chat(
+        self,
+        messages: list[dict[str, str]],
+        model: str | None = None,
+        stream: bool = False,
+        **kwargs: Any,
+    ) -> dict[str, Any] | AsyncIterator[dict[str, Any]]:
+        payload: dict[str, Any] = {
+            "model": model or self._default_model,
+            "messages": messages,
+            "stream": stream,
+        }
+        if "max_tokens" in kwargs:
+            payload["max_tokens"] = kwargs.pop("max_tokens")
+        if "temperature" in kwargs:
+            payload["temperature"] = kwargs.pop("temperature")
+        payload.update(kwargs)
+
+        if stream:
+            req = self._client.build_request("POST", "/chat/completions", json=payload)
+            response = await self._client.send(req, stream=True)
+            if response.status_code == 401:
+                await response.aclose()
+                raise ProviderAuthError("Hugging Face API key is invalid")
+            if response.status_code >= 400:
+                body = await response.aread()
+                await response.aclose()
+                raise ProviderError(f"Hugging Face API error {response.status_code}: {body.decode()}")
+            return self._stream_openai(response)
+
+        response = await self._client.post("/chat/completions", json=payload)
+        if response.status_code == 401:
+            raise ProviderAuthError("Hugging Face API key is invalid")
+        if response.status_code >= 400:
+            raise ProviderError(f"Hugging Face API error {response.status_code}: {response.text}")
+        return response.json()
+
+    async def complete(self, prompt: str, model: str | None = None, **kwargs: Any) -> str:
+        messages = [{"role": "user", "content": prompt}]
+        raw = await self.chat(messages, model=model, stream=False, **kwargs)
+        result = cast(dict[str, Any], raw)
+        choices = result.get("choices", [])
+        if isinstance(choices, list) and choices:
+            first = choices[0]
+            if isinstance(first, dict):
+                message = first.get("message", {})
+                if isinstance(message, dict):
+                    return str(message.get("content", ""))
+        return ""
+
+    async def health_check(self) -> bool:
+        try:
+            response = await self._client.get("/models")
+            return response.status_code == 200
+        except (httpx.ConnectError, httpx.TimeoutException):
+            return False
+
+    async def list_models(self) -> list[str]:
+        try:
+            response = await self._client.get("/models")
+            if response.status_code != 200:
+                return []
+            data = response.json()
+            data_list = data.get("data", [])
+            if not isinstance(data_list, list):
+                return []
+            result: list[str] = []
+            for m in data_list:
+                if isinstance(m, dict):
+                    model_id = m.get("id", "")
+                    if isinstance(model_id, str):
+                        result.append(model_id)
+            return result
+        except (httpx.ConnectError, httpx.TimeoutException):
+            return []
+
+    async def close(self) -> None:
+        if not self._client.is_closed:
+            await self._client.aclose()
+
+
+# ---------------------------------------------------------------------------
 # Task routing configuration
 # ---------------------------------------------------------------------------
 
@@ -713,6 +899,14 @@ class ProviderRouter:
             model_name = os.environ.get(model_env, default_model) if model_env else default_model
             self._task_config[task_type] = (provider_name, model_name)
 
+    def set_agent_model(self, agent_type: str, provider: str, model: str) -> None:
+        """Set a specific provider and model for an agent type."""
+        _AGENT_MODEL_MAP[agent_type] = (provider, model)
+
+    def get_agent_model(self, agent_type: str) -> tuple[str, str] | None:
+        """Get the provider and model for a specific agent type."""
+        return _AGENT_MODEL_MAP.get(agent_type)
+
     # -- provider construction (lazy, cached) --------------------------------
 
     def _build_provider(self, name: str) -> BaseProvider:
@@ -729,6 +923,8 @@ class ProviderRouter:
             return GeminiProvider()
         if name == "codex":
             return CodexProvider()
+        if name == "hf":
+            return HfProvider()
         raise ProviderError(f"Unknown provider: {name!r}")
 
     def get_provider(self, name: str) -> BaseProvider:
@@ -748,6 +944,7 @@ class ProviderRouter:
         self,
         task_type: str,
         messages: list[dict[str, str]],
+        agent_type: str | None = None,
         **kwargs: Any,
     ) -> dict[str, Any] | AsyncIterator[dict[str, Any]]:
         """Route a chat request based on *task_type*.
@@ -758,6 +955,8 @@ class ProviderRouter:
             One of ``"coding"``, ``"agent"``, ``"subagent"``, ``"embedding"``.
         messages:
             Conversation history.
+        agent_type:
+            Specific agent type for custom model assignment.
         **kwargs:
             Forwarded to the provider's ``chat`` method.
 
@@ -770,13 +969,16 @@ class ProviderRouter:
         ProviderUnavailableError
             If no provider in the fallback chain can serve the request.
         """
-        if task_type not in self._task_config:
+        # Check if we have a specific agent model assignment
+        if agent_type and agent_type in _AGENT_MODEL_MAP:
+            primary_provider, model = _AGENT_MODEL_MAP[agent_type]
+        elif task_type not in self._task_config:
             raise ProviderError(
                 f"Unknown task type: {task_type!r}. "
                 f"Expected one of: {', '.join(self._task_config)}"
             )
-
-        primary_provider, model = self._task_config[task_type]
+        else:
+            primary_provider, model = self._task_config[task_type]
 
         # Build an ordered attempt list: primary first, then the rest of the chain
         attempt_order = [primary_provider] + [p for p in _FALLBACK_CHAIN if p != primary_provider]
@@ -829,6 +1031,7 @@ class ProviderRouter:
             "claude": "ANTHROPIC_API_KEY",
             "gemini": "GEMINI_API_KEY",
             "codex": "OPENAI_API_KEY",
+            "hf": "HF_TOKEN",
         }
         for provider_name, env_var in key_map.items():
             if os.environ.get(env_var, ""):

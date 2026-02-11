@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from src.context_manager import ContextManager
-from src.session import Session
+from runner.context_manager import ContextManager
+from model.session import Session
 
 
 class TestContextManagerWithSubAgents:

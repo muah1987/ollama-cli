@@ -149,6 +149,12 @@ logs/
 *.swo
 *~
 
+# Local development folders (never commit these)
+.claude/
+.codex/
+.gemini/
+.ruff_cache/
+
 # OS
 .DS_Store
 Thumbs.db
