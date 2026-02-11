@@ -194,6 +194,38 @@ def cmd_interactive(_args: argparse.Namespace) -> None:
     asyncio.run(_run())
 
 
+def cmd_run_prompt(args: argparse.Namespace) -> None:
+    """Run a one-shot prompt and print the response."""
+    cfg = get_config()
+    prompt_text = args.prompt
+    if not prompt_text:
+        console.print("[red]Error:[/red] No prompt provided.")
+        sys.exit(1)
+
+    url = f"{cfg.ollama_host}/api/generate"
+    payload: dict[str, object] = {"model": cfg.ollama_model, "prompt": prompt_text, "stream": False}
+    if args.system_prompt:
+        payload["system"] = args.system_prompt
+
+    try:
+        resp = httpx.post(url, json=payload, timeout=120.0)
+        resp.raise_for_status()
+        data = resp.json()
+    except httpx.ConnectError:
+        console.print(f"[red]Error:[/red] Cannot connect to Ollama at {cfg.ollama_host}")
+        console.print("Make sure Ollama is running: [bold]ollama serve[/bold]")
+        sys.exit(1)
+    except httpx.HTTPStatusError as exc:
+        console.print(f"[red]Error:[/red] HTTP {exc.response.status_code} from Ollama API")
+        sys.exit(1)
+
+    response_text = data.get("response", "")
+    if args.json:
+        print(json.dumps(data, indent=2))
+    else:
+        print(response_text)
+
+
 # ---------------------------------------------------------------------------
 # stubs for new Ollama commands
 # ---------------------------------------------------------------------------
@@ -233,10 +265,16 @@ def build_parser() -> argparse.ArgumentParser:
     """Build the top-level argument parser with all subcommands."""
     parser = argparse.ArgumentParser(
         prog="ollama-cli",
-        description="Full-featured AI coding assistant powered by Ollama",
+        usage="ollama-cli [options] [command] [prompt]",
+        description=(
+            "Ollama CLI - an AI coding assistant powered by Ollama. "
+            "Starts an interactive session by default. "
+            "Use -p/--print for non-interactive output."
+        ),
     )
 
     # Global flags
+    parser.add_argument("-v", "--version", action="version", version=f"ollama-cli v{VERSION}")
     parser.add_argument("--model", type=str, default=None, help="Override model")
     parser.add_argument(
         "--provider",
@@ -245,9 +283,18 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Override provider",
     )
+    parser.add_argument(
+        "-p",
+        "--print",
+        action="store_true",
+        default=False,
+        dest="print_mode",
+        help="Print response and exit (non-interactive mode)",
+    )
     parser.add_argument("--json", action="store_true", default=False, help="JSON output mode")
     parser.add_argument("--verbose", action="store_true", default=False, help="Verbose output")
     parser.add_argument("--no-hooks", action="store_true", default=False, help="Disable hooks")
+    parser.add_argument("--system-prompt", type=str, default=None, help="System prompt to use")
 
     subparsers = parser.add_subparsers(dest="command")
 
@@ -303,7 +350,7 @@ def build_parser() -> argparse.ArgumentParser:
         from .accelerate import register_commands
 
         register_commands(subparsers)
-    except ImportError:
+    except (ImportError, AttributeError):
         pass
 
     return parser
@@ -333,9 +380,60 @@ COMMAND_MAP = {
 }
 
 
+def _extract_prompt_args(argv: list[str]) -> tuple[list[str], str | None]:
+    """Separate a direct prompt from CLI arguments.
+
+    If the first non-flag argument is not a known subcommand, treat all
+    remaining positional tokens as a direct prompt.  Returns the filtered
+    argv (flags only) and the extracted prompt string (or *None*).
+    """
+    known_commands = set(COMMAND_MAP.keys())
+    flags: list[str] = []
+    positionals: list[str] = []
+
+    i = 0
+    while i < len(argv):
+        arg = argv[i]
+        if arg.startswith("-"):
+            flags.append(arg)
+            # Consume the next token if this flag expects a value
+            if arg in ("--model", "--provider", "--system-prompt") and i + 1 < len(argv):
+                i += 1
+                flags.append(argv[i])
+        else:
+            positionals.append(arg)
+            # Collect everything after first positional
+            positionals.extend(argv[i + 1 :])
+            break
+        i += 1
+
+    if positionals and positionals[0] not in known_commands:
+        return flags, " ".join(positionals)
+    return argv, None
+
+
 def main() -> None:
     """Entry point."""
     parser = build_parser()
+
+    raw_args = sys.argv[1:]
+    filtered_args, direct_prompt = _extract_prompt_args(raw_args)
+
+    if direct_prompt is not None:
+        # Parse only the flags (no subcommand)
+        args = parser.parse_args(filtered_args)
+        args.prompt = direct_prompt
+        # Apply global flag overrides to config
+        cfg = get_config()
+        if args.model:
+            cfg.ollama_model = args.model
+        if args.provider:
+            cfg.provider = args.provider
+        if args.no_hooks:
+            cfg.hooks_enabled = False
+        cmd_run_prompt(args)
+        return
+
     args = parser.parse_args()
 
     # Apply global flag overrides to config
@@ -347,8 +445,14 @@ def main() -> None:
     if args.no_hooks:
         cfg.hooks_enabled = False
 
-    # Default to interactive if no subcommand given
-    command = args.command or "chat"
+    command = args.command
+    if not command:
+        if args.print_mode:
+            console.print("[red]Error:[/red] --print requires a prompt.")
+            console.print('Usage: ollama-cli -p "your prompt here"')
+            sys.exit(1)
+        # Default to interactive mode
+        command = "interactive"
 
     if command not in COMMAND_MAP:
         parser.print_help()
