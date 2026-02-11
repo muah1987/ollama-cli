@@ -138,9 +138,7 @@ class OllamaClient:
                 # Handle model-not-found (Ollama returns 404)
                 if response.status_code == 404:
                     body = response.text if not stream else ""
-                    raise OllamaModelNotFoundError(
-                        f"Model not found (HTTP 404): {body}"
-                    )
+                    raise OllamaModelNotFoundError(f"Model not found (HTTP 404): {body}")
 
                 response.raise_for_status()
                 return response
@@ -162,22 +160,17 @@ class OllamaClient:
                     await asyncio.sleep(wait)
                     continue
                 raise OllamaConnectionError(
-                    f"Request to Ollama timed out after {self.timeout}s "
-                    f"({_MAX_RETRIES} attempts)"
+                    f"Request to Ollama timed out after {self.timeout}s ({_MAX_RETRIES} attempts)"
                 ) from exc
 
             except (OllamaModelNotFoundError, OllamaError):
                 raise
 
             except httpx.HTTPStatusError as exc:
-                raise OllamaError(
-                    f"HTTP {exc.response.status_code}: {exc.response.text}"
-                ) from exc
+                raise OllamaError(f"HTTP {exc.response.status_code}: {exc.response.text}") from exc
 
         # Should not reach here, but just in case
-        raise OllamaConnectionError(
-            f"Request failed after {_MAX_RETRIES} retries"
-        ) from last_exc
+        raise OllamaConnectionError(f"Request failed after {_MAX_RETRIES} retries") from last_exc
 
     async def _stream_response(self, response: httpx.Response) -> AsyncIterator[dict[str, Any]]:
         """Read NDJSON lines from a streaming httpx response, yielding parsed dicts.
@@ -396,9 +389,7 @@ class OllamaClient:
         if modelfile is not None:
             payload["modelfile"] = modelfile
 
-        response = await self._request_with_retry(
-            "POST", "/api/create", json_body=payload, stream=stream
-        )
+        response = await self._request_with_retry("POST", "/api/create", json_body=payload, stream=stream)
 
         if stream:
             return self._stream_response(response)
@@ -507,9 +498,7 @@ class OllamaClient:
             **kwargs,
         }
 
-        response = await self._request_with_retry(
-            "POST", "/v1/chat/completions", json_body=payload, stream=stream
-        )
+        response = await self._request_with_retry("POST", "/v1/chat/completions", json_body=payload, stream=stream)
 
         if stream:
             return self._stream_response(response)
@@ -563,6 +552,7 @@ class OllamaClient:
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
+
     async def _test() -> None:
         client = OllamaClient()
         try:

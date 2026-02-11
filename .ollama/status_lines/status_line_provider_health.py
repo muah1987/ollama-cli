@@ -32,14 +32,14 @@ from pathlib import Path
 # Add status_lines directory to path for status_utils import
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from status_utils import (
-    colorize,
-    format_tokens,
-    safe_read_stdin,
     BOLD,
     CYAN,
     DIM,
     GREEN,
     RESET,
+    colorize,
+    format_tokens,
+    safe_read_stdin,
 )
 
 # Provider display order

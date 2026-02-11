@@ -22,7 +22,6 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-
 # ---------------------------------------------------------------------------
 # Notification handling
 # ---------------------------------------------------------------------------
@@ -79,6 +78,7 @@ def handle_notification(payload: dict) -> dict:
 # Logging
 # ---------------------------------------------------------------------------
 
+
 def log_notification(payload: dict, processed: dict) -> None:
     """Log the notification event."""
     project_dir = os.environ.get(
@@ -101,6 +101,7 @@ def log_notification(payload: dict, processed: dict) -> None:
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     """Read stdin, handle notification, log event."""

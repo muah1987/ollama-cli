@@ -21,10 +21,10 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-
 # ---------------------------------------------------------------------------
 # Context snapshot
 # ---------------------------------------------------------------------------
+
 
 def save_context_snapshot(payload: dict) -> str | None:
     """Save a context snapshot before compaction. Returns the snapshot path."""
@@ -59,6 +59,7 @@ def save_context_snapshot(payload: dict) -> str | None:
 # Trigger reason
 # ---------------------------------------------------------------------------
 
+
 def determine_trigger_reason(payload: dict) -> str:
     """Determine why compaction was triggered."""
     context_window = payload.get("context_window", {})
@@ -84,6 +85,7 @@ def determine_trigger_reason(payload: dict) -> str:
 # ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
+
 
 def log_pre_compact(payload: dict, trigger_reason: str, snapshot_path: str | None) -> None:
     """Log the pre-compact event."""
@@ -115,6 +117,7 @@ def log_pre_compact(payload: dict, trigger_reason: str, snapshot_path: str | Non
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     """Read stdin, save snapshot, log compaction trigger."""

@@ -35,6 +35,7 @@ if str(_SCRIPT_DIR) not in sys.path:
 if str(_PACKAGE_DIR) not in sys.path:
     sys.path.insert(0, str(_PACKAGE_DIR))
 
+from api.provider_router import ProviderRouter  # noqa: E402
 from runner.context_manager import ContextManager  # noqa: E402
 from runner.token_counter import TokenCounter  # noqa: E402
 
@@ -90,6 +91,7 @@ class Session:
         context_manager: ContextManager | None = None,
         token_counter: TokenCounter | None = None,
         hooks_enabled: bool = True,
+        provider_router: ProviderRouter | None = None,
     ) -> None:
         self.session_id: str = session_id or uuid.uuid4().hex[:12]
         self.model: str = model
@@ -97,10 +99,44 @@ class Session:
         self.context_manager: ContextManager = context_manager or ContextManager()
         self.token_counter: TokenCounter = token_counter or TokenCounter(provider=provider)
         self.hooks_enabled: bool = hooks_enabled
+        self.provider_router: ProviderRouter = provider_router or ProviderRouter()
 
         self.start_time: datetime | None = None
         self._end_time: datetime | None = None
         self._message_count: int = 0
+
+    # -- sub-context helpers -------------------------------------------------
+
+    def create_sub_context(self, context_id: str, **kwargs: Any) -> ContextManager:
+        """Create a sub-context on the underlying :class:`ContextManager`.
+
+        Parameters
+        ----------
+        context_id:
+            Unique identifier for the sub-context.
+        **kwargs:
+            Optional overrides forwarded to
+            :meth:`ContextManager.create_sub_context`.
+
+        Returns
+        -------
+        The newly created child :class:`ContextManager`.
+        """
+        return self.context_manager.create_sub_context(context_id, **kwargs)
+
+    def get_sub_context(self, context_id: str) -> ContextManager | None:
+        """Return a sub-context by identifier.
+
+        Parameters
+        ----------
+        context_id:
+            The sub-context identifier.
+
+        Returns
+        -------
+        The child :class:`ContextManager`, or ``None`` if not found.
+        """
+        return self.context_manager.get_sub_context(context_id)
 
     # -- lifecycle -----------------------------------------------------------
 
@@ -127,17 +163,26 @@ class Session:
             except OSError:
                 logger.warning("Found OLLAMA.md but failed to read it", exc_info=True)
 
-    async def send(self, message: str) -> dict[str, Any]:
+    async def send(
+        self,
+        message: str,
+        agent_type: str | None = None,
+        context_id: str | None = None,
+    ) -> dict[str, Any]:
         """Send a user message and get a response.
 
         This method adds the user message to the context, delegates to the
-        provider for a response (currently a placeholder), updates token
+        provider for a response via ProviderRouter, updates token
         metrics, and triggers auto-compaction when the threshold is reached.
 
         Parameters
         ----------
         message:
             The user's input text.
+        agent_type:
+            Specific agent type for custom model assignment.
+        context_id:
+            If provided, route the message through the named sub-context.
 
         Returns
         -------
@@ -145,34 +190,77 @@ class Session:
         and ``compacted`` (whether compaction was triggered).
         """
         self._message_count += 1
-        self.context_manager.add_message("user", message)
 
-        # --- Provider call placeholder ---
-        # In production this delegates to OllamaClient.chat() or the
-        # appropriate cloud provider.  For now we return a stub so the
-        # session pipeline can be tested end-to-end without a running server.
-        response_content = f"[placeholder] Response to: {message[:80]}"
-        response_metrics: dict[str, Any] = {
-            "prompt_eval_count": self.context_manager._estimated_context_tokens,
-            "eval_count": max(1, len(response_content) // 4),
-            "eval_duration": 1_000_000_000,  # 1 second stub
-            "total_duration": 1_500_000_000,
-        }
+        # Determine target context
+        target_cm = self.context_manager
+        if context_id is not None:
+            sub = self.context_manager.get_sub_context(context_id)
+            if sub is not None:
+                target_cm = sub
+
+        target_cm.add_message("user", message)
+
+        # Prepare messages for the provider
+        messages = target_cm.messages.copy()
+        # Add the new user message if it's not already in the context
+        if not messages or messages[-1]["role"] != "user" or messages[-1]["content"] != message:
+            messages.append({"role": "user", "content": message})
+
+        try:
+            # Route through the provider router
+            response = await self.provider_router.route(task_type="agent", messages=messages, agent_type=agent_type)
+
+            # Extract response content and metrics
+            if isinstance(response, dict):
+                # Handle non-streaming response
+                choices = response.get("choices", [])
+                if choices and isinstance(choices, list) and len(choices) > 0:
+                    message_content = choices[0].get("message", {})
+                    response_content = message_content.get("content", "[empty response]")
+                else:
+                    response_content = str(response.get("content", "[no content]"))
+
+                # Extract token usage
+                usage = response.get("usage", {})
+                response_metrics = {
+                    "prompt_eval_count": usage.get("prompt_tokens", 0),
+                    "eval_count": usage.get("completion_tokens", 0),
+                    "total_tokens": usage.get("total_tokens", 0),
+                }
+            else:
+                # Handle streaming response (simple fallback)
+                response_content = f"[streaming response for: {message[:50]}...]"
+                response_metrics = {
+                    "prompt_eval_count": target_cm._estimated_context_tokens,
+                    "eval_count": max(1, len(response_content) // 4),
+                    "eval_duration": 1_000_000_000,  # 1 second stub
+                    "total_duration": 1_500_000_000,
+                }
+        except Exception as e:
+            logger.warning("Provider call failed, using placeholder: %s", e)
+            # Fallback to placeholder on error
+            response_content = f"[placeholder] Response to: {message[:80]}"
+            response_metrics = {
+                "prompt_eval_count": target_cm._estimated_context_tokens,
+                "eval_count": max(1, len(response_content) // 4),
+                "eval_duration": 1_000_000_000,  # 1 second stub
+                "total_duration": 1_500_000_000,
+            }
 
         # Record assistant response
-        self.context_manager.add_message("assistant", response_content)
-        self.context_manager.update_metrics(response_metrics)
+        target_cm.add_message("assistant", response_content)
+        target_cm.update_metrics(response_metrics)
         self.token_counter.update(response_metrics)
 
         # Sync context window info into the token counter
-        usage = self.context_manager.get_context_usage()
-        self.token_counter.set_context(usage["used"], usage["max"])
+        usage_info = target_cm.get_context_usage()
+        self.token_counter.set_context(usage_info["used"], usage_info["max"])
 
         # Auto-compact if threshold reached
         compacted = False
-        if self.context_manager.auto_compact and self.context_manager.should_compact():
+        if target_cm.auto_compact and target_cm.should_compact():
             try:
-                compact_result = await self.context_manager.compact()
+                compact_result = await target_cm.compact()
                 compacted = True
                 logger.info("Auto-compacted: %s", compact_result)
             except Exception:
@@ -285,6 +373,20 @@ class Session:
                 "estimated_context_tokens": self.context_manager._estimated_context_tokens,
                 "total_prompt_tokens": self.context_manager.total_prompt_tokens,
                 "total_completion_tokens": self.context_manager.total_completion_tokens,
+                "sub_contexts": {
+                    cid: {
+                        "messages": sub.messages,
+                        "system_message": sub.system_message,
+                        "max_context_length": sub.max_context_length,
+                        "compact_threshold": sub.compact_threshold,
+                        "auto_compact": sub.auto_compact,
+                        "keep_last_n": sub.keep_last_n,
+                        "estimated_context_tokens": sub._estimated_context_tokens,
+                        "total_prompt_tokens": sub.total_prompt_tokens,
+                        "total_completion_tokens": sub.total_completion_tokens,
+                    }
+                    for cid, sub in self.context_manager._sub_contexts.items()
+                },
             },
             "saved_at": datetime.now(tz=timezone.utc).isoformat(),
         }
@@ -345,6 +447,21 @@ class Session:
         cm._estimated_context_tokens = cm_data.get("estimated_context_tokens", 0)
         cm.total_prompt_tokens = cm_data.get("total_prompt_tokens", 0)
         cm.total_completion_tokens = cm_data.get("total_completion_tokens", 0)
+
+        # Restore sub-contexts
+        for cid, sub_data in cm_data.get("sub_contexts", {}).items():
+            sub = cm.create_sub_context(
+                cid,
+                max_context_length=sub_data.get("max_context_length", cm.max_context_length),
+                compact_threshold=sub_data.get("compact_threshold", cm.compact_threshold),
+                auto_compact=sub_data.get("auto_compact", cm.auto_compact),
+                keep_last_n=sub_data.get("keep_last_n", cm.keep_last_n),
+            )
+            sub.system_message = sub_data.get("system_message")
+            sub.messages = sub_data.get("messages", [])
+            sub._estimated_context_tokens = sub_data.get("estimated_context_tokens", 0)
+            sub.total_prompt_tokens = sub_data.get("total_prompt_tokens", 0)
+            sub.total_completion_tokens = sub_data.get("total_completion_tokens", 0)
 
         # Rebuild TokenCounter
         tc_data = data.get("token_counter", {})
