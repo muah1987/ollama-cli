@@ -63,4 +63,6 @@ def test_rdma_client_implements_protocol() -> None:
 
 
 if __name__ == "__main__":
+    import subprocess
+
     sys.exit(subprocess.run([sys.executable, "-m", "pytest", __file__, "-v"]).returncode)

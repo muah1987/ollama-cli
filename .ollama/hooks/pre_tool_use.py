@@ -99,6 +99,7 @@ LOW_RISK_TOOLS: set[str] = {
 # Risk scoring
 # ---------------------------------------------------------------------------
 
+
 def compute_risk_score(tool_name: str, tool_inputs: dict) -> tuple[int, list[str]]:
     """Return a risk score 0-100 and list of reasons."""
     score = 0
@@ -173,6 +174,7 @@ def make_decision(risk_score: int) -> str:
 # Logging
 # ---------------------------------------------------------------------------
 
+
 def log_event(payload: dict, risk_score: int, decision: str, reasons: list[str]) -> None:
     """Append a log entry to the pre_tool_use log file."""
     project_dir = os.environ.get(
@@ -199,6 +201,7 @@ def log_event(payload: dict, risk_score: int, decision: str, reasons: list[str])
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     """Read stdin, evaluate risk, output decision JSON."""

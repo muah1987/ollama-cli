@@ -6,10 +6,10 @@ for Ollama CLI operations across multiple nodes.
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import os
 import socket
+import subprocess
 from dataclasses import dataclass
 from typing import Any
 
@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class EXONode:
     """An EXO cluster node."""
+
     hostname: str
     ip: str
     cpu_count: int
@@ -172,17 +173,21 @@ class EXOSkill:
 
         if action == "check":
             await self.executor.initialize()
-            result.update({
-                "initialized": self.executor._initialized,
-                "node_count": len(self.executor._nodes),
-                "nodes": [self._node_to_dict(n) for n in self.executor._nodes],
-            })
+            result.update(
+                {
+                    "initialized": self.executor._initialized,
+                    "node_count": len(self.executor._nodes),
+                    "nodes": [self._node_to_dict(n) for n in self.executor._nodes],
+                }
+            )
         elif action == "discover":
             await self.executor.initialize()
-            result.update({
-                "discovered": len(self.executor._nodes),
-                "nodes": [self._node_to_dict(n) for n in self.executor._nodes],
-            })
+            result.update(
+                {
+                    "discovered": len(self.executor._nodes),
+                    "nodes": [self._node_to_dict(n) for n in self.executor._nodes],
+                }
+            )
         elif action == "execute":
             if not self.executor._initialized:
                 await self.executor.initialize()

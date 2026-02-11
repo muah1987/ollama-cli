@@ -1,22 +1,15 @@
 """
 Comprehensive tests for Ollama CLI components.
 """
-import asyncio
-import json
-import sys
+
 import tempfile
 from pathlib import Path
 
 import pytest
 
-# Add src to path so we can import our modules
-src_path = str(Path(__file__).parent.parent / "src")
-if src_path not in sys.path:
-    sys.path.insert(0, src_path)
-
-from context_manager import ContextManager
-from token_counter import TokenCounter
-from session import Session
+from model.session import Session
+from runner.context_manager import ContextManager
+from runner.token_counter import TokenCounter
 
 
 class TestTokenCounterComprehensive:
@@ -36,7 +29,7 @@ class TestTokenCounterComprehensive:
         # Test cost estimation for Anthropic
         tc.prompt_tokens = 1000000  # 1M tokens
         tc.completion_tokens = 1000000  # 1M tokens
-        cost = tc._estimate_cost()
+        cost = tc._estimate_cost(tc.provider)
         # Anthropic pricing: $3.00/input million, $15.00/output million
         assert cost == 18.0  # (1 * 3) + (1 * 15)
 
@@ -48,7 +41,7 @@ class TestTokenCounterComprehensive:
         # Test cost estimation for OpenAI
         tc.prompt_tokens = 1000000  # 1M tokens
         tc.completion_tokens = 1000000  # 1M tokens
-        cost = tc._estimate_cost()
+        cost = tc._estimate_cost(tc.provider)
         # OpenAI pricing: $1.00/input million, $2.00/output million
         assert cost == 3.0  # (1 * 1) + (1 * 2)
 
@@ -71,11 +64,8 @@ class TestTokenCounterComprehensive:
         """Test updating token counter with Anthropic (Claude) response metrics."""
         tc = TokenCounter(provider="anthropic")
         metrics = {
-            "usage": {
-                "input_tokens": 5000,
-                "output_tokens": 1000
-            },
-            "response_ms": 2000  # 2 seconds
+            "usage": {"input_tokens": 5000, "output_tokens": 1000},
+            "response_ms": 2000,  # 2 seconds
         }
 
         tc.update(metrics)
@@ -123,12 +113,7 @@ class TestContextManagerComprehensive:
 
     def test_init(self):
         """Test ContextManager initialization."""
-        cm = ContextManager(
-            max_context_length=8192,
-            compact_threshold=0.9,
-            auto_compact=False,
-            keep_last_n=6
-        )
+        cm = ContextManager(max_context_length=8192, compact_threshold=0.9, auto_compact=False, keep_last_n=6)
 
         assert cm.max_context_length == 8192
         assert cm.compact_threshold == 0.9
@@ -210,7 +195,7 @@ class TestContextManagerComprehensive:
         cm.add_message("assistant", "Test response")
 
         # Save to temporary file
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
             temp_path = f.name
 
         try:
@@ -234,18 +219,14 @@ class TestSessionComprehensive:
 
     def test_init(self):
         """Test Session initialization."""
-        session = Session(
-            session_id="test123",
-            model="llama3.2",
-            provider="anthropic"
-        )
+        session = Session(session_id="test123", model="llama3.2", provider="anthropic")
 
         assert session.session_id == "test123"
         assert session.model == "llama3.2"
         assert session.provider == "anthropic"
         # Just check that context_manager and token_counter exist and have the right types
-        assert hasattr(session, 'context_manager')
-        assert hasattr(session, 'token_counter')
+        assert hasattr(session, "context_manager")
+        assert hasattr(session, "token_counter")
 
     def test_get_status(self):
         """Test getting session status."""

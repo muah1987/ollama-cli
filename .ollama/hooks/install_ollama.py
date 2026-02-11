@@ -17,7 +17,6 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
-from pathlib import Path
 
 
 def check_ollama_installed() -> bool:
@@ -82,10 +81,7 @@ def install_ollama_macos() -> bool:
 
         # Fall back to direct download
         version = os.environ.get("OLLAMA_VERSION", "0.3.5")
-        download_url = (
-            f"https://github.com/ollama/ollama/releases/download/v{version}/"
-            f"ollama-darwin-amd64.tar.gz"
-        )
+        download_url = f"https://github.com/ollama/ollama/releases/download/v{version}/ollama-darwin-amd64.tar.gz"
         print(f"Downloading Ollama from {download_url}...")
         result = subprocess.run(
             ["curl", "-L", download_url, "|", "tar", "xz", "-C", "/usr/local/bin"],

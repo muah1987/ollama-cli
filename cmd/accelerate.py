@@ -12,7 +12,6 @@ Provides commands for managing hardware acceleration (MLX, EXO, RDMA).
 from __future__ import annotations
 
 import argparse
-import sys
 
 from rich.console import Console
 
@@ -52,6 +51,7 @@ def cmd_accelerate_check(_args: argparse.Namespace) -> None:
     console.print("\n[bold]RDMA Acceleration:[/bold]")
     try:
         import subprocess
+
         result = subprocess.run(
             ["rdma", "link", "show"],
             capture_output=True,
@@ -133,30 +133,18 @@ def register_commands(parser: argparse._SubParsersAction) -> None:
     accel_parser.set_defaults(func=cmd_accelerate)
 
     # ollama-cli accelerate check
-    check_parser = subparsers.add_parser(
-        "check", help="Check available acceleration methods"
-    )
+    check_parser = subparsers.add_parser("check", help="Check available acceleration methods")
     check_parser.set_defaults(func=cmd_accelerate_check)
 
     # ollama-cli accelerate enable <method>
-    enable_parser = subparsers.add_parser(
-        "enable", help="Enable acceleration method"
-    )
-    enable_parser.add_argument(
-        "method", choices=["mlx", "rdma", "exo"], help="Acceleration method"
-    )
-    enable_parser.add_argument(
-        "-d", "--device", help="Device name for RDMA"
-    )
+    enable_parser = subparsers.add_parser("enable", help="Enable acceleration method")
+    enable_parser.add_argument("method", choices=["mlx", "rdma", "exo"], help="Acceleration method")
+    enable_parser.add_argument("-d", "--device", help="Device name for RDMA")
     enable_parser.set_defaults(func=cmd_accelerate_enable)
 
     # ollama-cli accelerate disable <method>
-    disable_parser = subparsers.add_parser(
-        "disable", help="Disable acceleration method"
-    )
-    disable_parser.add_argument(
-        "method", choices=["mlx", "rdma", "exo"], help="Acceleration method"
-    )
+    disable_parser = subparsers.add_parser("disable", help="Disable acceleration method")
+    disable_parser.add_argument("method", choices=["mlx", "rdma", "exo"], help="Acceleration method")
     disable_parser.set_defaults(func=cmd_accelerate_disable)
 
 

@@ -23,6 +23,7 @@ from dotenv import load_dotenv
 # Configuration dataclass
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class OllamaCliConfig:
     """Central configuration for the CLI."""
@@ -44,6 +45,7 @@ class OllamaCliConfig:
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _bool_from_env(value: str | None, default: bool) -> bool:
     """Parse a boolean from an environment variable string."""
@@ -75,6 +77,7 @@ def _float_from_env(value: str | None, default: float) -> float:
 # ---------------------------------------------------------------------------
 # Load / save
 # ---------------------------------------------------------------------------
+
 
 def load_config(env_path: str | Path | None = None, config_json_path: str | Path | None = None) -> OllamaCliConfig:
     """Load configuration from environment variables, then overlay from config.json.

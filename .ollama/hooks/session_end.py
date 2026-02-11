@@ -21,10 +21,10 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-
 # ---------------------------------------------------------------------------
 # Session summary
 # ---------------------------------------------------------------------------
+
 
 def generate_summary(payload: dict) -> dict:
     """Generate a summary of the session."""
@@ -48,6 +48,7 @@ def generate_summary(payload: dict) -> dict:
 # ---------------------------------------------------------------------------
 # OLLAMA.md updates
 # ---------------------------------------------------------------------------
+
 
 def append_to_ollama_md(summary: dict) -> bool:
     """Append session summary to OLLAMA.md if it exists."""
@@ -85,6 +86,7 @@ def append_to_ollama_md(summary: dict) -> bool:
 # Logging
 # ---------------------------------------------------------------------------
 
+
 def log_session_end(payload: dict, summary: dict, md_updated: bool) -> None:
     """Log session end event."""
     project_dir = os.environ.get(
@@ -108,6 +110,7 @@ def log_session_end(payload: dict, summary: dict, md_updated: bool) -> None:
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     """Read stdin, generate summary, update OLLAMA.md, log event."""

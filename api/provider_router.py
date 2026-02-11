@@ -114,7 +114,7 @@ def _load_agent_model_config() -> dict[str, tuple[str, str]]:
                 for agent_type, config_data in agent_models.items():
                     config[agent_type] = (
                         config_data.get("provider", "ollama"),
-                        config_data.get("model", _DEFAULT_MODELS.get("ollama", "llama3.2"))
+                        config_data.get("model", _DEFAULT_MODELS.get("ollama", "llama3.2")),
                     )
         except Exception:
             pass  # Ignore config errors
@@ -973,10 +973,7 @@ class ProviderRouter:
         if agent_type and agent_type in _AGENT_MODEL_MAP:
             primary_provider, model = _AGENT_MODEL_MAP[agent_type]
         elif task_type not in self._task_config:
-            raise ProviderError(
-                f"Unknown task type: {task_type!r}. "
-                f"Expected one of: {', '.join(self._task_config)}"
-            )
+            raise ProviderError(f"Unknown task type: {task_type!r}. Expected one of: {', '.join(self._task_config)}")
         else:
             primary_provider, model = self._task_config[task_type]
 
@@ -999,10 +996,7 @@ class ProviderRouter:
                 model = _DEFAULT_MODELS.get(provider_name, model)
                 continue
 
-        raise ProviderUnavailableError(
-            f"All providers exhausted for task_type={task_type!r}. "
-            f"Last error: {last_error}"
-        )
+        raise ProviderUnavailableError(f"All providers exhausted for task_type={task_type!r}. Last error: {last_error}")
 
     # -- health / introspection ----------------------------------------------
 

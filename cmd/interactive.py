@@ -313,8 +313,10 @@ class InteractiveMode:
         Always ``False`` (continue REPL).
         """
         usage_before = self.session.context_manager.get_context_usage()
-        self._print_system(f"Before compaction: {usage_before['used']:,} / {usage_before['max']:,} tokens "
-                           f"({usage_before['percentage']}%)")
+        self._print_system(
+            f"Before compaction: {usage_before['used']:,} / {usage_before['max']:,} tokens "
+            f"({usage_before['percentage']}%)"
+        )
 
         try:
             result = await self.session.compact()
@@ -323,8 +325,9 @@ class InteractiveMode:
             return False
 
         usage_after = self.session.context_manager.get_context_usage()
-        self._print_info(f"After compaction:  {usage_after['used']:,} / {usage_after['max']:,} tokens "
-                         f"({usage_after['percentage']}%)")
+        self._print_info(
+            f"After compaction:  {usage_after['used']:,} / {usage_after['max']:,} tokens ({usage_after['percentage']}%)"
+        )
         self._print_info(f"Messages removed:  {result.get('messages_removed', 0)}")
         return False
 
@@ -429,8 +432,9 @@ class InteractiveMode:
         self.session._end_time = loaded._end_time
         self.session._message_count = loaded._message_count
 
-        self._print_info(f"Session loaded: {loaded.session_id} "
-                         f"({loaded._message_count} messages, model={loaded.model})")
+        self._print_info(
+            f"Session loaded: {loaded.session_id} ({loaded._message_count} messages, model={loaded.model})"
+        )
         return False
 
     def _cmd_history(self, _arg: str) -> bool:
@@ -693,6 +697,7 @@ if __name__ == "__main__":
     if os.environ.get("OLLAMA_CLI_TEST") or not sys.stdin.isatty():
         asyncio.run(_test())
     else:
+
         async def _main() -> None:
             session = Session(model="llama3.2", provider="ollama")
             await session.start()

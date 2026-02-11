@@ -15,7 +15,6 @@ and safe stdin reading for all Ollama CLI status lines.
 import json
 import sys
 
-
 # --- ANSI Color Constants ---
 RESET = "\033[0m"
 BOLD = "\033[1m"

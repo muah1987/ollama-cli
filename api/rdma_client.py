@@ -7,17 +7,16 @@ iWARP (internet Wide Area RDMA Protocol), and TCP/IP fallback.
 
 from __future__ import annotations
 
-import asyncio
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
 class TransportProtocol(Enum):
     """Supported RDMA transport protocols."""
+
     INFINIBAND = "infiniband"
     ROCETH = "roce"  # RoCE v1
     ROCEV2 = "roce_v2"  # RoCE v2
@@ -27,6 +26,7 @@ class TransportProtocol(Enum):
 
 class DeviceType(Enum):
     """RDMA device types."""
+
     PHYSICAL = "physical"
     VIRTUAL = "virtual"
     USB_RDMA = "usb_rdma"
@@ -37,6 +37,7 @@ class DeviceType(Enum):
 @dataclass
 class RDMADeviceInfo:
     """Information about an RDMA device."""
+
     name: str
     device_type: DeviceType
     transport: TransportProtocol
@@ -52,6 +53,7 @@ class RDMADeviceInfo:
 @dataclass
 class RDMAConnectionConfig:
     """Configuration for an RDMA connection."""
+
     local_port: int
     remote_host: str
     remote_port: int
@@ -109,8 +111,7 @@ class RDMAClient:
         self._config = config
         await self._transport.connect(config)
         self._connected = True
-        logger.info("RDMA connection established to %s:%d",
-                    config.remote_host, config.remote_port)
+        logger.info("RDMA connection established to %s:%d", config.remote_host, config.remote_port)
 
     async def disconnect(self) -> None:
         """Disconnect from RDMA endpoint."""

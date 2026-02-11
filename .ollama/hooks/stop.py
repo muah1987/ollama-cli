@@ -22,10 +22,10 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-
 # ---------------------------------------------------------------------------
 # Session summary
 # ---------------------------------------------------------------------------
+
 
 def compute_session_summary(payload: dict) -> dict:
     """Compute final session summary metrics."""
@@ -65,6 +65,7 @@ def compute_session_summary(payload: dict) -> dict:
 # Cleanup
 # ---------------------------------------------------------------------------
 
+
 def perform_cleanup() -> list[str]:
     """Perform any final cleanup tasks. Returns list of actions taken."""
     actions: list[str] = []
@@ -94,6 +95,7 @@ def perform_cleanup() -> list[str]:
 # ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
+
 
 def log_stop(payload: dict, summary: dict, cleanup_actions: list[str]) -> None:
     """Log the stop event."""
@@ -135,6 +137,7 @@ def print_summary(summary: dict) -> None:
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     """Read stdin, cleanup, print summary, log event."""

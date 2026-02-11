@@ -6,7 +6,6 @@ and connection handling for RDMA-based high-performance computing.
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import os
 import subprocess
@@ -20,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class RDMAEventType(Enum):
     """Types of RDMA events."""
+
     DEVICE_ADD = "device_add"
     DEVICE_REMOVE = "device_remove"
     CONNECT_REQUEST = "connect_request"
@@ -31,6 +31,7 @@ class RDMAEventType(Enum):
 @dataclass
 class RDMAEvent:
     """An RDMA event."""
+
     event_type: RDMAEventType
     device_name: str
     details: dict[str, Any] = field(default_factory=dict)
@@ -39,6 +40,7 @@ class RDMAEvent:
 @dataclass
 class RDMAClusterConfig:
     """Configuration for an RDMA cluster."""
+
     cluster_name: str
     leader_host: str
     members: list[str] = field(default_factory=list)
@@ -60,6 +62,7 @@ class RDMAConfiguration:
         config_file = self.config_dir / "config.json"
         if config_file.exists():
             import json
+
             try:
                 with open(config_file) as f:
                     self._devices = json.load(f)
@@ -72,6 +75,7 @@ class RDMAConfiguration:
     def save(self) -> None:
         """Save configuration to disk."""
         import json
+
         config_file = self.config_dir / "config.json"
         with open(config_file, "w") as f:
             json.dump(self._devices, f, indent=2)
@@ -154,12 +158,14 @@ class RDMAManager:
                 # This is a simplified implementation
                 for line in result.stdout.split("\n"):
                     if "RDMA" in line or "InfiniBand" in line:
-                        devices.append({
-                            "name": line.strip(),
-                            "type": "usb_rdma",
-                            "transport": "tcp",
-                            "vendor": "unknown",
-                        })
+                        devices.append(
+                            {
+                                "name": line.strip(),
+                                "type": "usb_rdma",
+                                "transport": "tcp",
+                                "vendor": "unknown",
+                            }
+                        )
         except Exception as e:
             logger.warning("USB RDMA detection failed: %s", e)
         return devices
@@ -176,12 +182,14 @@ class RDMAManager:
                 if ib_path.exists():
                     for device_dir in ib_path.iterdir():
                         if device_dir.is_dir():
-                            devices.append({
-                                "name": device_dir.name,
-                                "type": "thunderbolt_rdma",
-                                "transport": "roce_v2",
-                                "vendor": self._get_vendor(device_dir),
-                            })
+                            devices.append(
+                                {
+                                    "name": device_dir.name,
+                                    "type": "thunderbolt_rdma",
+                                    "transport": "roce_v2",
+                                    "vendor": self._get_vendor(device_dir),
+                                }
+                            )
             elif platform == "Darwin":
                 # Check for Thunderbolt devices on macOS
                 result = subprocess.run(
@@ -191,12 +199,14 @@ class RDMAManager:
                     timeout=10,
                 )
                 if result.returncode == 0:
-                    devices.append({
-                        "name": "Thunderbolt RDMA",
-                        "type": "thunderbolt_rdma",
-                        "transport": "roce_v2",
-                        "vendor": "Apple",
-                    })
+                    devices.append(
+                        {
+                            "name": "Thunderbolt RDMA",
+                            "type": "thunderbolt_rdma",
+                            "transport": "roce_v2",
+                            "vendor": "Apple",
+                        }
+                    )
         except Exception as e:
             logger.warning("Thunderbolt RDMA detection failed: %s", e)
 
@@ -218,12 +228,14 @@ class RDMAManager:
                     if line.strip():
                         parts = line.split()
                         if parts:
-                            devices.append({
-                                "name": parts[0].rstrip(":"),
-                                "type": "network_rdma",
-                                "transport": self._get_transport_protocol(parts[0]),
-                                "vendor": "unknown",
-                            })
+                            devices.append(
+                                {
+                                    "name": parts[0].rstrip(":"),
+                                    "type": "network_rdma",
+                                    "transport": self._get_transport_protocol(parts[0]),
+                                    "vendor": "unknown",
+                                }
+                            )
         except Exception as e:
             logger.warning("Network RDMA detection failed: %s", e)
 
@@ -236,7 +248,7 @@ class RDMAManager:
             try:
                 with open(vendor_file) as f:
                     vendor_id = f.read().strip()
-                    #_map vendor IDs
+                    # _map vendor IDs
                     vendor_map = {
                         "0x02c9": "Mellanox",
                         "0x05ad": "Intel",
@@ -278,8 +290,7 @@ class RDMAManager:
     async def connect_cluster(self, config: RDMAClusterConfig) -> bool:
         """Connect to an RDMA cluster."""
         self._cluster_config = config
-        logger.info("Connecting to cluster %s (leader: %s)",
-                    config.cluster_name, config.leader_host)
+        logger.info("Connecting to cluster %s (leader: %s)", config.cluster_name, config.leader_host)
         self._connected = True
         return True
 

@@ -6,11 +6,9 @@ on macOS with Apple Silicon chips.
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import os
 import subprocess
-from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -128,21 +126,27 @@ class MLXSkill:
 
         if action == "check":
             await self.accelerator.initialize()
-            result.update({
-                "available": self.accelerator.is_available,
-                "device_info": self.accelerator.device_info,
-            })
+            result.update(
+                {
+                    "available": self.accelerator.is_available,
+                    "device_info": self.accelerator.device_info,
+                }
+            )
         elif action == "enable":
             success = await self.accelerator.initialize()
-            result.update({
-                "enabled": success,
-            })
+            result.update(
+                {
+                    "enabled": success,
+                }
+            )
         elif action == "disable":
             self.accelerator._initialized = False
             self.accelerator._device_info = None
-            result.update({
-                "disabled": True,
-            })
+            result.update(
+                {
+                    "disabled": True,
+                }
+            )
 
         return result
 

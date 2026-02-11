@@ -4,6 +4,8 @@ Basic tests for ollama-cli functionality.
 
 import os
 
+import pytest
+
 
 def test_modules_exist():
     """Test that all main modules exist and can be loaded."""
@@ -11,9 +13,9 @@ def test_modules_exist():
 
     modules = [
         "api/ollama_client.py",
-        "model/model_manager.py",
-        "server/status.py",
-        "runner/executor.py",
+        "model/session.py",
+        "server/hook_runner.py",
+        "runner/context_manager.py",
     ]
 
     for module in modules:
@@ -42,6 +44,26 @@ def test_commands_module_exists():
     for cmd in expected_commands:
         cmd_path = os.path.join(cmd_dir, cmd)
         assert os.path.exists(cmd_path), f"Command {cmd} does not exist"
+
+
+@pytest.fixture()
+def sample_model():
+    """Return a sample model dict for testing."""
+    return {
+        "name": "llama3.2",
+        "modified_at": "2024-01-01T00:00:00Z",
+        "size": 4_000_000_000,
+    }
+
+
+@pytest.fixture()
+def sample_generation():
+    """Return a sample generation response for testing."""
+    return {
+        "model": "llama3.2",
+        "response": "Hello! How can I help you?",
+        "done": True,
+    }
 
 
 def test_sample_model(sample_model):

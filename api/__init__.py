@@ -8,10 +8,12 @@ This package contains:
 
 from .ollama_client import (
     OllamaClient,
-    OllamaClient as Client,
     OllamaConnectionError,
     OllamaError,
     OllamaModelNotFoundError,
+)
+from .ollama_client import (
+    OllamaClient as Client,
 )
 from .provider_router import (
     BaseProvider,

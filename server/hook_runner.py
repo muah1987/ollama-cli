@@ -19,14 +19,15 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-
 # ---------------------------------------------------------------------------
 # Data types
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class HookResult:
     """Result from executing a single hook."""
+
     success: bool
     stdout: str = ""
     stderr: str = ""
@@ -53,6 +54,7 @@ class HookResult:
 # ---------------------------------------------------------------------------
 # HookRunner
 # ---------------------------------------------------------------------------
+
 
 class HookRunner:
     """Loads settings.json and executes hook commands for named events."""
@@ -225,6 +227,7 @@ class HookRunner:
 # ---------------------------------------------------------------------------
 # Direct execution: test mode
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     """Test mode: fire a sample SessionStart event."""

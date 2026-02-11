@@ -30,6 +30,7 @@ from dotenv import load_dotenv
 # Provider detection
 # ---------------------------------------------------------------------------
 
+
 def check_ollama_health(host: str = "http://localhost:11434") -> bool:
     """Check if the Ollama server is reachable."""
     try:
@@ -66,6 +67,7 @@ def detect_providers() -> dict[str, bool]:
 # Project context
 # ---------------------------------------------------------------------------
 
+
 def load_project_context() -> str | None:
     """Load OLLAMA.md if it exists in the project root."""
     project_dir = os.environ.get(
@@ -84,6 +86,7 @@ def load_project_context() -> str | None:
 # ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
+
 
 def log_session_start(payload: dict, providers: dict[str, bool], context_loaded: bool) -> None:
     """Log session start event."""
@@ -110,6 +113,7 @@ def log_session_start(payload: dict, providers: dict[str, bool], context_loaded:
 # ---------------------------------------------------------------------------
 # Banner
 # ---------------------------------------------------------------------------
+
 
 def print_banner(payload: dict, providers: dict[str, bool], context_loaded: bool) -> None:
     """Print a session startup banner to stderr for visibility."""
@@ -145,6 +149,7 @@ def print_banner(payload: dict, providers: dict[str, bool], context_loaded: bool
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     """Read stdin, detect providers, print banner, log event."""

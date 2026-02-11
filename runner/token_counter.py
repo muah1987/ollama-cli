@@ -14,6 +14,7 @@ speed, and provides formatted display strings for status lines.
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from typing import Any
 
 # ---------------------------------------------------------------------------
@@ -29,8 +30,73 @@ logger = logging.getLogger(__name__)
 _COST_PER_MILLION: dict[str, tuple[float, float]] = {
     "ollama": (0.0, 0.0),
     "claude": (3.0, 15.0),
+    "anthropic": (3.0, 15.0),
     "gemini": (1.25, 5.0),
+    "google": (1.25, 5.0),
     "codex": (2.50, 10.0),
+    "openai": (1.00, 2.00),
+}
+
+# ---------------------------------------------------------------------------
+# Provider-specific token extractors
+# ---------------------------------------------------------------------------
+
+
+def _extract_ollama(response: dict[str, Any]) -> tuple[int, int, float]:
+    """Extract tokens and speed from an Ollama response."""
+    prompt = response.get("prompt_eval_count", 0)
+    completion = response.get("eval_count", 0)
+    eval_duration = response.get("eval_duration", 0)
+    speed = 0.0
+    if eval_duration > 0 and completion > 0:
+        speed = round(completion / (eval_duration / 1e9), 2)
+    return prompt, completion, speed
+
+
+def _extract_anthropic(response: dict[str, Any]) -> tuple[int, int, float]:
+    """Extract tokens and speed from an Anthropic response."""
+    usage = response.get("usage", {})
+    prompt = usage.get("input_tokens", 0)
+    completion = usage.get("output_tokens", 0)
+    response_ms = response.get("response_ms", 0)
+    speed = 0.0
+    if response_ms > 0 and completion > 0:
+        speed = round(completion / (response_ms / 1000), 2)
+    return prompt, completion, speed
+
+
+def _extract_google(response: dict[str, Any]) -> tuple[int, int, float]:
+    """Extract tokens and speed from a Google response."""
+    prompt = response.get("prompt_token_count", 0)
+    candidates = response.get("candidates", [])
+    completion = sum(c.get("token_count", 0) for c in candidates)
+    latency = response.get("total_latency", 0)
+    speed = 0.0
+    if latency > 0 and completion > 0:
+        speed = round(completion / latency, 2)
+    return prompt, completion, speed
+
+
+def _extract_openai(response: dict[str, Any]) -> tuple[int, int, float]:
+    """Extract tokens and speed from an OpenAI response."""
+    usage = response.get("usage", {})
+    prompt = usage.get("prompt_tokens", 0)
+    completion = usage.get("completion_tokens", 0)
+    latency_ms = response.get("request_latency_ms", 0)
+    speed = 0.0
+    if latency_ms > 0 and completion > 0:
+        speed = round(completion / (latency_ms / 1000), 2)
+    return prompt, completion, speed
+
+
+_EXTRACTORS: dict[str, Callable[[dict[str, Any]], tuple[int, int, float]]] = {
+    "ollama": _extract_ollama,
+    "claude": _extract_anthropic,
+    "anthropic": _extract_anthropic,
+    "gemini": _extract_google,
+    "google": _extract_google,
+    "codex": _extract_openai,
+    "openai": _extract_openai,
 }
 
 # ---------------------------------------------------------------------------
@@ -84,27 +150,24 @@ class TokenCounter:
     # -- public methods ------------------------------------------------------
 
     def update(self, response_metrics: dict[str, Any]) -> None:
-        """Update counters from an Ollama API response metrics dict.
+        """Update counters from a provider API response.
 
-        Expects the dict returned by ``OllamaClient.extract_metrics()``,
-        containing ``prompt_eval_count``, ``eval_count``, ``eval_duration``,
-        and ``total_duration``.
+        Dispatches to the correct extractor for the current provider.
+        Falls back to Ollama-style keys if the provider is unknown.
 
         Parameters
         ----------
         response_metrics:
-            Metrics dict extracted from an Ollama response.
+            Metrics dict from a provider response.
         """
-        prompt = response_metrics.get("prompt_eval_count", 0)
-        completion = response_metrics.get("eval_count", 0)
-        eval_duration = response_metrics.get("eval_duration", 0)
+        extractor = _EXTRACTORS.get(self.provider.lower(), _extract_ollama)
+        prompt, completion, speed = extractor(response_metrics)
 
         self.prompt_tokens += prompt
         self.completion_tokens += completion
 
-        # Ollama reports durations in nanoseconds
-        if eval_duration > 0 and completion > 0:
-            self.tokens_per_second = round(completion / (eval_duration / 1e9), 2)
+        if speed > 0:
+            self.tokens_per_second = speed
 
         # Update context-used to reflect the latest prompt size
         if prompt > 0:
@@ -203,12 +266,14 @@ if __name__ == "__main__":
     tc = TokenCounter(provider="ollama", context_max=4096)
 
     # Simulate an Ollama response
-    tc.update({
-        "prompt_eval_count": 128,
-        "eval_count": 256,
-        "eval_duration": 5_000_000_000,  # 5 seconds in nanoseconds
-        "total_duration": 6_000_000_000,
-    })
+    tc.update(
+        {
+            "prompt_eval_count": 128,
+            "eval_count": 256,
+            "eval_duration": 5_000_000_000,  # 5 seconds in nanoseconds
+            "total_duration": 6_000_000_000,
+        }
+    )
 
     print(f"Display: {tc.format_display()}")
     print(f"Total tokens: {tc.total_tokens}")
@@ -216,11 +281,13 @@ if __name__ == "__main__":
 
     # Simulate with Claude pricing
     tc_cloud = TokenCounter(provider="claude", context_max=200_000)
-    tc_cloud.update({
-        "prompt_eval_count": 5000,
-        "eval_count": 1000,
-        "eval_duration": 2_000_000_000,
-        "total_duration": 3_000_000_000,
-    })
+    tc_cloud.update(
+        {
+            "prompt_eval_count": 5000,
+            "eval_count": 1000,
+            "eval_duration": 2_000_000_000,
+            "total_duration": 3_000_000_000,
+        }
+    )
     print(f"\nClaude display: {tc_cloud.format_display()}")
     print(f"Claude JSON: {tc_cloud.format_json()}")

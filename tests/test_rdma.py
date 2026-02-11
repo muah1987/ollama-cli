@@ -7,7 +7,6 @@
 Test RDMA functionality.
 """
 
-import importlib
 import sys
 from pathlib import Path
 
@@ -32,7 +31,7 @@ def test_rdma_transport_protocol() -> None:
         sys.path.insert(0, str(api_path))
 
     try:
-        from rdma_client import TransportProtocol, DeviceType
+        from rdma_client import DeviceType, TransportProtocol
 
         assert TransportProtocol.INFINIBAND.value == "infiniband"
         assert DeviceType.PHYSICAL.value == "physical"
@@ -48,4 +47,6 @@ def test_rdma_skill_exists() -> None:
 
 
 if __name__ == "__main__":
+    import subprocess
+
     sys.exit(subprocess.run([sys.executable, "-m", "pytest", __file__, "-v"]).returncode)

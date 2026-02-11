@@ -8,12 +8,13 @@ leverage the enhanced token counting and context management systems.
 
 import json
 import logging
+
+# Handle both when run as standalone and when imported
+import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-# Handle both when run as standalone and when imported
-import sys
 _script_dir = Path(__file__).resolve().parent
 if str(_script_dir) not in sys.path:
     sys.path.insert(0, str(_script_dir))
@@ -56,10 +57,7 @@ class BaseSkill(ABC):
             messages: List of message dictionaries with 'role' and 'content' keys
         """
         for message in messages:
-            self.context_manager.add_message(
-                role=message["role"],
-                content=message["content"]
-            )
+            self.context_manager.add_message(role=message["role"], content=message["content"])
 
     def get_token_usage(self) -> Dict[str, Any]:
         """Get current token usage statistics.
@@ -91,9 +89,7 @@ class TokenCountingSkill(BaseSkill):
 
     def __init__(self, context_manager: Optional[ContextManager] = None):
         super().__init__(
-            name="token_counter",
-            description="Advanced token counting and analysis",
-            context_manager=context_manager
+            name="token_counter", description="Advanced token counting and analysis", context_manager=context_manager
         )
 
     async def execute(self, text: str, provider: str = "ollama") -> Dict[str, Any]:
@@ -117,18 +113,14 @@ class TokenCountingSkill(BaseSkill):
         self.context_manager.add_message("assistant", f"Estimated token count: {token_count}")
 
         # Update token counter with dummy metrics for demonstration
-        self.token_counter.update({
-            "prompt_eval_count": token_count,
-            "eval_count": 1,
-            "eval_duration": 1000000000
-        })
+        self.token_counter.update({"prompt_eval_count": token_count, "eval_count": 1, "eval_duration": 1000000000})
 
         return {
             "text": text,
             "token_count": token_count,
             "provider": provider,
             "cost_estimate": self.token_counter.cost_estimate,
-            "metrics": self.token_counter.format_json()
+            "metrics": self.token_counter.format_json(),
         }
 
 
@@ -137,16 +129,11 @@ class AutoCompactSkill(BaseSkill):
 
     def __init__(self, context_manager: Optional[ContextManager] = None):
         super().__init__(
-            name="auto_compact",
-            description="Context auto-compaction management",
-            context_manager=context_manager
+            name="auto_compact", description="Context auto-compaction management", context_manager=context_manager
         )
 
     async def execute(
-        self,
-        action: str = "check",
-        threshold: Optional[float] = None,
-        keep_last_n: Optional[int] = None
+        self, action: str = "check", threshold: Optional[float] = None, keep_last_n: Optional[int] = None
     ) -> Dict[str, Any]:
         """Manage auto-compaction settings and execution.
 
@@ -162,20 +149,24 @@ class AutoCompactSkill(BaseSkill):
 
         if action == "check":
             usage = self.context_manager.get_context_usage()
-            result.update({
-                "context_usage": usage,
-                "should_compact": self.context_manager.should_compact(),
-                "total_tokens": self.context_manager.get_total_context_tokens()
-            })
+            result.update(
+                {
+                    "context_usage": usage,
+                    "should_compact": self.context_manager.should_compact(),
+                    "total_tokens": self.context_manager.get_total_context_tokens(),
+                }
+            )
 
         elif action == "compact":
             if self.context_manager.should_compact():
                 compact_result = await self.context_manager.compact()
-                result.update({
-                    "compacted": True,
-                    "compact_result": compact_result,
-                    "new_usage": self.context_manager.get_context_usage()
-                })
+                result.update(
+                    {
+                        "compacted": True,
+                        "compact_result": compact_result,
+                        "new_usage": self.context_manager.get_context_usage(),
+                    }
+                )
             else:
                 result["compacted"] = False
                 result["reason"] = "Context usage below compaction threshold"
@@ -186,11 +177,13 @@ class AutoCompactSkill(BaseSkill):
             if keep_last_n is not None:
                 self.context_manager.keep_last_n = keep_last_n
 
-            result.update({
-                "configured": True,
-                "threshold": self.context_manager.compact_threshold,
-                "keep_last_n": self.context_manager.keep_last_n
-            })
+            result.update(
+                {
+                    "configured": True,
+                    "threshold": self.context_manager.compact_threshold,
+                    "keep_last_n": self.context_manager.keep_last_n,
+                }
+            )
 
         # Add messages to context
         self.context_manager.add_message("user", f"Auto-compact {action} request")
@@ -225,12 +218,15 @@ def get_skill(skill_name: str, context_manager: Optional[ContextManager] = None)
     # Handle dynamic imports for new skills
     if skill_name == "mlx_acceleration":
         from skills.mlx import MLXSkill
+
         return MLXSkill()
     elif skill_name == "exo_execution":
         from skills.exo import EXOSkill
+
         return EXOSkill()
     elif skill_name == "rdma_acceleration":
         from skills.rdma import RDMA_skill
+
         return RDMA_skill()
 
     if skill_name not in SKILLS:
@@ -240,11 +236,7 @@ def get_skill(skill_name: str, context_manager: Optional[ContextManager] = None)
     return skill_class(context_manager)
 
 
-async def execute_skill(
-    skill_name: str,
-    context_manager: Optional[ContextManager] = None,
-    **kwargs
-) -> Dict[str, Any]:
+async def execute_skill(skill_name: str, context_manager: Optional[ContextManager] = None, **kwargs) -> Dict[str, Any]:
     """Execute a skill by name with the given parameters.
 
     Args:

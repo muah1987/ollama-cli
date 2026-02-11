@@ -6,7 +6,6 @@ enabling low-latency, high-throughput communication between nodes.
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import subprocess
 from typing import Any
@@ -46,23 +45,28 @@ class RDMAAccelerator:
                 for line in result.stdout.split("\n"):
                     if line.strip():
                         name = line.split()[0].rstrip(":")
-                        devices.append({
-                            "name": name,
-                            "type": "network_rdma",
-                            "status": "available",
-                        })
+                        devices.append(
+                            {
+                                "name": name,
+                                "type": "network_rdma",
+                                "status": "available",
+                            }
+                        )
 
             # Check for InfiniBand devices
             ib_path = "/sys/class/infiniband"
             import os
+
             if os.path.exists(ib_path):
                 for item in os.listdir(ib_path):
                     if os.path.isdir(os.path.join(ib_path, item)):
-                        devices.append({
-                            "name": item,
-                            "type": "infiniband",
-                            "status": "available",
-                        })
+                        devices.append(
+                            {
+                                "name": item,
+                                "type": "infiniband",
+                                "status": "available",
+                            }
+                        )
         except Exception as e:
             logger.warning("RDMA detection failed: %s", e)
 
@@ -137,32 +141,40 @@ class RDMA_skill:
 
         if action == "check":
             await self.accelerator.initialize()
-            result.update({
-                "initialized": self.accelerator.is_connected,
-                "device_count": len(self.accelerator.devices),
-                "devices": self.accelerator.devices,
-            })
+            result.update(
+                {
+                    "initialized": self.accelerator.is_connected,
+                    "device_count": len(self.accelerator.devices),
+                    "devices": self.accelerator.devices,
+                }
+            )
         elif action == "connect":
             device = kwargs.get("device")
             if not device:
                 result.update({"error": "Device name required for connect action"})
             else:
                 success = await self.accelerator.connect_device(device)
-                result.update({
-                    "connected": success,
-                    "device": device,
-                })
+                result.update(
+                    {
+                        "connected": success,
+                        "device": device,
+                    }
+                )
         elif action == "disconnect":
             await self.accelerator.disconnect()
-            result.update({
-                "disconnected": True,
-            })
+            result.update(
+                {
+                    "disconnected": True,
+                }
+            )
         elif action == "status":
             await self.accelerator.initialize()
-            result.update({
-                "connected": self.accelerator.is_connected,
-                "device": self.accelerator.connected_device,
-            })
+            result.update(
+                {
+                    "connected": self.accelerator.is_connected,
+                    "device": self.accelerator.connected_device,
+                }
+            )
 
         return result
 

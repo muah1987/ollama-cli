@@ -58,11 +58,13 @@ class ContextManager:
         compact_threshold: float = 0.85,
         auto_compact: bool = True,
         keep_last_n: int = 4,
+        context_id: str | None = None,
     ) -> None:
         self.max_context_length = max_context_length
         self.compact_threshold = compact_threshold
         self.auto_compact = auto_compact
         self.keep_last_n = keep_last_n
+        self.context_id: str | None = context_id
 
         # Conversation state
         self.messages: list[dict[str, Any]] = []
@@ -78,6 +80,65 @@ class ContextManager:
         # Latest generation speed
         self._tokens_per_second: float = 0.0
 
+        # Sub-agent contexts
+        self.parent_context: ContextManager | None = None
+        self._sub_contexts: dict[str, ContextManager] = {}
+
+    # -- sub-context management ------------------------------------------------
+
+    def create_sub_context(
+        self,
+        context_id: str,
+        **kwargs: Any,
+    ) -> ContextManager:
+        """Create a child context for a sub-agent.
+
+        The child inherits this context's settings unless overridden.
+
+        Parameters
+        ----------
+        context_id:
+            Unique identifier for the sub-context.
+        **kwargs:
+            Optional overrides for ``max_context_length``, ``compact_threshold``,
+            ``auto_compact``, and ``keep_last_n``.
+
+        Returns
+        -------
+        A new :class:`ContextManager` linked to this parent.
+        """
+        child = ContextManager(
+            max_context_length=kwargs.get("max_context_length", self.max_context_length),
+            compact_threshold=kwargs.get("compact_threshold", self.compact_threshold),
+            auto_compact=kwargs.get("auto_compact", self.auto_compact),
+            keep_last_n=kwargs.get("keep_last_n", self.keep_last_n),
+            context_id=context_id,
+        )
+        child.parent_context = self
+        self._sub_contexts[context_id] = child
+        return child
+
+    def get_sub_context(self, context_id: str) -> ContextManager | None:
+        """Return a sub-context by its identifier.
+
+        Parameters
+        ----------
+        context_id:
+            The sub-context identifier.
+
+        Returns
+        -------
+        The child :class:`ContextManager`, or ``None`` if not found.
+        """
+        return self._sub_contexts.get(context_id)
+
+    def get_total_context_tokens(self) -> int:
+        """Return the total estimated tokens across this context and all children."""
+        total = self._estimated_context_tokens
+        for child in self._sub_contexts.values():
+            total += child.get_total_context_tokens()
+        return total
+
     # -- public methods ------------------------------------------------------
 
     def add_message(
@@ -86,6 +147,7 @@ class ContextManager:
         content: str,
         thinking: str | None = None,
         tool_calls: list[Any] | None = None,
+        context_id: str | None = None,
     ) -> None:
         """Add a message to the conversation history.
 
@@ -99,7 +161,15 @@ class ContextManager:
             Optional chain-of-thought text (for assistant messages).
         tool_calls:
             Optional list of tool call objects (for assistant messages).
+        context_id:
+            If provided, route the message to the named sub-context instead.
         """
+        if context_id is not None:
+            sub = self._sub_contexts.get(context_id)
+            if sub is not None:
+                sub.add_message(role, content, thinking=thinking, tool_calls=tool_calls)
+                return
+
         message: dict[str, Any] = {"role": role, "content": content}
         if thinking is not None:
             message["thinking"] = thinking

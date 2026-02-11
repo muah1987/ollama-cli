@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import argparse
+
 from rich.console import Console
 
 version = "0.1.0"

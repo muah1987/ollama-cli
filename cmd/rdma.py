@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import argparse
 import subprocess
-import sys
 from pathlib import Path
 
 from rich.console import Console
@@ -39,11 +38,13 @@ def cmd_rdma_detect(_args: argparse.Namespace) -> None:
             for line in result.stdout.split("\n"):
                 if line.strip():
                     name = line.split()[0].rstrip(":")
-                    devices.append({
-                        "name": name,
-                        "type": "network_rdma",
-                        "transport": _get_transport_protocol(name),
-                    })
+                    devices.append(
+                        {
+                            "name": name,
+                            "type": "network_rdma",
+                            "transport": _get_transport_protocol(name),
+                        }
+                    )
     except FileNotFoundError:
         console.print("[yellow]rdma tool not found. Checking for InfiniBand devices...[/yellow]")
 
@@ -54,12 +55,14 @@ def cmd_rdma_detect(_args: argparse.Namespace) -> None:
             if device_dir.is_dir():
                 name = device_dir.name
                 vendor = _get_vendor(device_dir)
-                devices.append({
-                    "name": name,
-                    "type": "infiniband",
-                    "transport": "infiniband",
-                    "vendor": vendor,
-                })
+                devices.append(
+                    {
+                        "name": name,
+                        "type": "infiniband",
+                        "transport": "infiniband",
+                        "vendor": vendor,
+                    }
+                )
 
     # Print results
     if not devices:
@@ -76,7 +79,7 @@ def cmd_rdma_detect(_args: argparse.Namespace) -> None:
         console.print(f"  [cyan]{device['name']}[/cyan]")
         console.print(f"    Type: {device['type']}")
         console.print(f"    Transport: {device['transport']}")
-        if 'vendor' in device:
+        if "vendor" in device:
             console.print(f"    Vendor: {device['vendor']}")
         console.print()
 
@@ -163,7 +166,7 @@ def cmd_rdma_connect(args: argparse.Namespace) -> None:
         console.print(f"[red]Device {device} not found or not accessible.[/red]")
         console.print("")
         console.print("Available devices:")
-        cmd_rdma_detect(_args)
+        cmd_rdma_detect(args)
 
 
 def cmd_rdma(_args: argparse.Namespace) -> None:
@@ -191,21 +194,15 @@ def register_commands(parser: argparse._SubParsersAction) -> None:
     rdma_parser.set_defaults(func=cmd_rdma)
 
     # ollama-cli rdma detect
-    detect_parser = subparsers.add_parser(
-        "detect", help="Detect RDMA devices"
-    )
+    detect_parser = subparsers.add_parser("detect", help="Detect RDMA devices")
     detect_parser.set_defaults(func=cmd_rdma_detect)
 
     # ollama-cli rdma status
-    status_parser = subparsers.add_parser(
-        "status", help="Show RDMA status"
-    )
+    status_parser = subparsers.add_parser("status", help="Show RDMA status")
     status_parser.set_defaults(func=cmd_rdma_status)
 
     # ollama-cli rdma connect <device>
-    connect_parser = subparsers.add_parser(
-        "connect", help="Connect to RDMA device"
-    )
+    connect_parser = subparsers.add_parser("connect", help="Connect to RDMA device")
     connect_parser.add_argument("device", help="RDMA device name (e.g., mlx5_0)")
     connect_parser.set_defaults(func=cmd_rdma_connect)
 

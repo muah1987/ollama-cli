@@ -44,9 +44,6 @@ from pathlib import Path
 # Add status_lines directory to path for status_utils import
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from status_utils import (
-    colorize,
-    format_tokens,
-    safe_read_stdin,
     BOLD,
     CYAN,
     DIM,
@@ -55,6 +52,9 @@ from status_utils import (
     RED,
     RESET,
     YELLOW,
+    colorize,
+    format_tokens,
+    safe_read_stdin,
 )
 
 # Provider display order
@@ -123,10 +123,7 @@ def generate_status_line(data: dict) -> str:
     # Build the line
     provider_part = colorize(f"[{provider}]", DIM)
     model_part = colorize(model, CYAN + BOLD)
-    tok_part = (
-        f"{DIM}tok:{RESET} {ctx_color}{total_str}/{max_str} "
-        f"({pct_int}%){RESET} {DIM}@{RESET} {speed_int}/s"
-    )
+    tok_part = f"{DIM}tok:{RESET} {ctx_color}{total_str}/{max_str} ({pct_int}%){RESET} {DIM}@{RESET} {speed_int}/s"
 
     return (
         f"{provider_part} {model_part} {DIM}|{RESET} "

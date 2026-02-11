@@ -14,7 +14,6 @@ from __future__ import annotations
 import argparse
 import subprocess
 import sys
-from pathlib import Path
 
 import httpx
 from rich.console import Console
@@ -108,8 +107,8 @@ def _install_ollama_macos(args: argparse.Namespace) -> None:
         with httpx.stream("GET", url, timeout=120) as response:
             response.raise_for_status()
             # Extract to /usr/local/bin
-            import tarfile
             import io
+            import tarfile
 
             with tarfile.open(fileobj=io.BytesIO(response.read()), mode="r:gz") as tar:
                 tar.extractall("/usr/local/bin")
@@ -183,9 +182,7 @@ def register_commands(parser: argparse._SubParsersAction) -> None:
     install_parser.set_defaults(func=cmd_install)
 
     # ollama-cli install ollama
-    install_ollama_parser = subparsers.add_parser(
-        "ollama", help="Install Ollama (legacy alias)"
-    )
+    install_ollama_parser = subparsers.add_parser("ollama", help="Install Ollama (legacy alias)")
     install_ollama_parser.set_defaults(func=cmd_install_ollama)
 
     # ollama-cli check

@@ -25,6 +25,7 @@ from pathlib import Path
 # Logging
 # ---------------------------------------------------------------------------
 
+
 def get_log_dir() -> Path:
     """Return the logs directory, creating it if needed."""
     project_dir = os.environ.get(
@@ -103,6 +104,7 @@ def update_usage_stats(payload: dict) -> None:
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _looks_like_error(output: object) -> bool:
     """Heuristic check if the tool output looks like an error."""
     if output is None:
@@ -124,6 +126,7 @@ def _looks_like_error(output: object) -> bool:
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     """Read stdin, log results, update stats."""
