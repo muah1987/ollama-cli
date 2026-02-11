@@ -1,147 +1,69 @@
-# GitHub Actions Setup
+# Ollama CLI Documentation
 
-This repository contains CI/CD workflows for automated testing, building, and releasing `ollama-cli`.
+Comprehensive documentation for Ollama CLI - a full-featured AI coding assistant powered by Ollama with multi-provider support.
 
-## Workflows
+---
 
-### 1. Build and Test (`build-test.yml`)
-Runs on every push to `main` and on all pull requests to `main`.
+## Getting Started
 
-**Steps:**
-- Checks out code
-- Sets up Python 3.11
-- Installs `uv` dependency manager
-- Caches dependencies for faster builds
-- Runs tests with `pytest`
-- Runs `ruff` linter
-- Runs import sort check
+### Quick Start Guide
 
-### 2. Release (`release.yml`)
-Runs when a tag matching `v*` is pushed.
+1. **Install Ollama CLI** (with automatic Ollama installation):
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/muah1987/ollama-cli/main/install.sh | bash
+   ```
 
-**Steps:**
-- Checks out code with full history
-- Sets up Python 3.11
-- Builds the package with `uv build`
-- Creates a GitHub Release with all artifacts from `dist/`
+2. **Start Ollama server**:
+   ```bash
+   ollama serve
+   ```
 
-### 3. Deploy to PyPI (`pypi-publish.yml`)
-Runs when a release is published.
+3. **Start chatting**:
+   ```bash
+   ollama-cli interactive
+   ```
 
-**Steps:**
-- Checks out code
-- Sets up Python 3.11
-- Deploys the package to PyPI using `pypa/gh-action-pypi-publish`
+---
 
-### 4. Auto Release (`autorelease.yml`)
-Runs on push to `main` when the commit message contains `release:`.
+## Documentation Structure
 
-**Steps:**
-- Checks out code with full history
-- Sets up Python 3.11
-- Runs `semantic-release` to automatically version and tag the release
+| Documentation | Description | Link |
+|-------------|-------------|------|
+| **Getting Started** | Installation and first steps | [`docs/getting_started.md`](getting_started.md) |
+| **Project Overview** | Features, architecture, hooks, status lines, and contributing | [`docs/project_overview.md`](project_overview.md) |
+| **CLI Reference** | All available commands | [`docs/cli_reference.md`](cli_reference.md) |
+| **API Reference** | Ollama and provider APIs | [`docs/api_reference.md`](api_reference.md) |
+| **Configuration** | Environment variables and settings | [`docs/configuration.md`](configuration.md) |
+| **Multi-Provider** | Using Claude, Gemini, Codex | [`docs/multi_provider.md`](multi_provider.md) |
+| **Agent Models** | Agent-specific model assignments | [`docs/agent_model_assignment.md`](agent_model_assignment.md) |
+| **RDMA Support** | High-performance networking | [`docs/rdma.md`](rdma.md) |
+| **Hooks System** | Lifecycle hooks and customization | [`docs/hooks.md`](hooks.md) |
+| **Development** | Contributing and building | [`docs/development.md`](development.md) |
 
-## Required GitHub Secrets
+---
 
-### PYPI_API_TOKEN
-**Required for:** `pypi-publish.yml` workflow
+## Features
 
-This token is used to publish the package to PyPI.
+- **Multi-Provider Routing** - Seamlessly switch between Ollama, Claude, Gemini, and Codex
+- **Agent Model Assignment** - Assign specific models to agent types for specialized tasks
+- **Auto-Compact Context** - Automatic context management at 85% threshold
+- **Hook System** - 7 lifecycle hooks for customization
+- **Status Lines** - Real-time token usage and provider health
+- **Interactive REPL** - Full chat mode with streaming responses
+- **Token Tracking** - Token usage and cost estimation across providers
+- **Session Persistence** - Save and resume conversations
+- **RDMA Acceleration** - High-performance networking support (MLX, EXO, RMDA)
 
-**How to add:**
+---
 
-1. Go to your PyPI account: https://pypi.org/account/
-2. Navigate to "Account settings" → "API tokens"
-3. Create a new API token with scope "Entire account" (recommended for publishing)
-4. Copy the token
-5. Go to your GitHub repository: https://github.com/muah1987/ollama-cli/settings/secrets/actions
-6. Click "New repository secret"
-7. Name: `PYPI_API_TOKEN`
-8. Value: paste your PyPI API token
-9. Click "Add secret"
+## Support
 
-**Getting a PyPI API token:**
+- **GitHub Issues**: [Report bugs or request features](https://github.com/muah1987/ollama-cli/issues)
+- **Documentation**: [Full documentation](https://github.com/muah1987/ollama-cli/docs)
+- **Ollama**: [Official Ollama website](https://ollama.ai)
 
-```bash
-# Create a token at https://pypi.org/manage/account/token/
-# Use: pypa/gh-action-pypi-publish action will handle authentication automatically
-```
+---
 
-## Automatic Versioning
+## License
 
-This repository uses `python-semantic-release` for automated versioning. The version is determined by commit message prefixes:
-
-- `feat:` - Minor version bump (e.g., 0.1.0 → 0.2.0)
-- `fix:` - Patch version bump (e.g., 0.1.0 → 0.1.1)
-- `BREAKING CHANGE:` or `!` - Major version bump (e.g., 0.1.0 → 1.0.0)
-
-**Example commits:**
-
-```bash
-git commit -m "feat: add new command for model deletion"
-git commit -m "fix: resolve issue with streaming responses"
-git commit -m "feat!: change API response format (BREAKING CHANGE)"
-```
-
-**To release a new version:**
-
-```bash
-# Make your changes and commit with conventional commit message
-git add .
-git commit -m "feat: new feature"
-git push origin main
-
-# Trigger auto-release by including 'release:' in commit message
-git commit --allow-empty -m "release: prepare next version"
-git push origin main
-```
-
-## Manual Tagging
-
-You can also manually create a tag to trigger a release:
-
-```bash
-# Create and push a version tag
-git tag v0.1.0
-git push origin v0.1.0
-```
-
-This will trigger both the `release.yml` and `pypi-publish.yml` workflows.
-
-## Local Development
-
-Run the same checks locally before pushing:
-
-```bash
-# Install dependencies
-uv sync --dev
-
-# Run tests
-uv run pytest tests/
-
-# Run linter
-uv run ruff check .
-
-# Run type/import checks
-uv run ruff check --select I .
-
-# Build package
-uv build
-```
-
-## Troubleshooting
-
-**Build fails in CI:**
-- Check Python version (must be 3.11+)
-- Verify `uv.lock` is committed
-- Ensure all dependencies are in `pyproject.toml`
-
-**PyPI publish fails:**
-- Verify `PYPI_API_TOKEN` secret is set
-- Check the token has publish permissions
-- Ensure the version hasn't already been published
-
-**Auto-release doesn't trigger:**
-- Commit message must contain `release:`
-- Branch must be `main`
-- Changes must be in `cmd/`, `api/`, `model/`, `server/`, `runner/`, or `pyproject.toml`
+MIT License - see [LICENSE](../LICENSE) for details.
