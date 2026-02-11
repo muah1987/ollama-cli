@@ -30,6 +30,7 @@ Comprehensive documentation for Ollama CLI - a full-featured AI coding assistant
 | Documentation | Description | Link |
 |-------------|-------------|------|
 | **Getting Started** | Installation and first steps | [`docs/getting_started.md`](getting_started.md) |
+| **Project Overview** | Features, architecture, hooks, status lines, and contributing | [`docs/project_overview.md`](project_overview.md) |
 | **CLI Reference** | All available commands | [`docs/cli_reference.md`](cli_reference.md) |
 | **API Reference** | Ollama and provider APIs | [`docs/api_reference.md`](api_reference.md) |
 | **Configuration** | Environment variables and settings | [`docs/configuration.md`](configuration.md) |
