@@ -1,7 +1,0 @@
-{
-  "session_id": "ca50019b-8cc0-40f8-96e1-329b1dd149c7",
-  "prompts": [
-    "/plan_w_team i think you made a mistake, you uploaded the totality of the ollama-cli folder to main, only the production may be pushed to github.... you also didnt update the production folder data..... correct this issue in the spec folder there are the old files where you did it correctly. FIX THE ISSUE AND PUSH the correct folder to github make sure to remove the incorrect files from github.",
-    "/build specs/fix-ollama-cli-github-push.md"
-  ]
-}
