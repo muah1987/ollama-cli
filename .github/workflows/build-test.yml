@@ -32,7 +32,7 @@ jobs:
 
       - name: Run tests
         run: |
-          uv run pytest tests/ -v
+          cd ollama-cli && uv run --python 3.11 pytest ../tests/ -v
 
       - name: Run linter
         run: |
