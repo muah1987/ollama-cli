@@ -22,7 +22,7 @@ Comprehensive documentation for Ollama CLI - a full-featured AI coding assistant
 
 3. **Start chatting**:
    ```bash
-   ollama-cli interactive
+   ollama-cli
    ```
 
 ---
