@@ -152,6 +152,87 @@ class TestProviderRouterMultiModel:
         assert result == ("claude", "claude-sonnet")
 
 
+class TestProviderFallbackChain:
+    """Tests for provider fallback chain using correct default models."""
+
+    def test_fallback_uses_provider_default_model(self) -> None:
+        """Fallback providers should use their own default model, not the failed provider's model."""
+        script = (
+            "import asyncio\n"
+            "from api.provider_router import ProviderError, ProviderRouter, _DEFAULT_MODELS\n"
+            "router = ProviderRouter()\n"
+            "call_log = []\n"
+            "class FP:\n"
+            "    def __init__(self, n):\n"
+            "        self.pname = n\n"
+            "    async def chat(self, messages, model=None, **kw):\n"
+            "        call_log.append((self.pname, model or ''))\n"
+            "        raise ProviderError(self.pname)\n"
+            "for p in ('ollama','claude','gemini','codex','hf'):\n"
+            "    router._providers[p] = FP(p)\n"
+            "try:\n"
+            "    asyncio.run(router.route('agent', [{'role':'user','content':'hi'}]))\n"
+            "except Exception:\n"
+            "    pass\n"
+            "assert call_log[0][0] == 'ollama', f'first={call_log[0]}'\n"
+            "assert call_log[0][1] == _DEFAULT_MODELS['ollama']\n"
+            "for pn, mu in call_log[1:]:\n"
+            "    exp = _DEFAULT_MODELS.get(pn)\n"
+            "    assert mu == exp, f'{pn} got {mu!r} expected {exp!r}'\n"
+            "print('OK')\n"
+        )
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(script)
+            f.flush()
+            result = subprocess.run(
+                [sys.executable, f.name],
+                capture_output=True,
+                text=True,
+                cwd=_PROJECT_ROOT,
+            )
+            os.unlink(f.name)
+        assert result.returncode == 0, f"stderr: {result.stderr}"
+        assert "OK" in result.stdout
+
+    def test_primary_provider_uses_configured_model(self) -> None:
+        """The primary provider should receive the user-configured model, not a default."""
+        script = (
+            "import asyncio\n"
+            "from api.provider_router import ProviderError, ProviderRouter, _DEFAULT_MODELS\n"
+            "router = ProviderRouter()\n"
+            "router._task_config['agent'] = ('ollama', 'custom-model:latest')\n"
+            "call_log = []\n"
+            "class FP:\n"
+            "    def __init__(self, n):\n"
+            "        self.pname = n\n"
+            "    async def chat(self, messages, model=None, **kw):\n"
+            "        call_log.append((self.pname, model or ''))\n"
+            "        raise ProviderError(self.pname)\n"
+            "for p in ('ollama','claude','gemini','codex','hf'):\n"
+            "    router._providers[p] = FP(p)\n"
+            "try:\n"
+            "    asyncio.run(router.route('agent', [{'role':'user','content':'test'}]))\n"
+            "except Exception:\n"
+            "    pass\n"
+            "assert call_log[0] == ('ollama','custom-model:latest'), f'first={call_log[0]}'\n"
+            "assert call_log[1][0] == 'claude'\n"
+            "assert call_log[1][1] == _DEFAULT_MODELS['claude'], f'claude got {call_log[1][1]!r}'\n"
+            "print('OK')\n"
+        )
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(script)
+            f.flush()
+            result = subprocess.run(
+                [sys.executable, f.name],
+                capture_output=True,
+                text=True,
+                cwd=_PROJECT_ROOT,
+            )
+            os.unlink(f.name)
+        assert result.returncode == 0, f"stderr: {result.stderr}"
+        assert "OK" in result.stdout
+
+
 # ---------------------------------------------------------------------------
 # Status bar job tracking tests (using subprocess to avoid cmd module collision)
 # ---------------------------------------------------------------------------

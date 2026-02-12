@@ -993,12 +993,15 @@ class ProviderRouter:
                 # No credentials -- skip to next
                 continue
 
+            # Use the original model for the primary provider; for fallback
+            # providers, switch to their own default model so we don't send
+            # a model name that only exists on another provider.
+            effective_model = model if provider_name == primary_provider else _DEFAULT_MODELS.get(provider_name, model)
+
             try:
-                return await provider.chat(messages, model=model, **kwargs)
+                return await provider.chat(messages, model=effective_model, **kwargs)
             except (ProviderError, OllamaError, httpx.ConnectError, httpx.TimeoutException) as exc:
                 last_error = exc
-                # Reset model to the provider default for the next fallback
-                model = _DEFAULT_MODELS.get(provider_name, model)
                 continue
 
         raise ProviderUnavailableError(f"All providers exhausted for task_type={task_type!r}. Last error: {last_error}")
