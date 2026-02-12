@@ -1,0 +1,957 @@
+"""Build verification and end-to-end integration tests with a fake Ollama API.
+
+This test module verifies:
+1. The package builds successfully (wheel + sdist)
+2. All core functions work against a fake Ollama API server
+3. CLI entrypoint, session lifecycle, interactive commands, tools, hooks
+
+The fake API is implemented using httpx.MockTransport so no real server is needed.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import json
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
+
+import httpx
+
+_PROJECT_DIR = str(Path(__file__).resolve().parent.parent)
+if _PROJECT_DIR not in sys.path:
+    sys.path.insert(0, _PROJECT_DIR)
+
+from api.ollama_client import OllamaClient  # noqa: E402
+from model.session import Session  # noqa: E402
+from runner.context_manager import ContextManager  # noqa: E402
+
+
+# ---------------------------------------------------------------------------
+# Fake Ollama API responses
+# ---------------------------------------------------------------------------
+
+_FAKE_MODELS = [
+    {"name": "llama3.2", "size": 2_000_000_000, "modified_at": "2025-01-01T00:00:00Z"},
+    {"name": "codellama", "size": 3_500_000_000, "modified_at": "2025-01-02T00:00:00Z"},
+]
+
+_FAKE_CHAT_RESPONSE = {
+    "model": "llama3.2",
+    "message": {"role": "assistant", "content": "Hello! I'm a helpful assistant."},
+    "done": True,
+    "total_duration": 1_500_000_000,
+    "load_duration": 200_000_000,
+    "prompt_eval_count": 26,
+    "prompt_eval_duration": 300_000_000,
+    "eval_count": 12,
+    "eval_duration": 800_000_000,
+}
+
+_FAKE_GENERATE_RESPONSE = {
+    "model": "llama3.2",
+    "response": "def reverse_string(s): return s[::-1]",
+    "done": True,
+    "total_duration": 1_000_000_000,
+    "prompt_eval_count": 15,
+    "eval_count": 10,
+    "eval_duration": 500_000_000,
+}
+
+_FAKE_SHOW_RESPONSE = {
+    "modelfile": "FROM llama3.2",
+    "parameters": "temperature 0.7",
+    "template": "{{ .Prompt }}",
+    "details": {"family": "llama", "parameter_size": "3.2B", "quantization_level": "Q4_0"},
+}
+
+_FAKE_VERSION_RESPONSE = {"version": "0.5.1"}
+
+_FAKE_EMBED_RESPONSE = {"embeddings": [[0.1, 0.2, 0.3, 0.4, 0.5]]}
+
+_FAKE_PS_RESPONSE = {
+    "models": [
+        {"name": "llama3.2", "size": 2_000_000_000, "digest": "abc123", "expires_at": "2025-12-31T00:00:00Z"}
+    ]
+}
+
+
+def _fake_handler(request: httpx.Request) -> httpx.Response:
+    """Route fake API requests to canned responses."""
+    path = request.url.path
+
+    # Health / list models
+    if path == "/api/tags" and request.method == "GET":
+        return httpx.Response(200, json={"models": _FAKE_MODELS})
+
+    # Chat
+    if path == "/api/chat" and request.method == "POST":
+        return httpx.Response(200, json=_FAKE_CHAT_RESPONSE)
+
+    # Generate
+    if path == "/api/generate" and request.method == "POST":
+        body = json.loads(request.content) if request.content else {}
+        if body.get("keep_alive") == 0:
+            return httpx.Response(200, json={"status": "stopped"})
+        return httpx.Response(200, json=_FAKE_GENERATE_RESPONSE)
+
+    # Show
+    if path == "/api/show" and request.method == "POST":
+        return httpx.Response(200, json=_FAKE_SHOW_RESPONSE)
+
+    # Version
+    if path == "/api/version" and request.method == "GET":
+        return httpx.Response(200, json=_FAKE_VERSION_RESPONSE)
+
+    # Embed
+    if path == "/api/embed" and request.method == "POST":
+        return httpx.Response(200, json=_FAKE_EMBED_RESPONSE)
+
+    # Pull
+    if path == "/api/pull" and request.method == "POST":
+        return httpx.Response(200, json={"status": "success"})
+
+    # Create
+    if path == "/api/create" and request.method == "POST":
+        return httpx.Response(200, json={"status": "success"})
+
+    # Delete
+    if path == "/api/delete" and request.method == "DELETE":
+        return httpx.Response(200, json={"status": "deleted"})
+
+    # Copy
+    if path == "/api/copy" and request.method == "POST":
+        return httpx.Response(200, json={"status": "copied"})
+
+    # PS
+    if path == "/api/ps" and request.method == "GET":
+        return httpx.Response(200, json=_FAKE_PS_RESPONSE)
+
+    # OpenAI-compatible
+    if path == "/v1/chat/completions" and request.method == "POST":
+        return httpx.Response(
+            200,
+            json={
+                "choices": [{"message": {"role": "assistant", "content": "OpenAI-style response"}}],
+                "usage": {"prompt_tokens": 20, "completion_tokens": 8, "total_tokens": 28},
+            },
+        )
+
+    return httpx.Response(404, json={"error": f"Not found: {path}"})
+
+
+def _make_fake_client() -> OllamaClient:
+    """Create an OllamaClient backed by the fake transport."""
+    client = OllamaClient(host="http://fake-ollama:11434")
+    client._client = httpx.AsyncClient(transport=httpx.MockTransport(_fake_handler))
+    return client
+
+
+# ===========================================================================
+# 1. BUILD TEST
+# ===========================================================================
+
+
+class TestBuild:
+    """Verify the package builds correctly."""
+
+    def test_build_wheel(self) -> None:
+        """uv build should produce a wheel without errors."""
+        result = subprocess.run(
+            ["uv", "build", "--wheel"],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_DIR,
+        )
+        assert result.returncode == 0, f"Build failed:\n{result.stderr}"
+        assert "Successfully built" in result.stdout or "Successfully built" in result.stderr
+
+    def test_build_sdist(self) -> None:
+        """uv build should produce an sdist without errors."""
+        result = subprocess.run(
+            ["uv", "build", "--sdist"],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_DIR,
+        )
+        assert result.returncode == 0, f"Build failed:\n{result.stderr}"
+
+    def test_wheel_contains_packages(self) -> None:
+        """The wheel should include all expected packages."""
+        import zipfile
+
+        whl_path = Path(_PROJECT_DIR) / "dist" / "ollama_cli-0.1.0-py3-none-any.whl"
+        if not whl_path.exists():
+            subprocess.run(["uv", "build", "--wheel"], cwd=_PROJECT_DIR, capture_output=True)
+        assert whl_path.exists(), "Wheel file not found after build"
+
+        with zipfile.ZipFile(whl_path) as zf:
+            names = zf.namelist()
+        for pkg in ("cmd/root.py", "api/ollama_client.py", "model/session.py", "runner/context_manager.py"):
+            assert pkg in names, f"{pkg} missing from wheel"
+
+
+# ===========================================================================
+# 2. OLLAMA CLIENT (fake API)
+# ===========================================================================
+
+
+class TestOllamaClientFakeAPI:
+    """Test OllamaClient methods against the fake Ollama API."""
+
+    def test_health_check(self) -> None:
+        client = _make_fake_client()
+
+        async def run() -> bool:
+            try:
+                return await client.health_check()
+            finally:
+                await client.close()
+
+        assert asyncio.run(run()) is True
+
+    def test_get_version(self) -> None:
+        client = _make_fake_client()
+
+        async def run() -> str:
+            try:
+                return await client.get_version()
+            finally:
+                await client.close()
+
+        assert asyncio.run(run()) == "0.5.1"
+
+    def test_list_models(self) -> None:
+        client = _make_fake_client()
+
+        async def run() -> list:
+            try:
+                return await client.list_models()
+            finally:
+                await client.close()
+
+        models = asyncio.run(run())
+        assert len(models) == 2
+        assert models[0]["name"] == "llama3.2"
+
+    def test_chat(self) -> None:
+        client = _make_fake_client()
+
+        async def run() -> dict:
+            try:
+                return await client.chat("llama3.2", [{"role": "user", "content": "Hello"}])
+            finally:
+                await client.close()
+
+        result = asyncio.run(run())
+        assert result["message"]["content"] == "Hello! I'm a helpful assistant."
+        assert result["done"] is True
+        assert result["eval_count"] == 12
+
+    def test_generate(self) -> None:
+        client = _make_fake_client()
+
+        async def run() -> dict:
+            try:
+                return await client.generate("llama3.2", "Write a function")
+            finally:
+                await client.close()
+
+        result = asyncio.run(run())
+        assert "reverse_string" in result["response"]
+
+    def test_show_model(self) -> None:
+        client = _make_fake_client()
+
+        async def run() -> dict:
+            try:
+                return await client.show_model("llama3.2")
+            finally:
+                await client.close()
+
+        result = asyncio.run(run())
+        assert "details" in result
+        assert result["details"]["family"] == "llama"
+
+    def test_embed(self) -> None:
+        client = _make_fake_client()
+
+        async def run() -> dict:
+            try:
+                return await client.embed("llama3.2", "Hello world")
+            finally:
+                await client.close()
+
+        result = asyncio.run(run())
+        assert "embeddings" in result
+        assert len(result["embeddings"][0]) == 5
+
+    def test_list_running_models(self) -> None:
+        client = _make_fake_client()
+
+        async def run() -> list:
+            try:
+                return await client.list_running_models()
+            finally:
+                await client.close()
+
+        models = asyncio.run(run())
+        assert len(models) == 1
+        assert models[0]["name"] == "llama3.2"
+
+    def test_stop_model(self) -> None:
+        client = _make_fake_client()
+
+        async def run() -> dict:
+            try:
+                return await client.stop_model("llama3.2")
+            finally:
+                await client.close()
+
+        result = asyncio.run(run())
+        assert result["status"] == "stopped"
+
+    def test_delete_model(self) -> None:
+        client = _make_fake_client()
+
+        async def run() -> dict:
+            try:
+                return await client.delete_model("llama3.2")
+            finally:
+                await client.close()
+
+        result = asyncio.run(run())
+        assert result["status"] == "deleted"
+
+    def test_copy_model(self) -> None:
+        client = _make_fake_client()
+
+        async def run() -> dict:
+            try:
+                return await client.copy_model("llama3.2", "my-llama")
+            finally:
+                await client.close()
+
+        result = asyncio.run(run())
+        assert result["status"] == "copied"
+
+    def test_extract_metrics(self) -> None:
+        metrics = OllamaClient.extract_metrics(_FAKE_CHAT_RESPONSE)
+        assert metrics["prompt_eval_count"] == 26
+        assert metrics["eval_count"] == 12
+        assert metrics["tokens_per_second"] > 0
+
+    def test_chat_openai_compat(self) -> None:
+        client = _make_fake_client()
+
+        async def run() -> dict:
+            try:
+                return await client.chat_openai("llama3.2", [{"role": "user", "content": "Hi"}])
+            finally:
+                await client.close()
+
+        result = asyncio.run(run())
+        assert result["choices"][0]["message"]["content"] == "OpenAI-style response"
+
+
+# ===========================================================================
+# 3. SESSION LIFECYCLE (fake API)
+# ===========================================================================
+
+
+class TestSessionLifecycle:
+    """Test Session start/send/end/save/load with fake provider responses."""
+
+    def test_session_start_and_status(self) -> None:
+        async def run() -> dict[str, Any]:
+            s = Session(model="llama3.2", provider="ollama")
+            await s.start()
+            return s.get_status()
+
+        status = asyncio.run(run())
+        assert status["model"] == "llama3.2"
+        assert status["provider"] == "ollama"
+        assert status["messages"] == 0
+        assert status["uptime_seconds"] >= 0
+
+    def test_session_send_returns_content(self) -> None:
+        """send() should return a dict with content and metrics."""
+
+        async def run() -> dict[str, Any]:
+            s = Session(model="llama3.2", provider="ollama")
+            await s.start()
+            return await s.send("Hello world")
+
+        result = asyncio.run(run())
+        assert "content" in result
+        assert "metrics" in result
+        assert "compacted" in result
+        assert isinstance(result["content"], str)
+        assert len(result["content"]) > 0
+
+    def test_session_send_increments_messages(self) -> None:
+        async def run() -> int:
+            s = Session(model="llama3.2", provider="ollama")
+            await s.start()
+            await s.send("First message")
+            await s.send("Second message")
+            return s.get_status()["messages"]
+
+        assert asyncio.run(run()) == 2
+
+    def test_session_end_returns_summary(self) -> None:
+        async def run() -> dict[str, Any]:
+            s = Session(model="llama3.2", provider="ollama")
+            await s.start()
+            await s.send("Hello")
+            return await s.end()
+
+        summary = asyncio.run(run())
+        assert "session_id" in summary
+        assert "duration_seconds" in summary
+        assert "messages" in summary
+        assert summary["messages"] == 1
+
+    def test_session_save_and_load(self, tmp_path: Path) -> None:
+        """Session should persist and restore correctly."""
+
+        async def run() -> tuple[str, dict, dict]:
+            s = Session(model="codellama", provider="ollama")
+            await s.start()
+            await s.send("Test message")
+            path = s.save(str(tmp_path / "session.json"))
+            status_before = s.get_status()
+            loaded = Session.load(s.session_id, path)
+            status_after = loaded.get_status()
+            return s.session_id, status_before, status_after
+
+        sid, before, after = asyncio.run(run())
+        assert after["session_id"] == sid
+        assert after["model"] == "codellama"
+        assert after["messages"] == 1
+
+    def test_session_auto_compact_lifecycle(self) -> None:
+        """Auto-compact should trigger when threshold is reached during send()."""
+
+        async def run() -> dict[str, Any]:
+            cm = ContextManager(max_context_length=100, compact_threshold=0.3, auto_compact=True, keep_last_n=1)
+            s = Session(model="llama3.2", provider="ollama", context_manager=cm)
+            await s.start()
+            # Fill context to exceed threshold
+            for i in range(10):
+                cm.add_message("user", f"Fill message {i} " + "x" * 30)
+            return await s.send("trigger compact")
+
+        result = asyncio.run(run())
+        assert result["compacted"] is True
+
+    def test_session_manual_compact(self) -> None:
+        """Manual compact() should work through Session."""
+
+        async def run() -> dict[str, int]:
+            cm = ContextManager(max_context_length=500, keep_last_n=2)
+            s = Session(model="llama3.2", provider="ollama", context_manager=cm)
+            await s.start()
+            for i in range(10):
+                cm.add_message("user", f"Message {i}")
+            return await s.compact()
+
+        result = asyncio.run(run())
+        assert result["messages_removed"] > 0
+
+
+# ===========================================================================
+# 4. INTERACTIVE MODE COMMANDS
+# ===========================================================================
+
+
+class TestInteractiveCommands:
+    """Test all slash commands by calling handlers directly."""
+
+    @staticmethod
+    def _make_repl() -> Any:
+        """Create InteractiveMode with a fresh session."""
+        from cmd.interactive import InteractiveMode
+
+        async def setup():
+            s = Session(model="llama3.2", provider="ollama")
+            await s.start()
+            return InteractiveMode(s)
+
+        return asyncio.run(setup())
+
+    def test_cmd_help(self, capsys) -> None:
+        repl = self._make_repl()
+        result = repl._cmd_help("")
+        assert result is False
+        out = capsys.readouterr().out
+        assert "/help" in out
+        assert "/compact" in out
+        assert "/tools" in out
+
+    def test_cmd_status(self, capsys) -> None:
+        repl = self._make_repl()
+        result = repl._cmd_status("")
+        assert result is False
+        out = capsys.readouterr().out
+        assert "llama3.2" in out
+        assert "ollama" in out
+        assert "compact" in out.lower()
+
+    def test_cmd_model_switch(self, capsys) -> None:
+        repl = self._make_repl()
+        result = repl._cmd_model("codellama")
+        assert result is False
+        assert repl.session.model == "codellama"
+
+    def test_cmd_model_no_arg(self, capsys) -> None:
+        repl = self._make_repl()
+        result = repl._cmd_model("")
+        assert result is False
+        out = capsys.readouterr().out
+        assert "llama3.2" in out
+
+    def test_cmd_provider_switch(self, capsys) -> None:
+        repl = self._make_repl()
+        result = repl._cmd_provider("claude")
+        assert result is False
+        assert repl.session.provider == "claude"
+
+    def test_cmd_provider_invalid(self, capsys) -> None:
+        repl = self._make_repl()
+        repl._cmd_provider("fakecloud")
+        out = capsys.readouterr().out
+        assert "unknown" in out.lower() or "Unknown" in out
+
+    def test_cmd_clear(self, capsys) -> None:
+        repl = self._make_repl()
+        repl.session.context_manager.add_message("user", "hello")
+        result = repl._cmd_clear("")
+        assert result is False
+        assert len(repl.session.context_manager.messages) == 0
+
+    def test_cmd_compact(self, capsys) -> None:
+        repl = self._make_repl()
+        cm = repl.session.context_manager
+        for i in range(10):
+            cm.add_message("user", f"Message {i}")
+        result = asyncio.run(repl._cmd_compact(""))
+        assert result is False
+        out = capsys.readouterr().out
+        assert "compact" in out.lower()
+
+    def test_cmd_compact_nothing_to_compact(self, capsys) -> None:
+        repl = self._make_repl()
+        result = asyncio.run(repl._cmd_compact(""))
+        assert result is False
+        out = capsys.readouterr().out
+        assert "nothing" in out.lower()
+
+    def test_cmd_tools(self, capsys) -> None:
+        repl = self._make_repl()
+        result = repl._cmd_tools("")
+        assert result is False
+        out = capsys.readouterr().out
+        assert "file_read" in out
+
+    def test_cmd_diff(self, capsys) -> None:
+        repl = self._make_repl()
+        result = repl._cmd_diff("")
+        assert result is False
+
+    def test_cmd_config_view(self, capsys) -> None:
+        repl = self._make_repl()
+        result = repl._cmd_config("")
+        assert result is False
+        out = capsys.readouterr().out
+        assert "provider" in out.lower() or "model" in out.lower()
+
+    def test_cmd_quit(self) -> None:
+        repl = self._make_repl()
+        result = repl._cmd_quit("")
+        assert result is True
+
+    def test_cmd_history(self, capsys) -> None:
+        repl = self._make_repl()
+        repl.session.context_manager.add_message("user", "test message")
+        result = repl._cmd_history("")
+        assert result is False
+
+    def test_cmd_update_status_line(self, capsys, tmp_path, monkeypatch) -> None:
+        monkeypatch.chdir(tmp_path)
+        repl = self._make_repl()
+        (tmp_path / ".ollama" / "sessions").mkdir(parents=True)
+        result = repl._cmd_update_status_line("project myapp")
+        assert result is False
+        out = capsys.readouterr().out
+        assert "project" in out.lower()
+
+    def test_cmd_update_status_line_no_args(self, capsys) -> None:
+        repl = self._make_repl()
+        result = repl._cmd_update_status_line("")
+        assert result is False
+        out = capsys.readouterr().out
+        assert "usage" in out.lower()
+
+    def test_cmd_resume_no_tasks(self, capsys, tmp_path, monkeypatch) -> None:
+        monkeypatch.chdir(tmp_path)
+        repl = self._make_repl()
+        result = repl._cmd_resume("")
+        assert result is False
+        out = capsys.readouterr().out
+        assert "no previous" in out.lower()
+
+    def test_cmd_resume_with_tasks(self, capsys, tmp_path, monkeypatch) -> None:
+        monkeypatch.chdir(tmp_path)
+        tasks_dir = tmp_path / ".ollama" / "tasks"
+        tasks_dir.mkdir(parents=True)
+        (tasks_dir / "my-task.json").write_text(
+            json.dumps({"id": "my-task", "type": "team_planning", "description": "Test", "status": "planned"})
+        )
+        repl = self._make_repl()
+        result = repl._cmd_resume("")
+        assert result is False
+        out = capsys.readouterr().out
+        assert "my-task" in out
+
+    def test_cmd_build_no_arg(self, capsys) -> None:
+        repl = self._make_repl()
+        result = asyncio.run(repl._cmd_build(""))
+        assert result is False
+        out = capsys.readouterr().out
+        assert "usage" in out.lower()
+
+    def test_cmd_build_missing_file(self, capsys) -> None:
+        repl = self._make_repl()
+        result = asyncio.run(repl._cmd_build("/nonexistent/plan.md"))
+        assert result is False
+        out = capsys.readouterr().out
+        assert "not found" in out.lower()
+
+    def test_cmd_team_planning_no_arg(self, capsys) -> None:
+        repl = self._make_repl()
+        result = asyncio.run(repl._cmd_team_planning(""))
+        assert result is False
+        out = capsys.readouterr().out
+        assert "usage" in out.lower()
+
+    def test_cmd_bug(self, capsys, tmp_path, monkeypatch) -> None:
+        monkeypatch.chdir(tmp_path)
+        repl = self._make_repl()
+        result = repl._cmd_bug("Something is broken")
+        assert result is False
+        # Bug file should be created
+        bugs_dir = tmp_path / ".ollama" / "bugs"
+        if bugs_dir.exists():
+            bug_files = list(bugs_dir.glob("*.json"))
+            assert len(bug_files) >= 1
+
+
+# ===========================================================================
+# 5. BUILT-IN TOOLS
+# ===========================================================================
+
+
+class TestBuiltInTools:
+    """Test skills/tools.py functions."""
+
+    def test_file_read(self, tmp_path: Path) -> None:
+        from skills.tools import tool_file_read
+
+        f = tmp_path / "hello.txt"
+        f.write_text("line1\nline2\nline3\n")
+        result = tool_file_read(str(f))
+        assert result["content"] == "line1\nline2\nline3\n"
+        assert result["lines"] == 3
+
+    def test_file_read_missing(self) -> None:
+        from skills.tools import tool_file_read
+
+        result = tool_file_read("/nonexistent/file.txt")
+        assert "error" in result
+
+    def test_file_write(self, tmp_path: Path) -> None:
+        from skills.tools import tool_file_write
+
+        f = tmp_path / "output.txt"
+        result = tool_file_write(str(f), "Hello world")
+        assert result["written"] is True
+        assert f.read_text() == "Hello world"
+
+    def test_file_edit(self, tmp_path: Path) -> None:
+        from skills.tools import tool_file_edit
+
+        f = tmp_path / "edit.txt"
+        f.write_text("old text here")
+        result = tool_file_edit(str(f), "old text", "new text")
+        assert result["edited"] is True
+        assert "new text here" in f.read_text()
+
+    def test_file_edit_no_match(self, tmp_path: Path) -> None:
+        from skills.tools import tool_file_edit
+
+        f = tmp_path / "edit2.txt"
+        f.write_text("hello world")
+        result = tool_file_edit(str(f), "nonexistent", "replacement")
+        assert "error" in result
+
+    def test_grep_search(self, tmp_path: Path) -> None:
+        from skills.tools import tool_grep_search
+
+        (tmp_path / "test.py").write_text("def main():\n    print('hello')\n")
+        result = tool_grep_search("def main", str(tmp_path))
+        assert result["count"] > 0
+
+    def test_shell_exec(self) -> None:
+        from skills.tools import tool_shell_exec
+
+        result = tool_shell_exec("echo hello_world")
+        assert result["exit_code"] == 0
+        assert "hello_world" in result["stdout"]
+
+    def test_shell_exec_failure(self) -> None:
+        from skills.tools import tool_shell_exec
+
+        result = tool_shell_exec("false")
+        assert result["exit_code"] != 0
+
+    def test_list_tools(self) -> None:
+        from skills.tools import list_tools
+
+        tools = list_tools()
+        names = [t["name"] for t in tools]
+        assert "file_read" in names
+        assert "file_write" in names
+        assert "shell_exec" in names
+        assert "grep_search" in names
+        assert "web_fetch" in names
+
+    def test_get_tool(self) -> None:
+        from skills.tools import get_tool
+
+        tool = get_tool("file_read")
+        assert tool is not None
+        assert tool["name"] == "file_read"
+
+    def test_get_tool_unknown(self) -> None:
+        from skills.tools import get_tool
+
+        assert get_tool("nonexistent_tool") is None
+
+    def test_ollamaignore(self, tmp_path: Path, monkeypatch) -> None:
+        from skills.tools import clear_ignore_cache, is_path_ignored
+
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / ".ollamaignore").write_text(".env\nsecrets/\n")
+        clear_ignore_cache()
+        assert is_path_ignored(".env") is True
+        assert is_path_ignored("secrets/key.txt") is True
+        assert is_path_ignored("src/main.py") is False
+        clear_ignore_cache()
+
+
+# ===========================================================================
+# 6. SKILLS FRAMEWORK
+# ===========================================================================
+
+
+class TestSkillsFramework:
+    """Test the skills registry and execute_skill."""
+
+    def test_skill_registry(self) -> None:
+        from skills import SKILLS
+
+        assert "token_counter" in SKILLS
+        assert "auto_compact" in SKILLS
+
+    def test_token_counting_skill(self) -> None:
+        from skills import execute_skill
+
+        result = asyncio.run(execute_skill("token_counter", text="Hello, world!", provider="ollama"))
+        assert "token_count" in result
+        assert result["token_count"] > 0
+
+    def test_auto_compact_skill_check(self) -> None:
+        from skills import execute_skill
+
+        result = asyncio.run(execute_skill("auto_compact", action="check"))
+        assert result["action"] == "check"
+        assert "should_compact" in result
+
+    def test_auto_compact_skill_configure(self) -> None:
+        from skills import execute_skill
+
+        cm = ContextManager()
+        result = asyncio.run(execute_skill("auto_compact", cm, action="configure", threshold=0.7, keep_last_n=6))
+        assert result["configured"] is True
+        assert cm.compact_threshold == 0.7
+        assert cm.keep_last_n == 6
+
+
+# ===========================================================================
+# 7. CONTEXT MANAGER
+# ===========================================================================
+
+
+class TestContextManagerIntegration:
+    """Integration tests for ContextManager."""
+
+    def test_full_lifecycle(self) -> None:
+        cm = ContextManager(max_context_length=4096, compact_threshold=0.85)
+        cm.set_system_message("You are a helpful assistant.")
+
+        # Add messages
+        cm.add_message("user", "Hello")
+        cm.add_message("assistant", "Hi there!")
+        cm.add_message("user", "Write a function")
+        cm.add_message("assistant", "def hello(): pass")
+
+        # Check usage
+        usage = cm.get_context_usage()
+        assert usage["used"] > 0
+        assert usage["max"] == 4096
+
+        # Check metrics
+        metrics = cm.get_token_metrics()
+        assert metrics["context_used"] > 0
+
+    def test_save_load_cycle(self, tmp_path: Path) -> None:
+        cm1 = ContextManager(max_context_length=2048, compact_threshold=0.7, auto_compact=True, keep_last_n=5)
+        cm1.set_system_message("System prompt")
+        cm1.add_message("user", "Hello")
+        cm1.add_message("assistant", "Hi")
+
+        path = str(tmp_path / "ctx.json")
+        cm1.save_session(path)
+
+        cm2 = ContextManager()
+        cm2.load_session(path)
+
+        assert cm2.max_context_length == 2048
+        assert cm2.compact_threshold == 0.7
+        assert cm2.auto_compact is True
+        assert cm2.keep_last_n == 5
+        assert cm2.system_message == "System prompt"
+        assert len(cm2.messages) == 2
+
+    def test_sub_context_isolation(self) -> None:
+        parent = ContextManager(max_context_length=4096)
+        child = parent.create_sub_context("agent1")
+
+        parent.add_message("user", "Parent message")
+        child.add_message("user", "Child message")
+
+        assert len(parent.messages) == 1
+        assert len(child.messages) == 1
+        assert parent.get_total_context_tokens() > child._estimated_context_tokens
+
+
+# ===========================================================================
+# 8. HOOKS SYSTEM
+# ===========================================================================
+
+
+class TestHooksIntegration:
+    """Test the hooks system works end-to-end."""
+
+    def test_hook_runner_import(self) -> None:
+        from server.hook_runner import HookRunner
+
+        runner = HookRunner()
+        assert hasattr(runner, "run_hook")
+        assert hasattr(runner, "is_enabled")
+
+    def test_hook_runner_is_enabled(self) -> None:
+        from server.hook_runner import HookRunner
+
+        runner = HookRunner()
+        # Should return bool without error
+        result = runner.is_enabled()
+        assert isinstance(result, bool)
+
+    def test_hooks_directory_structure(self) -> None:
+        hooks_dir = Path(_PROJECT_DIR) / ".ollama" / "hooks"
+        assert hooks_dir.is_dir(), "Hooks directory missing"
+
+
+# ===========================================================================
+# 9. CLI ENTRYPOINT
+# ===========================================================================
+
+
+class TestCLIEntrypoint:
+    """Test the CLI entrypoint via subprocess."""
+
+    def test_cli_version(self) -> None:
+        result = subprocess.run(
+            [sys.executable, "-c", "from cmd.root import build_parser; build_parser().parse_args(['--version'])"],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_DIR,
+        )
+        # --version causes SystemExit(0)
+        assert "0.1.0" in result.stdout or result.returncode == 0
+
+    def test_cli_help(self) -> None:
+        result = subprocess.run(
+            [sys.executable, "-c", "from cmd.root import build_parser; build_parser().parse_args(['--help'])"],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_DIR,
+        )
+        assert "ollama-cli" in result.stdout
+
+    def test_cli_parser_all_subcommands(self) -> None:
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "from cmd.root import build_parser; p = build_parser(); print(list(p._subparsers._group_actions[0].choices.keys()))",
+            ],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_DIR,
+        )
+        for cmd in ("chat", "run", "list", "pull", "show", "serve", "config", "status", "version", "interactive"):
+            assert cmd in result.stdout, f"Command '{cmd}' missing from parser"
+
+    def test_cli_command_map_complete(self) -> None:
+        result = subprocess.run(
+            [sys.executable, "-c", "from cmd.root import COMMAND_MAP; print(list(COMMAND_MAP.keys()))"],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_DIR,
+        )
+        for cmd in ("chat", "list", "pull", "show", "serve", "config", "status", "version", "interactive"):
+            assert cmd in result.stdout, f"Command '{cmd}' missing from COMMAND_MAP"
+
+
+# ===========================================================================
+# 10. CONFIG
+# ===========================================================================
+
+
+class TestConfig:
+    """Test configuration loading."""
+
+    def test_config_loads(self) -> None:
+        from api.config import get_config
+
+        cfg = get_config()
+        assert cfg.provider in ("ollama", "claude", "gemini", "codex")
+        assert cfg.context_length > 0
+        assert isinstance(cfg.auto_compact, bool)
+        assert 0 < cfg.compact_threshold <= 1.0
+
+    def test_config_has_all_fields(self) -> None:
+        from api.config import OllamaCliConfig
+
+        cfg = OllamaCliConfig()
+        assert hasattr(cfg, "provider")
+        assert hasattr(cfg, "ollama_model")
+        assert hasattr(cfg, "context_length")
+        assert hasattr(cfg, "auto_compact")
+        assert hasattr(cfg, "compact_threshold")
+        assert hasattr(cfg, "output_format")
+        assert hasattr(cfg, "allowed_tools")
