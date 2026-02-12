@@ -6,6 +6,17 @@ Current task priorities and pending work for the Ollama CLI project.
 
 ## Production Readiness (Critical)
 
+### Completed
+- [x] Multi-provider routing (Ollama, Claude, Gemini, Codex, HF)
+- [x] 13 lifecycle hooks with skill→hook→.py pipeline
+- [x] Multi-model agent assignment (5+ models, mixed providers)
+- [x] MCP integration (GitHub, Docker, filesystem, memory)
+- [x] Chain orchestration (multi-wave subagent pipeline)
+- [x] Terminal layout fix (persistent bottom status bar with job status)
+- [x] GH_TOKEN and HF_TOKEN support
+- [x] Dependabot with auto-merge for patch/minor updates
+- [x] Updated all documentation files
+
 ### In Progress
 - [ ] Complete production folder structure
 - [ ] Update pyproject.toml with all dependencies

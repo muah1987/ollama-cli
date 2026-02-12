@@ -125,13 +125,18 @@ def cmd_mycommand(args: argparse.Namespace) -> None:
 ```
 ollama-cli/
 ├── cmd/              # CLI entry points per command
-├── api/              # API client and client utilities
+├── api/              # API client, provider router, MCP client, config
 ├── model/            # Model management and sessions
-├── server/           # Server status and health checks
-├── runner/           # Context manager and token counter
+├── server/           # Server utilities (hook runner)
+├── runner/           # Context manager, token counter, chain controller
+├── skills/           # Skill modules (EXO, MLX, RDMA) with hook trigger pipeline
 ├── docs/             # Documentation
 ├── tests/            # Test files
-├── .ollama/          # Hooks and configuration
+├── .ollama/          # Hooks, settings, MCP config, chain config
+│   ├── hooks/        # 13 lifecycle hook scripts
+│   ├── mcp.json      # MCP server configuration
+│   ├── chain.json    # Chain orchestration config
+│   └── settings.json # Hook config + agent_models
 └── pyproject.toml    # Project configuration
 ```
 

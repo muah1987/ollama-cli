@@ -1,9 +1,9 @@
 # Ollama CLI
 
-An open-source AI coding assistant that runs in your terminal, powered by [Ollama](https://ollama.ai) with multi-provider support for Claude, Gemini, and OpenAI Codex.
+An open-source AI coding assistant that runs in your terminal, powered by [Ollama](https://ollama.ai) with multi-provider support for Claude, Gemini, OpenAI Codex, and Hugging Face.
 
 <p align="center">
-  <strong>Local-first</strong> · <strong>Multi-provider</strong> · <strong>Extensible hooks</strong> · <strong>Built-in tools</strong>
+  <strong>Local-first</strong> · <strong>Multi-provider</strong> · <strong>13 lifecycle hooks</strong> · <strong>MCP integration</strong> · <strong>Chain orchestration</strong> · <strong>Built-in tools</strong>
 </p>
 
 ---
@@ -54,7 +54,7 @@ Options:
   -p, --print                     Print response and exit (non-interactive)
   -r, --resume                    Resume the most recent conversation
   --model MODEL                   Override model (e.g. llama3.2, codellama)
-  --provider {ollama,claude,gemini,codex}
+  --provider {ollama,claude,gemini,codex,hf}
                                   Override provider
   --system-prompt PROMPT          Custom system prompt
   --output-format {text,json,markdown}
@@ -86,7 +86,7 @@ Inside the REPL, use slash commands:
 | Command | Description |
 |---------|-------------|
 | `/model <name>` | Switch active model |
-| `/provider <name>` | Switch provider (ollama, claude, gemini, codex) |
+| `/provider <name>` | Switch provider (ollama, claude, gemini, codex, hf) |
 | `/status` | Show session status, tokens, context, auto-compact state |
 | `/compact` | Force context compaction to free space |
 | `/clear` | Clear conversation history |
@@ -102,6 +102,13 @@ Inside the REPL, use slash commands:
 | `/team_planning <desc>` | Generate an implementation plan → `specs/` |
 | `/build <plan>` | Execute a saved plan file |
 | `/resume [id]` | List or resume previous tasks |
+| `/set-agent-model <type:prov:model>` | Assign a model to an agent type |
+| `/list-agent-models` | List agent model assignments |
+| `/agents` | List active agents and communication stats |
+| `/mcp [action]` | Manage MCP servers (enable, disable, tools, invoke) |
+| `/chain <prompt>` | Run multi-wave chain orchestration |
+| `/remember <k> <v>` | Store a memory entry |
+| `/recall [query]` | Recall stored memories |
 | `/update_status_line <k> <v>` | Update session status metadata |
 | `/help` | Show all commands |
 | `/quit` | Exit the session |
@@ -128,6 +135,9 @@ ollama-cli --provider gemini
 
 # Use OpenAI Codex
 ollama-cli --provider codex
+
+# Use Hugging Face
+ollama-cli --provider hf
 ```
 
 Switch mid-session with `/provider claude` in the REPL.
@@ -235,19 +245,73 @@ secrets/
 
 ### Hook System
 
-7 lifecycle hooks for customization:
+13 lifecycle hooks for full customization:
 
 | Hook | When it fires |
 |------|---------------|
+| `Setup` | On init/maintenance (git status, context injection) |
 | `SessionStart` | Session begins |
 | `SessionEnd` | Session ends |
+| `UserPromptSubmit` | Before processing user input (can deny) |
 | `PreToolUse` | Before a tool executes (can deny/ask/allow) |
 | `PostToolUse` | After a tool completes |
+| `PostToolUseFailure` | When a tool execution fails |
+| `PermissionRequest` | On permission dialog (auto-allows read-only ops) |
+| `SkillTrigger` | Skill→hook→.py pipeline trigger |
 | `PreCompact` | Before context compaction |
-| `Stop` | After plan generation (for validation) |
+| `Stop` | When model finishes responding |
+| `SubagentStart` | When a subagent spawns |
+| `SubagentStop` | When a subagent finishes |
 | `Notification` | On notable events |
 
-Hooks are configured in `.ollama/settings.json` and run as shell commands.
+Hooks are configured in `.ollama/settings.json` and run as shell commands via the skill→hook→.py pipeline.
+
+### MCP Integration
+
+Connect to MCP (Model Context Protocol) servers for extended capabilities:
+
+```bash
+# List MCP servers
+>>> /mcp
+  ● enabled  github   GitHub MCP server for repos, issues, PRs, actions
+  ○ disabled docker   Docker MCP server for container management
+  ○ disabled filesystem  Filesystem MCP server for file operations
+  ○ disabled memory   Memory MCP server for persistent knowledge graph
+
+# Enable a server
+>>> /mcp enable docker
+
+# Discover tools from a server
+>>> /mcp tools github
+
+# Invoke a tool
+>>> /mcp invoke github list_repos '{"owner": "myorg"}'
+```
+
+GitHub MCP auto-enables when `GH_TOKEN` is set. Configure in `.ollama/mcp.json`.
+
+### Chain Orchestration
+
+Run multi-wave subagent pipelines for complex tasks:
+
+```bash
+>>> /chain Add JWT authentication with refresh tokens
+
+🔗 Chain Orchestration
+  Prompt: Add JWT authentication with refresh tokens
+
+📊 Chain Complete (run: a1b2c3d4)
+  Waves: 4 | Duration: 45.2s
+  • analysis: 2 agents, 8.1s
+  • plan_validate_optimize: 3 agents, 15.3s
+  • execution: 2 agents, 12.5s
+  • finalize: 3 agents, 9.3s
+
+📝 Final Output
+  ...
+```
+
+Configure wave pipeline in `.ollama/chain.json`.
 
 ### Session Persistence
 
@@ -294,6 +358,8 @@ Create a `.env` file or set these environment variables:
 | `ANTHROPIC_API_KEY` | — | Claude API key |
 | `GEMINI_API_KEY` | — | Gemini API key |
 | `OPENAI_API_KEY` | — | OpenAI API key |
+| `HF_TOKEN` | — | Hugging Face API key |
+| `GH_TOKEN` | — | GitHub token (auto-enables GitHub MCP) |
 
 See [`.env.sample`](.env.sample) for the full template.
 

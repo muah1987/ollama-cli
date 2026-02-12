@@ -74,7 +74,7 @@ Or in `.ollama/settings.json`:
 | Option | Description |
 |--------|-------------|
 | `--model <name>` | Override default model |
-| `--provider <name>` | Override provider (ollama, claude, gemini, codex) |
+| `--provider <name>` | Override provider (ollama, claude, gemini, codex, hf) |
 | `--json` | Output in JSON format |
 | `--verbose` | Enable verbose output |
 | `--no-hooks` | Disable hooks |
@@ -85,10 +85,31 @@ Or in `.ollama/settings.json`:
 
 | Provider | Provider Flag | API Key Env Var |
 |----------|---------------|-----------------|
-| Ollama (default) | `--provider ollama` | None |
+| Ollama (default) | `--provider ollama` | None (or `OLLAMA_API_KEY`) |
 | Claude | `--provider claude` | `ANTHROPIC_API_KEY` |
 | Gemini | `--provider gemini` | `GEMINI_API_KEY` |
 | Codex | `--provider codex` | `OPENAI_API_KEY` |
+| Hugging Face | `--provider hf` | `HF_TOKEN` |
+
+---
+
+## MCP Commands
+
+In interactive mode:
+
+| Command | Description |
+|---------|-------------|
+| `/mcp` | List configured MCP servers |
+| `/mcp enable <name>` | Enable an MCP server |
+| `/mcp disable <name>` | Disable an MCP server |
+| `/mcp tools [name]` | List tools from an MCP server |
+| `/mcp invoke <server> <tool> [json]` | Invoke an MCP tool |
+
+## Chain Orchestration
+
+| Command | Description |
+|---------|-------------|
+| `/chain <prompt>` | Run multi-wave chain orchestration (analyze → plan → execute → finalize) |
 
 ---
 

@@ -7,13 +7,19 @@ A comprehensive roadmap for the Ollama CLI project, tracking current priorities 
 ## Current Status: v0.1.0 (Production)
 
 ### Recently Completed
-- [x] Multi-provider routing (Ollama, Claude, Gemini, Codex)
+- [x] Multi-provider routing (Ollama, Claude, Gemini, Codex, Hugging Face)
 - [x] Auto-compact context management
-- [x] 7 lifecycle hooks (mirroring Claude Code)
+- [x] 13 lifecycle hooks (Setup, SessionStart/End, UserPromptSubmit, PreToolUse, PostToolUse, PostToolUseFailure, PermissionRequest, SkillTrigger, PreCompact, Stop, SubagentStart/Stop, Notification)
+- [x] Skill→Hook→.py pipeline
+- [x] MCP integration (GitHub, Docker, filesystem, memory servers)
+- [x] Chain orchestration (multi-wave subagent pipeline)
+- [x] Multi-model agent assignment (5+ models with mixed providers)
 - [x] Status line dashboards (token counter, provider health, full dashboard)
-- [x] Interactive REPL mode
+- [x] Interactive REPL mode with persistent bottom status bar (cwd, UUID, model, context%, job status)
 - [x] Token tracking and cost estimation
 - [x] Session persistence
+- [x] GH_TOKEN and HF_TOKEN support
+- [x] Dependabot with auto-merge for patch/minor updates
 
 ### Current Priority: Production Readiness (v0.2.0)
 - [x] Folder structure synchronization (production/ as GitHub root)
