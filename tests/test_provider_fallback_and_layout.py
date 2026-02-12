@@ -1,6 +1,6 @@
 """
-Tests for provider fallback routing with user-selected model override
-and status bar terminal positioning (pinned to bottom).
+Tests for provider fallback routing with user-selected model override,
+status bar terminal positioning (pinned to bottom), and model discovery.
 """
 
 import os
@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 _PROJECT_ROOT = str(Path(__file__).parent.parent)
 
@@ -206,3 +207,71 @@ class TestStatusBarLayout:
         assert result.returncode == 0
         height = int(result.stdout.strip())
         assert height > 0
+
+
+# ---------------------------------------------------------------------------
+# Model discovery / resolution tests
+# ---------------------------------------------------------------------------
+
+
+class TestModelDiscovery:
+    """Tests for _resolve_model and _fetch_local_models in root.py."""
+
+    def test_resolve_model_returns_configured_when_available(self) -> None:
+        """When the configured model is in the local list, return it unchanged."""
+        from ollama_cmd.root import _resolve_model
+
+        with patch("ollama_cmd.root._fetch_local_models", return_value=["llama3.2:latest", "codestral:latest"]):
+            result = _resolve_model("llama3.2:latest", "http://localhost:11434")
+            assert result == "llama3.2:latest"
+
+    def test_resolve_model_partial_match(self) -> None:
+        """When the configured model is a prefix of a local model, return the full name."""
+        from ollama_cmd.root import _resolve_model
+
+        with patch("ollama_cmd.root._fetch_local_models", return_value=["llama3.2:latest", "codestral:latest"]):
+            result = _resolve_model("llama3.2", "http://localhost:11434")
+            assert result == "llama3.2:latest"
+
+    def test_resolve_model_fallback_to_first_available(self) -> None:
+        """When the configured model is not available, select the first local model."""
+        from ollama_cmd.root import _resolve_model
+
+        with patch("ollama_cmd.root._fetch_local_models", return_value=["codestral:latest", "mistral:latest"]):
+            result = _resolve_model("nonexistent-model", "http://localhost:11434")
+            assert result == "codestral:latest"
+
+    def test_resolve_model_returns_default_when_no_models(self) -> None:
+        """When no local models exist, return the configured default."""
+        from ollama_cmd.root import _resolve_model
+
+        with patch("ollama_cmd.root._fetch_local_models", return_value=[]):
+            result = _resolve_model("llama3.2", "http://localhost:11434")
+            assert result == "llama3.2"
+
+    def test_resolve_model_returns_default_when_server_unreachable(self) -> None:
+        """When Ollama server is unreachable, return the configured default."""
+        from ollama_cmd.root import _resolve_model
+
+        with patch("ollama_cmd.root._fetch_local_models", return_value=[]):
+            result = _resolve_model("glm-5:cloud", "http://localhost:99999")
+            assert result == "glm-5:cloud"
+
+    def test_fetch_local_models_returns_empty_on_connection_error(self) -> None:
+        """_fetch_local_models should return [] when Ollama is unreachable."""
+        from ollama_cmd.root import _fetch_local_models
+
+        result = _fetch_local_models("http://localhost:99999")
+        assert result == []
+
+    def test_resolve_model_function_exists(self) -> None:
+        """_resolve_model should be importable from root."""
+        from ollama_cmd.root import _resolve_model
+
+        assert callable(_resolve_model)
+
+    def test_fetch_local_models_function_exists(self) -> None:
+        """_fetch_local_models should be importable from root."""
+        from ollama_cmd.root import _fetch_local_models
+
+        assert callable(_fetch_local_models)

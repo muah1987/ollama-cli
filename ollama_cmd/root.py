@@ -74,6 +74,79 @@ def print_banner() -> None:
 
 
 # ---------------------------------------------------------------------------
+# Model discovery / resolution
+# ---------------------------------------------------------------------------
+
+
+def _fetch_local_models(host: str) -> list[str]:
+    """Query the local Ollama server for available model names.
+
+    Parameters
+    ----------
+    host:
+        Base URL of the Ollama server (e.g. ``http://localhost:11434``).
+
+    Returns
+    -------
+    Sorted list of model name strings, or an empty list on failure.
+    """
+    try:
+        resp = httpx.get(f"{host}/api/tags", timeout=10.0)
+        resp.raise_for_status()
+        data = resp.json()
+        models = data.get("models", [])
+        return [m.get("name", "") for m in models if m.get("name")]
+    except (httpx.ConnectError, httpx.TimeoutException, httpx.HTTPStatusError):
+        return []
+
+
+def _resolve_model(cfg_model: str, host: str) -> str:
+    """Resolve the model to use by checking available local models.
+
+    1. Fetches the list of locally available models from Ollama.
+    2. If the configured model is present, returns it unchanged.
+    3. Otherwise, selects the first available model and warns the user.
+    4. If Ollama is unreachable or has no models, returns the configured default.
+
+    Parameters
+    ----------
+    cfg_model:
+        The model name from the CLI configuration.
+    host:
+        Base URL of the Ollama server.
+
+    Returns
+    -------
+    The model name to use for this session.
+    """
+    local_models = _fetch_local_models(host)
+
+    if not local_models:
+        return cfg_model
+
+    # Exact match
+    if cfg_model in local_models:
+        return cfg_model
+
+    # Partial match: "llama3.2" matches "llama3.2:latest"
+    for m in local_models:
+        if m.startswith(cfg_model + ":") or m == cfg_model:
+            return m
+
+    # Configured model not found – appoint the first available model
+    chosen = local_models[0]
+    console.print(
+        f"[yellow]Warning:[/yellow] Configured model [bold]{cfg_model}[/bold] not found locally."
+    )
+    console.print(f"  Available models: {', '.join(local_models[:5])}")
+    if len(local_models) > 5:
+        console.print(f"  ... and {len(local_models) - 5} more")
+    console.print(f"  Auto-selecting: [green]{chosen}[/green]")
+    console.print()
+    return chosen
+
+
+# ---------------------------------------------------------------------------
 # Command handlers
 # ---------------------------------------------------------------------------
 
@@ -199,6 +272,9 @@ def cmd_interactive(args: argparse.Namespace) -> None:
     if needs_onboarding():
         cfg = run_onboarding()
 
+    # Discover local models and resolve the best available model
+    model = _resolve_model(cfg.ollama_model, cfg.ollama_host)
+
     # Resume the most recent session if --resume was passed
     session = None
     if getattr(args, "resume", False):
@@ -211,7 +287,7 @@ def cmd_interactive(args: argparse.Namespace) -> None:
                 console.print(f"[yellow]Could not resume session ({exc}), starting new one.[/yellow]")
 
     if session is None:
-        session = Session(model=cfg.ollama_model, provider=cfg.provider)
+        session = Session(model=model, provider=cfg.provider)
 
     async def _run() -> None:
         await session.start()
@@ -237,7 +313,9 @@ def cmd_run_prompt(args: argparse.Namespace) -> None:
 
     from model.session import Session
 
-    session = Session(model=cfg.ollama_model, provider=cfg.provider)
+    # Discover local models and resolve the best available model
+    model = _resolve_model(cfg.ollama_model, cfg.ollama_host)
+    session = Session(model=model, provider=cfg.provider)
 
     import asyncio
 
