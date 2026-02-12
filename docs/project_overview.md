@@ -9,16 +9,20 @@ Ollama CLI gives you a local-first AI coding assistant that runs on your machine
 ## Features
 
 - **Multi-Provider Routing** -- Seamlessly switch between Ollama (local/cloud), Claude, Gemini, Codex, and Hugging Face with a single flag
-- **Agent Model Assignment** -- Assign specific models to agent types for specialized tasks (@code, @research, etc.)
+- **Multi-Model Agent Assignment** -- Assign 5+ models from mixed providers to agent types (@code, @review, @test, @plan, @docs)
 - **Auto-Compact Context** -- Automatically compacts conversation history at 85% context usage to keep sessions running smoothly
-- **Hook System** -- 7 lifecycle hooks let you extend behavior at every stage of execution
-- **Status Lines** -- Real-time dashboards showing token usage, provider health, and session metrics
-- **Interactive REPL** -- Full chat mode with streaming responses and rich terminal output
+- **13 Lifecycle Hooks** -- Full hook system: Setup, SessionStart/End, UserPromptSubmit, PreToolUse, PostToolUse, PostToolUseFailure, PermissionRequest, SkillTrigger, PreCompact, Stop, SubagentStart/Stop, Notification
+- **Skill→Hook→.py Pipeline** -- Skills trigger hooks, hooks trigger Python scripts for extensible automation
+- **MCP Integration** -- Connect to GitHub MCP, Docker MCP, filesystem, and memory MCP servers
+- **Chain Orchestration** -- Multi-wave subagent pipeline: analyze → plan/validate/optimize → execute → finalize
+- **Status Lines** -- Real-time dashboards showing token usage, provider health, and session metrics with job status
+- **Interactive REPL** -- Full chat mode with streaming responses and persistent bottom status bar
 - **Token Tracking** -- Track token usage and cost estimation across all providers
 - **Session Persistence** -- Save and resume conversations with automatic session management
 - **RDMA Acceleration** -- High-performance networking with InfiniBand, RoCE, iWARP, USB/RDMA, and Thunderbolt support
 - **Apple Silicon MLX** -- Metal Performance Shaders acceleration for macOS
 - **EXO Distributed Execution** -- Multi-node distributed computing support
+- **Dependabot** -- Automated dependency updates with auto-merge for patch/minor versions
 
 ---
 

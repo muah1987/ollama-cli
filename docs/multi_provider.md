@@ -1,6 +1,6 @@
 # Multi-Provider Guide
 
-Use Ollama, Claude, Gemini, and Codex with a single CLI.
+Use Ollama, Claude, Gemini, Codex, and Hugging Face with a single CLI.
 
 ---
 

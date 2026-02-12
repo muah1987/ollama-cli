@@ -55,7 +55,55 @@ ollama-cli --agent-model code:mistralai/Mistral-7B-Instruct-v0.3 --agent-provide
 
 ## Implementation Plan
 
-### 1. Enhanced Provider Router
+### Supported Agent Types (10+)
+
+The system supports the following agent types, each configurable with any provider:
+
+| Agent Type | Description | Default Model |
+|-----------|-------------|---------------|
+| `code` | Code generation and editing | `codestral:latest` |
+| `research` | Information gathering | `llama3.2` |
+| `writer` | Documentation and prose | `llama3.2` |
+| `analysis` | Code and data analysis | `llama3.2` |
+| `planning` | Task planning | `llama3.2` |
+| `review` | Code review | `llama3.2` |
+| `test` | Test generation | `llama3.2` |
+| `debug` | Debugging assistance | `llama3.2` |
+| `docs` | Documentation generation | `llama3.2` |
+| `orchestrator` | Chain orchestration | `llama3.2` |
+
+### Multi-Model Configuration
+
+Configure 5+ models with mixed providers in `.ollama/settings.json`:
+
+```json
+{
+  "agent_models": {
+    "code": {"provider": "ollama", "model": "codestral:latest"},
+    "review": {"provider": "claude", "model": "claude-sonnet"},
+    "test": {"provider": "gemini", "model": "gemini-flash"},
+    "plan": {"provider": "ollama", "model": "llama3.2"},
+    "docs": {"provider": "hf", "model": "mistral-7b"}
+  }
+}
+```
+
+Or via environment variables (up to 10 agent types):
+
+```bash
+OLLAMA_CLI_AGENT_CODE_PROVIDER=ollama
+OLLAMA_CLI_AGENT_CODE_MODEL=codestral:latest
+OLLAMA_CLI_AGENT_REVIEW_PROVIDER=claude
+OLLAMA_CLI_AGENT_REVIEW_MODEL=claude-sonnet
+OLLAMA_CLI_AGENT_TEST_PROVIDER=gemini
+OLLAMA_CLI_AGENT_TEST_MODEL=gemini-flash
+OLLAMA_CLI_AGENT_DOCS_PROVIDER=hf
+OLLAMA_CLI_AGENT_DOCS_MODEL=mistral-7b
+OLLAMA_CLI_AGENT_ORCHESTRATOR_PROVIDER=codex
+OLLAMA_CLI_AGENT_ORCHESTRATOR_MODEL=gpt-4
+```
+
+### 1. Provider Router
 
 The `ProviderRouter` class needs to be extended to support agent-specific model assignments:
 

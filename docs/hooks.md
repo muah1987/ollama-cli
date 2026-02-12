@@ -1,22 +1,31 @@
 # Hooks System
 
-Customize Ollama CLI behavior with lifecycle hooks.
+Customize Ollama CLI behavior with 13 lifecycle hooks.
 
 ---
 
 ## Overview
 
-Ollama CLI provides 7 lifecycle hooks that execute at specific points during execution:
+Ollama CLI provides 13 lifecycle hooks that execute at specific points during execution.
+Hooks follow the **skill→hook→.py pipeline**: a skill triggers a hook event, the hook
+dispatches to one or more `.py` scripts, and the scripts can modify behavior.
 
-| Hook | When It Fires | Use Cases |
-|------|---------------|-----------|
-| `SessionStart` | When a session begins | Initialize state, load context |
-| `SessionEnd` | When a session ends | Save summaries, persist memory |
-| `PreToolUse` | Before tool execution | Validate inputs, gate operations |
-| `PostToolUse` | After tool completes | Log results, transform output |
-| `PreCompact` | Before context compaction | Extract key information |
-| `Stop` | When assistant stops | Final cleanup, state save |
-| `Notification` | On notable events | Alerts, notifications |
+| # | Hook | When It Fires | Use Cases |
+|---|------|---------------|-----------|
+| 1 | `Setup` | On init or periodic maintenance | Load git status, inject context, environment persistence |
+| 2 | `SessionStart` | When a session begins | Initialize state, load context, load OLLAMA.md |
+| 3 | `SessionEnd` | When a session ends | Save summaries, persist memory, cleanup |
+| 4 | `UserPromptSubmit` | Before processing user input | Validate input, security filtering, prompt logging |
+| 5 | `PreToolUse` | Before tool execution | Validate inputs, gate operations, block dangerous commands |
+| 6 | `PostToolUse` | After tool completes | Log results, transform output, trigger follow-ups |
+| 7 | `PostToolUseFailure` | When a tool execution fails | Structured error logging with full context |
+| 8 | `PermissionRequest` | On permission dialog | Permission auditing, auto-allow read-only ops |
+| 9 | `SkillTrigger` | When a skill invokes a hook | Skill→hook routing, pre-processing, logging |
+| 10 | `PreCompact` | Before context compaction | Extract key information, save snapshots |
+| 11 | `Stop` | When the model finishes responding | Final cleanup, completion notifications |
+| 12 | `SubagentStart` | When a subagent spawns | Subagent spawn logging, announcements |
+| 13 | `SubagentStop` | When a subagent finishes | Subagent completion logging |
+| 14 | `Notification` | On notable events | Alerts, notifications, TTS |
 
 ---
 
@@ -29,12 +38,19 @@ Configuration is in `.ollama/settings.json`:
 ```json
 {
   "hooks": {
+    "Setup": [],
     "SessionStart": [],
     "SessionEnd": [],
+    "UserPromptSubmit": [],
     "PreToolUse": [],
     "PostToolUse": [],
+    "PostToolUseFailure": [],
+    "PermissionRequest": [],
+    "SkillTrigger": [],
     "PreCompact": [],
     "Stop": [],
+    "SubagentStart": [],
+    "SubagentStop": [],
     "Notification": []
   }
 }
@@ -88,6 +104,14 @@ Each hook receives JSON on stdin:
 
 ## Built-in Hooks
 
+### Setup
+
+Runs on init or periodic maintenance. Use cases:
+- Load git status and recent issues
+- Inject development context
+- Environment persistence via `OLLAMA_ENV_FILE`
+- Load context files (OLLAMA.md, .ollamaignore)
+
 ### SessionStart
 
 Runs when a session begins. Use cases:
@@ -101,12 +125,21 @@ Runs when a session ends. Use cases:
 - Save conversation summary
 - Persist memory entries
 - Send notification
+- Cleanup temp files and stale logs
+
+### UserPromptSubmit
+
+Runs immediately when user submits a prompt (before model processes it). Use cases:
+- Prompt validation and security filtering
+- Prompt logging
+- Context injection
+- Block dangerous or sensitive prompts
 
 ### PreToolUse
 
 Runs before tool execution. Use cases:
 - Validate tool inputs
-- Enforce access policies
+- Enforce access policies (block `rm -rf`, `.env` access)
 - Modify tool inputs
 
 ### PostToolUse
@@ -116,19 +149,55 @@ Runs after tool completion. Use cases:
 - Transform output
 - Trigger follow-up actions
 
+### PostToolUseFailure
+
+Runs when a tool execution fails. Use cases:
+- Structured error logging with timestamps
+- Error classification (permission, not_found, timeout, network)
+- Full context capture for debugging
+
+### PermissionRequest
+
+Runs when user is shown a permission dialog. Use cases:
+- Permission auditing
+- Auto-allow read-only ops (Read, Glob, Grep, safe Bash like `ls`, `cat`, `pwd`)
+- Auto-deny dangerous operations
+
+### SkillTrigger
+
+Runs when a skill invokes a hook (skill→hook→.py pipeline). Use cases:
+- Route skill invocations to downstream hooks
+- Pre-process skill parameters
+- Log skill usage
+
 ### PreCompact
 
 Runs before context compaction. Use cases:
 - Extract key information
 - Save important messages
 - Annotate content
+- Transcript backup
 
 ### Stop
 
-Runs when the assistant stops. Use cases:
+Runs when the model finishes responding. Use cases:
 - Final state cleanup
+- AI-generated completion messages
 - Save model state
-- Send completion notification
+
+### SubagentStart
+
+Runs when a subagent (via `@agent` commands) spawns. Use cases:
+- Subagent spawn logging
+- Resource allocation tracking
+- Optional announcements
+
+### SubagentStop
+
+Runs when a subagent finishes responding. Use cases:
+- Subagent completion logging
+- Result aggregation
+- Resource cleanup
 
 ### Notification
 

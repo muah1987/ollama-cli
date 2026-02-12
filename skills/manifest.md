@@ -102,3 +102,22 @@ result = await execute_skill("rdma_acceleration", action="connect", device="mlx5
 if result["connected"]:
     print(f"Connected to {result['device']}")
 ```
+
+## Skill→Hook→.py Pipeline
+
+Every skill invocation fires the `SkillTrigger` hook before execution, enabling:
+
+1. **Pre-processing** — Validate skill parameters, inject context
+2. **Logging** — Track skill usage for analytics
+3. **Routing** — Route skill invocations to downstream `.py` scripts
+4. **Access control** — Block or allow skill execution via hook permissions
+
+```
+┌──────────┐    ┌──────────────┐    ┌───────────────┐    ┌──────────┐
+│  Skill   │───▶│ SkillTrigger │───▶│ skill_trigger  │───▶│ Execute  │
+│ Invoked  │    │   Hook       │    │   .py script   │    │  Skill   │
+└──────────┘    └──────────────┘    └───────────────┘    └──────────┘
+```
+
+Use `fire_skill_trigger()` from `skills/tools.py` to integrate this pipeline
+into any custom skill.

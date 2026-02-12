@@ -514,6 +514,7 @@ rdma = [
 [package.dev-dependencies]
 dev = [
     { name = "pytest" },
+    { name = "ruff" },
 ]
 
 [package.metadata]
@@ -523,7 +524,7 @@ requires-dist = [
     { name = "psutil", marker = "extra == 'exo'", specifier = ">=5.9.0" },
     { name = "psutil", marker = "extra == 'mlx'", specifier = ">=5.9.0" },
     { name = "psutil", marker = "extra == 'rdma'", specifier = ">=5.9.0" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0.2" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
     { name = "python-semantic-release", marker = "extra == 'dev'", specifier = ">=9.0.0" },
     { name = "rich", specifier = ">=14.0.0" },
@@ -532,7 +533,10 @@ requires-dist = [
 provides-extras = ["dev", "rdma", "mlx", "exo"]
 
 [package.metadata.requires-dev]
-dev = [{ name = "pytest", specifier = ">=9.0.2" }]
+dev = [
+    { name = "pytest", specifier = ">=9.0.2" },
+    { name = "ruff", specifier = ">=0.15.0" },
+]
 
 [[package]]
 name = "packaging"

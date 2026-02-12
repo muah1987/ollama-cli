@@ -5,7 +5,7 @@
 [![PyPI version](https://badge.fury.io/py/ollama-cli.svg)](https://badge.fury.io/py/ollama-cli)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Ollama CLI is a local-first AI coding assistant that runs on your machine with Ollama, with optional cloud provider support for Claude, Gemini, and Codex.
+Ollama CLI is a local-first AI coding assistant that runs on your machine with Ollama, with optional cloud provider support for Claude, Gemini, Codex, and Hugging Face.
 
 ---
 
@@ -89,8 +89,10 @@ For detailed documentation on all features, configuration, and advanced usage, s
 | [API Reference](docs/api_reference.md) | Ollama and provider APIs |
 | [Configuration](docs/configuration.md) | Environment variables and settings |
 | [Multi-Provider](docs/multi_provider.md) | Using Claude, Gemini, Codex, Hugging Face |
+| [Agent Models](docs/agent_model_assignment.md) | Multi-model agent assignment |
 | [RDMA Support](docs/rdma.md) | High-performance networking |
-| [Hooks System](docs/hooks.md) | Lifecycle hooks and customization |
+| [Hooks System](docs/hooks.md) | 13 lifecycle hooks and customization |
+| [MCP Integration](docs/mcp.md) | GitHub, Docker, and other MCP servers |
 | [Development](docs/development.md) | Contributing and building |
 
 ---

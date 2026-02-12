@@ -34,25 +34,42 @@ Comprehensive documentation for Ollama CLI - a full-featured AI coding assistant
 | **CLI Reference** | All available commands | [`docs/cli_reference.md`](cli_reference.md) |
 | **API Reference** | Ollama and provider APIs | [`docs/api_reference.md`](api_reference.md) |
 | **Configuration** | Environment variables and settings | [`docs/configuration.md`](configuration.md) |
-| **Multi-Provider** | Using Claude, Gemini, Codex | [`docs/multi_provider.md`](multi_provider.md) |
+| **Multi-Provider** | Using Claude, Gemini, Codex, HF | [`docs/multi_provider.md`](multi_provider.md) |
 | **Agent Models** | Agent-specific model assignments | [`docs/agent_model_assignment.md`](agent_model_assignment.md) |
 | **RDMA Support** | High-performance networking | [`docs/rdma.md`](rdma.md) |
-| **Hooks System** | Lifecycle hooks and customization | [`docs/hooks.md`](hooks.md) |
+| **Hooks System** | 13 lifecycle hooks and customization | [`docs/hooks.md`](hooks.md) |
+| **MCP Integration** | GitHub, Docker, and other MCP servers | [`docs/mcp.md`](mcp.md) |
 | **Development** | Contributing and building | [`docs/development.md`](development.md) |
 
 ---
 
 ## Features
 
-- **Multi-Provider Routing** - Seamlessly switch between Ollama, Claude, Gemini, and Codex
-- **Agent Model Assignment** - Assign specific models to agent types for specialized tasks
+- **Multi-Provider Routing** - Seamlessly switch between Ollama, Claude, Gemini, Codex, and Hugging Face
+- **Multi-Model Agent Assignment** - Assign 5+ models from mixed providers to agent types (code, review, test, plan, docs)
 - **Auto-Compact Context** - Automatic context management at 85% threshold
-- **Hook System** - 7 lifecycle hooks for customization
-- **Status Lines** - Real-time token usage and provider health
-- **Interactive REPL** - Full chat mode with streaming responses
+- **13 Lifecycle Hooks** - Full hook system: Setup, SessionStart/End, UserPromptSubmit, PreToolUse, PostToolUse, PostToolUseFailure, PermissionRequest, SkillTrigger, PreCompact, Stop, SubagentStart/Stop, Notification
+- **Skill→Hook→.py Pipeline** - Skills trigger hooks, hooks trigger Python scripts for extensible automation
+- **MCP Integration** - Connect to GitHub MCP, Docker MCP, filesystem MCP, and memory MCP servers
+- **Status Lines** - Real-time token usage and provider health with job status (idle/thinking/compacting/planning/building)
+- **Interactive REPL** - Full chat mode with streaming responses and persistent bottom status bar
 - **Token Tracking** - Token usage and cost estimation across providers
 - **Session Persistence** - Save and resume conversations
-- **RDMA Acceleration** - High-performance networking support (MLX, EXO, RMDA)
+- **RDMA Acceleration** - High-performance networking support (MLX, EXO, RDMA)
+
+---
+
+## Terminal Layout
+
+The interactive REPL uses a three-zone terminal layout:
+
+| Zone | Content |
+|------|---------|
+| **TOP** | ASCII banner + startup info + warnings (only on startup) |
+| **MID** | Prompt region (user input and model responses) |
+| **BOTTOM** | Persistent status bar: `cwd │ session-uuid │ model │ context% │ tokens-left │ cost │ job-status` |
+
+The bottom status bar remains visible after every response, so even when the banner scrolls off, you always have context about what the CLI is doing.
 
 ---
 

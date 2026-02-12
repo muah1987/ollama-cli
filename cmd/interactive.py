@@ -271,11 +271,14 @@ class InteractiveMode:
         "/agents": "_cmd_agents",
         "/remember": "_cmd_remember",
         "/recall": "_cmd_recall",
+        "/mcp": "_cmd_mcp",
+        "/chain": "_cmd_chain",
     }
 
     def __init__(self, session: Session) -> None:
         self.session = session
         self._running: bool = False
+        self._current_job: str = "idle"
         self._setup_readline()
 
     # -- readline setup ------------------------------------------------------
@@ -374,10 +377,12 @@ class InteractiveMode:
     def _print_status_bar(self) -> None:
         """Print the persistent bottom status bar.
 
-        Layout: ``cwd | session-uuid | model | context% | cost``
+        Layout: ``cwd | session-uuid | model/status | context% | cost | job``
 
         This bar is shown after every response and slash command so it
         remains visible even after the TOP banner scrolls off screen.
+        The bar includes current job info so the user always has context
+        about what the CLI is doing.
         """
         ctx = self.session.context_manager.get_context_usage()
         pct = int(ctx.get("percentage", 0))
@@ -398,6 +403,17 @@ class InteractiveMode:
         else:
             pct_str = _red(f"{pct}%")
 
+        # Job status indicator
+        job = self._current_job
+        if job == "idle":
+            job_str = _dim("● idle")
+        elif job == "thinking":
+            job_str = _yellow("◉ thinking")
+        elif job == "compacting":
+            job_str = _magenta("◉ compacting")
+        else:
+            job_str = _cyan(f"◉ {job}")
+
         bar = (
             f"{_dim('─' * 60)}\n"
             f"{_dim('📁')} {_white(cwd)} "
@@ -405,7 +421,8 @@ class InteractiveMode:
             f"{_dim('│')} {_dim('🦙')} {_green(self.session.model)} "
             f"{_dim('│')} {pct_str} "
             f"{_dim('│')} {_dim('~')}{tokens_left:,}{_dim(' left')} "
-            f"{_dim('│')} {_green(f'${cost:.4f}')}"
+            f"{_dim('│')} {_green(f'${cost:.4f}')} "
+            f"{_dim('│')} {job_str}"
         )
         print(bar)
 
@@ -645,10 +662,14 @@ class InteractiveMode:
         })
 
         try:
+            self._current_job = "compacting"
             result = await self.session.compact()
         except Exception as exc:
+            self._current_job = "idle"
             self._print_error(f"  Compaction failed: {exc}")
             return False
+
+        self._current_job = "idle"
 
         usage_after = cm.get_context_usage()
         removed = result.get("messages_removed", 0)
@@ -855,6 +876,8 @@ class InteractiveMode:
         print(f"  {_cyan('/agents')}           List active agents and communication stats")
         print(f"  {_cyan('/remember <k> <v>')} Store a memory entry for token-efficient recall")
         print(f"  {_cyan('/recall [query]')}   Recall stored memories (all or by keyword)")
+        print(f"  {_cyan('/mcp [action]')}     Manage MCP servers (enable|disable|tools|invoke)")
+        print(f"  {_cyan('/chain <prompt>')}   Run multi-wave chain orchestration (analyze→plan→execute→finalize)")
         print(f"  {_cyan('/help')}             Show this help message")
         print(f"  {_cyan('/quit')}             Exit the session")
         print()
@@ -1163,6 +1186,13 @@ class InteractiveMode:
         # Display result
         if "error" in result:
             self._print_error(f"Error: {result['error']}")
+            # Fire PostToolUseFailure hook
+            self._fire_hook("PostToolUseFailure", {
+                "tool_name": tool_name,
+                "tool_input": tool_arg,
+                "error": result["error"],
+                "session_id": self.session.session_id,
+            })
         else:
             self._print_info(f"[{tool_name}] result:")
             print(_json.dumps(result, indent=2, default=str)[:3000])
@@ -1402,6 +1432,7 @@ class InteractiveMode:
         )
 
         try:
+            self._current_job = "planning"
             spinner = self._spinner(_LLAMA_PLAN_SPINNER)
             spinner.start()
             try:
@@ -1413,6 +1444,7 @@ class InteractiveMode:
             finally:
                 spinner.stop()
         except Exception as exc:
+            self._current_job = "idle"
             self._print_error(f"Failed to generate plan: {exc}")
             return False
 
@@ -1483,6 +1515,7 @@ class InteractiveMode:
             logger.debug("Failed to save task record", exc_info=True)
 
         # Report
+        self._current_job = "idle"
         print()
         self._print_info("✅ Implementation Plan Created")
         self._print_info(f"  File: {plan_file}")
@@ -1576,6 +1609,7 @@ class InteractiveMode:
         build_prompt += "\nImplement this plan now. Report what was completed for each step."
 
         try:
+            self._current_job = "building"
             spinner = self._spinner(_LLAMA_BUILD_SPINNER)
             spinner.start()
             try:
@@ -1587,8 +1621,11 @@ class InteractiveMode:
             finally:
                 spinner.stop()
         except Exception as exc:
+            self._current_job = "idle"
             self._print_error(f"Build failed: {exc}")
             return False
+
+        self._current_job = "idle"
 
         content = result.get("content", "")
         self._print_response(content)
@@ -1771,6 +1808,182 @@ class InteractiveMode:
             self._print_system(f"  Previous value: {old_value}")
         return False
 
+    def _cmd_mcp(self, arg: str) -> bool:
+        """Manage MCP (Model Context Protocol) server connections.
+
+        Usage:
+          ``/mcp``              — List configured MCP servers
+          ``/mcp enable <name>``  — Enable an MCP server
+          ``/mcp disable <name>`` — Disable an MCP server
+          ``/mcp tools [name]``   — List tools from an MCP server
+          ``/mcp invoke <server> <tool> [args_json]`` — Invoke an MCP tool
+
+        Returns
+        -------
+        Always ``False`` (continue REPL).
+        """
+        from api.mcp_client import get_mcp_client
+
+        client = get_mcp_client()
+
+        if not arg:
+            # List all MCP servers
+            servers = client.list_servers()
+            print()
+            self._print_info("MCP Servers:")
+            for s in servers:
+                if s["enabled"]:
+                    status = _green("● enabled")
+                else:
+                    status = _dim("○ disabled")
+                cred = _green("✓") if s["has_credentials"] else _dim("✗")
+                print(f"  {status} {_cyan(s['name']):20s} {s['description']}  [cred: {cred}]")
+            print()
+            self._print_system("Commands: /mcp enable|disable|tools|invoke <name>")
+            return False
+
+        parts = arg.split(maxsplit=2)
+        action = parts[0].lower()
+
+        if action == "enable" and len(parts) >= 2:
+            name = parts[1]
+            if client.enable_server(name):
+                self._print_info(f"MCP server '{name}' enabled.")
+            else:
+                self._print_error(f"Unknown MCP server: {name}")
+        elif action == "disable" and len(parts) >= 2:
+            name = parts[1]
+            if client.disable_server(name):
+                self._print_info(f"MCP server '{name}' disabled.")
+            else:
+                self._print_error(f"Unknown MCP server: {name}")
+        elif action == "tools":
+            name = parts[1] if len(parts) >= 2 else None
+            if name:
+                tools = client.discover_tools(name)
+                if tools:
+                    self._print_info(f"Tools from {name}:")
+                    for t in tools:
+                        print(f"  {_cyan(t.name):30s} {t.description}")
+                else:
+                    self._print_system(f"No tools discovered from {name} (is it enabled and accessible?).")
+            else:
+                all_tools = client.list_discovered_tools()
+                if all_tools:
+                    self._print_info("Discovered MCP tools:")
+                    for t in all_tools:
+                        print(f"  {_cyan(t['name']):40s} {t['description']}")
+                else:
+                    self._print_system("No MCP tools discovered yet. Use /mcp tools <server> to discover.")
+        elif action == "invoke" and len(parts) >= 2:
+            invoke_parts = parts[1].split(maxsplit=1)
+            if len(invoke_parts) < 1:
+                self._print_error("Usage: /mcp invoke <server> <tool> [args_json]")
+                return False
+            server_name = invoke_parts[0]
+            if len(invoke_parts) >= 2:
+                rest = invoke_parts[1]
+            elif len(parts) >= 3:
+                rest = parts[2]
+            else:
+                self._print_error("Usage: /mcp invoke <server> <tool> [args_json]")
+                return False
+            tool_parts = rest.split(maxsplit=1)
+            tool_name = tool_parts[0]
+            args_json = tool_parts[1] if len(tool_parts) > 1 else "{}"
+            import json as _json
+
+            try:
+                arguments = _json.loads(args_json)
+            except _json.JSONDecodeError:
+                self._print_error(f"Invalid JSON arguments: {args_json}")
+                return False
+            result = client.invoke_tool(server_name, tool_name, arguments)
+            if "error" in result:
+                self._print_error(f"MCP error: {result['error']}")
+            else:
+                self._print_info(f"[mcp:{server_name}:{tool_name}] result:")
+                print(_json.dumps(result, indent=2, default=str)[:3000])
+        else:
+            self._print_error("Usage: /mcp [enable|disable|tools|invoke] <name>")
+
+        return False
+
+    async def _cmd_chain(self, arg: str) -> bool:
+        """Run a multi-wave chain orchestration pipeline.
+
+        Usage: ``/chain <prompt>``
+
+        Executes the chain controller pipeline:
+        Wave 0: Ingest → Wave 1: Analysis → Wave 2: Plan/Validate/Optimize →
+        Wave 3: Execution → Wave 4: Finalize → Deliver.
+
+        Each wave runs multiple subagents in sequence, merges their outputs,
+        and feeds the result into the next wave via a Shared State object.
+
+        Returns
+        -------
+        Always ``False`` (continue REPL).
+        """
+        if not arg:
+            self._print_error("Usage: /chain <prompt>")
+            self._print_system("  Runs a multi-wave chain: analyze → plan → execute → finalize")
+            return False
+
+        from runner.chain_controller import ChainController
+
+        print()
+        self._print_info("🔗 Chain Orchestration")
+        self._print_system(f"  Prompt: {arg[:100]}{'...' if len(arg) > 100 else ''}")
+        print()
+
+        controller = ChainController(self.session)
+
+        # Run the chain with llama spinner
+        try:
+            self._current_job = "chain"
+            spinner = self._spinner(_LLAMA_SPINNER_FRAMES)
+            spinner.start()
+            try:
+                result = await controller.run_chain(arg)
+            finally:
+                spinner.stop()
+        except Exception as exc:
+            self._current_job = "idle"
+            self._print_error(f"Chain failed: {exc}")
+            logger.exception("Chain orchestration failed")
+            return False
+
+        self._current_job = "idle"
+
+        # Display wave summary
+        run_id = result.get("run_id", "???")
+        total_duration = result.get("total_duration", 0)
+        wave_count = result.get("wave_count", 0)
+
+        print()
+        self._print_info(f"📊 Chain Complete (run: {run_id})")
+        self._print_system(f"  Waves: {wave_count} | Duration: {total_duration:.1f}s")
+
+        for wr in result.get("wave_results", []):
+            self._print_system(f"  • {wr['wave']}: {wr['agents']} agents, {wr['duration']:.1f}s")
+
+        # Display final output
+        final_output = result.get("final_output", "")
+        if final_output:
+            print()
+            self._print_info("📝 Final Output")
+            self._print_response(final_output)
+
+        # Show token usage and comm stats
+        comm_stats = self.session.agent_comm.get_token_savings()
+        self._print_system(
+            f"  agent messages: {comm_stats['total_messages']} • "
+            f"token savings: {comm_stats['context_tokens_saved']:,}"
+        )
+        print()
+        return False
+
     def _cmd_quit(self, _arg: str) -> bool:
         """Signal the REPL to exit gracefully.
 
@@ -1792,6 +2005,15 @@ class InteractiveMode:
         """
         self._running = True
         self._print_banner()
+
+        # Fire Setup hook (init trigger)
+        self._fire_hook("Setup", {
+            "trigger": "init",
+            "session_id": self.session.session_id,
+            "model": self.session.model,
+            "provider": self.session.provider,
+            "cwd": os.getcwd(),
+        })
 
         # Fire SessionStart hook
         self._fire_hook("SessionStart", {
@@ -1843,9 +2065,37 @@ class InteractiveMode:
                     if len(parts) > 1:
                         agent_type = parts[0][1:]  # Remove the @ symbol
                         stripped = parts[1]
+                        # Fire SubagentStart hook for agent-specific commands
+                        self._fire_hook("SubagentStart", {
+                            "agent_id": f"{agent_type}-{self.session.session_id[:8]}",
+                            "agent_type": agent_type,
+                            "session_id": self.session.session_id,
+                            "model": self.session.model,
+                            "prompt_preview": stripped[:100],
+                        })
+
+                # Fire UserPromptSubmit hook before processing
+                prompt_results = self._fire_hook("UserPromptSubmit", {
+                    "prompt": stripped,
+                    "session_id": self.session.session_id,
+                    "model": self.session.model,
+                    "timestamp": __import__("datetime").datetime.now(
+                        tz=__import__("datetime").timezone.utc
+                    ).isoformat(),
+                })
+                # Check if the prompt was denied by the hook
+                prompt_denied = False
+                for pr in prompt_results:
+                    if pr.permission_decision == "deny":
+                        self._print_error("Prompt blocked by UserPromptSubmit hook.")
+                        prompt_denied = True
+                        break
+                if prompt_denied:
+                    continue
 
                 # Regular message -> send to session with llama spinner
                 try:
+                    self._current_job = "thinking"
                     spinner = self._spinner(_LLAMA_SPINNER_FRAMES)
                     spinner.start()
                     try:
@@ -1853,6 +2103,7 @@ class InteractiveMode:
                     finally:
                         spinner.stop()
                 except Exception as exc:
+                    self._current_job = "idle"
                     self._print_error(f"Error: {exc}")
                     logger.exception("Failed to send message")
                     continue
@@ -1860,6 +2111,22 @@ class InteractiveMode:
                 # Display response with agent-colored output
                 content = result.get("content", "")
                 self._print_response(content, agent_type=agent_type)
+
+                # Fire Stop hook (model finished responding)
+                self._fire_hook("Stop", {
+                    "session_id": self.session.session_id,
+                    "model": self.session.model,
+                    "stop_hook_active": True,
+                })
+
+                # Fire SubagentStop for agent-specific commands
+                if agent_type:
+                    self._fire_hook("SubagentStop", {
+                        "agent_id": f"{agent_type}-{self.session.session_id[:8]}",
+                        "agent_type": agent_type,
+                        "session_id": self.session.session_id,
+                        "stop_hook_active": True,
+                    })
 
                 # Show token usage after each response (like Claude Code)
                 metrics = result.get("metrics", {})
@@ -1871,8 +2138,11 @@ class InteractiveMode:
 
                 # Notify on auto-compaction
                 if result.get("compacted"):
+                    self._current_job = "compacting"
                     self._print_system("(Context was auto-compacted)")
                     self._fire_notification("info", "Context was auto-compacted")
+
+                self._current_job = "idle"
 
                 # BOTTOM: persistent status bar after every response
                 self._print_status_bar()
