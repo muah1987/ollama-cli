@@ -94,6 +94,7 @@ class TestRunOnboarding:
             patch("ollama_cmd.onboarding.save_config", return_value=config_path),
             patch("rich.prompt.Prompt.ask") as mock_ask,
             patch("ollama_cmd.onboarding.console"),
+            patch("ollama_cmd.onboarding._fetch_provider_models", return_value=[]),
         ):
             mock_ask.side_effect = [
                 "claude",  # provider
@@ -127,4 +128,75 @@ class TestRunOnboarding:
         assert result.provider == "ollama"
         assert result.ollama_model == "llama3.2"
         assert result.ollama_host == "http://localhost:11434"
+        assert result.onboarding_complete is True
+
+    def test_run_onboarding_fetches_models_for_cloud_provider(self, tmp_path: Path) -> None:
+        """When a cloud provider returns models, wizard shows them for selection."""
+        cfg = OllamaCliConfig()
+        config_path = tmp_path / "config.json"
+        fetched = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-1.5-pro"]
+
+        with (
+            patch("ollama_cmd.onboarding.get_config", return_value=cfg),
+            patch("ollama_cmd.onboarding.save_config", return_value=config_path),
+            patch("rich.prompt.Prompt.ask") as mock_ask,
+            patch("ollama_cmd.onboarding.console"),
+            patch("ollama_cmd.onboarding._fetch_provider_models", return_value=fetched),
+        ):
+            mock_ask.side_effect = [
+                "gemini",  # provider
+                "test-gemini-key",  # API key
+                "2",  # model by number (gemini-2.5-flash)
+            ]
+            result = run_onboarding()
+
+        assert result.provider == "gemini"
+        assert result.ollama_model == "gemini-2.5-flash"
+        assert result.onboarding_complete is True
+
+    def test_run_onboarding_model_fetch_failure_falls_back(self, tmp_path: Path) -> None:
+        """When model fetching fails, wizard falls back to manual entry."""
+        cfg = OllamaCliConfig()
+        config_path = tmp_path / "config.json"
+
+        with (
+            patch("ollama_cmd.onboarding.get_config", return_value=cfg),
+            patch("ollama_cmd.onboarding.save_config", return_value=config_path),
+            patch("rich.prompt.Prompt.ask") as mock_ask,
+            patch("ollama_cmd.onboarding.console"),
+            patch("ollama_cmd.onboarding._fetch_provider_models", return_value=[]),
+        ):
+            mock_ask.side_effect = [
+                "claude",  # provider
+                "sk-test-key",  # API key
+                "claude-sonnet-4-20250514",  # model (manual)
+            ]
+            result = run_onboarding()
+
+        assert result.provider == "claude"
+        assert result.ollama_model == "claude-sonnet-4-20250514"
+        assert result.onboarding_complete is True
+
+    def test_run_onboarding_model_selection_by_name(self, tmp_path: Path) -> None:
+        """User can type a model name from the fetched list."""
+        cfg = OllamaCliConfig()
+        config_path = tmp_path / "config.json"
+        fetched = ["gpt-4.1", "gpt-4.1-mini", "gpt-4o"]
+
+        with (
+            patch("ollama_cmd.onboarding.get_config", return_value=cfg),
+            patch("ollama_cmd.onboarding.save_config", return_value=config_path),
+            patch("rich.prompt.Prompt.ask") as mock_ask,
+            patch("ollama_cmd.onboarding.console"),
+            patch("ollama_cmd.onboarding._fetch_provider_models", return_value=fetched),
+        ):
+            mock_ask.side_effect = [
+                "codex",  # provider
+                "sk-openai-key",  # API key
+                "gpt-4o",  # model by name
+            ]
+            result = run_onboarding()
+
+        assert result.provider == "codex"
+        assert result.ollama_model == "gpt-4o"
         assert result.onboarding_complete is True

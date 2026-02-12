@@ -8,6 +8,7 @@ again unless the user deletes the config.
 
 from __future__ import annotations
 
+import asyncio
 import os
 
 from rich.console import Console
@@ -41,6 +42,23 @@ _DEFAULT_MODELS: dict[str, str] = {
     "codex": "gpt-4.1",
     "hf": "mistralai/Mistral-7B-Instruct-v0.2",
 }
+
+
+def _fetch_provider_models(provider_name: str) -> list[str]:
+    """Fetch available models from a cloud provider.
+
+    Returns a list of model identifiers, or an empty list on failure.
+    """
+    from api.provider_router import ProviderRouter
+
+    try:
+        router = ProviderRouter()
+        provider = router.get_provider(provider_name)
+        models = asyncio.run(provider.list_models())
+        asyncio.run(provider.close())
+        return models
+    except Exception:
+        return []
 
 
 def needs_onboarding() -> bool:
@@ -112,10 +130,40 @@ def run_onboarding() -> OllamaCliConfig:
 
     # --- 3. Choose model ----------------------------------------------------
     default_model = _DEFAULT_MODELS.get(provider_choice, "llama3.2")
-    model = Prompt.ask(
-        "Default model",
-        default=default_model,
-    )
+
+    # For cloud providers, try to fetch available models automatically.
+    fetched_models: list[str] = []
+    if key_field is not None:
+        api_key_value = getattr(cfg, key_field, "")
+        if api_key_value:
+            console.print("\n[dim]Fetching available models…[/dim]")
+            fetched_models = _fetch_provider_models(provider_choice)
+
+    if fetched_models:
+        console.print(f"\n[bold]Available {provider_choice} models:[/bold]")
+        for i, m in enumerate(fetched_models, 1):
+            marker = " [green](default)[/green]" if m == default_model else ""
+            console.print(f"  {i}. {m}{marker}")
+        console.print()
+
+        while True:
+            raw_model = Prompt.ask("Choose a model (name or number)", default=default_model)
+            if raw_model.isdigit() and 1 <= int(raw_model) <= len(fetched_models):
+                model = fetched_models[int(raw_model) - 1]
+                break
+            if raw_model in fetched_models or raw_model == default_model:
+                model = raw_model
+                break
+            # Allow any free-form model name as well
+            if raw_model:
+                model = raw_model
+                break
+            console.print("[prompt.invalid]Please enter a model name or number")
+    else:
+        model = Prompt.ask(
+            "Default model",
+            default=default_model,
+        )
     cfg.ollama_model = model
 
     # --- 4. Ollama host (for ollama provider) -------------------------------
