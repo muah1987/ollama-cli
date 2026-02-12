@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import readline
 import sys
 import threading
@@ -341,6 +342,72 @@ class InteractiveMode:
             prefix = _green(f"[{self.session.model}] ")
         print(f"{prefix}{text}")
 
+    # -- hook helpers --------------------------------------------------------
+
+    @staticmethod
+    def _fire_hook(event: str, payload: dict[str, Any], *, timeout: int = 15) -> list[Any]:
+        """Fire a named hook event and return the results.
+
+        Returns an empty list if hooks are not available or an error occurs.
+        """
+        try:
+            from server.hook_runner import HookRunner
+
+            runner = HookRunner()
+            if runner.is_enabled():
+                return runner.run_hook(event, payload, timeout=timeout)
+        except Exception:  # noqa: BLE001
+            logger.debug("Failed to fire %s hook", event, exc_info=True)
+        return []
+
+    def _fire_notification(self, ntype: str, message: str) -> None:
+        """Fire a Notification hook with the given type and message."""
+        self._fire_hook("Notification", {
+            "type": ntype,
+            "message": message,
+            "session_id": self.session.session_id,
+            "model": self.session.model,
+        })
+
+    # -- persistent bottom status bar ----------------------------------------
+
+    def _print_status_bar(self) -> None:
+        """Print the persistent bottom status bar.
+
+        Layout: ``cwd | session-uuid | model | context% | cost``
+
+        This bar is shown after every response and slash command so it
+        remains visible even after the TOP banner scrolls off screen.
+        """
+        ctx = self.session.context_manager.get_context_usage()
+        pct = ctx.get("percentage", 0)
+        tokens_left = max(0, ctx.get("remaining", ctx.get("max", 0) - ctx.get("used", 0)))
+        cost = self.session.token_counter.format_json().get("cost_estimate", 0.0)
+        sid = self.session.session_id
+        sid_short = (sid[:8] + "…") if len(sid) > 8 else sid
+        cwd = os.path.basename(os.getcwd()) or "/"
+
+        # Color context percentage based on usage
+        if pct < 50:
+            pct_str = _green(f"{pct}%")
+        elif pct < 75:
+            pct_str = _yellow(f"{pct}%")
+        elif pct < 90:
+            pct_str = _magenta(f"{pct}%")
+        else:
+            pct_str = _red(f"{pct}%")
+
+        bar = (
+            f"{_dim('─' * 60)}\n"
+            f"{_dim('📁')} {_white(cwd)} "
+            f"{_dim('│')} {_dim('🔑')} {_cyan(sid_short)} "
+            f"{_dim('│')} {_dim('🦙')} {_green(self.session.model)} "
+            f"{_dim('│')} {pct_str} "
+            f"{_dim('│')} {_dim('~')}{tokens_left:,}{_dim(' left')} "
+            f"{_dim('│')} {_green(f'${cost:.4f}')}"
+        )
+        print(bar)
+
     # -- llama spinner -------------------------------------------------------
 
     @staticmethod
@@ -565,6 +632,16 @@ class InteractiveMode:
             self._print_system("  Nothing to compact (message count ≤ keep_last_n).")
             print()
             return False
+
+        # Fire PreCompact hook before compaction
+        self._fire_hook("PreCompact", {
+            "session_id": self.session.session_id,
+            "context_used": usage_before.get("used", 0),
+            "context_max": usage_before.get("max", 0),
+            "context_percentage": usage_before.get("percentage", 0),
+            "message_count": len(cm.messages),
+            "trigger": "manual",
+        })
 
         try:
             result = await self.session.compact()
@@ -1715,6 +1792,18 @@ class InteractiveMode:
         self._running = True
         self._print_banner()
 
+        # Fire SessionStart hook
+        self._fire_hook("SessionStart", {
+            "session_id": self.session.session_id,
+            "model": self.session.model,
+            "provider": self.session.provider,
+            "source": "interactive",
+            "context_length": self.session.context_manager.max_length,
+        })
+
+        # Show initial bottom status bar
+        self._print_status_bar()
+
         try:
             while self._running:
                 try:
@@ -1741,6 +1830,8 @@ class InteractiveMode:
                     if should_exit:
                         self._print_system("Goodbye.")
                         break
+                    # BOTTOM: update status bar after slash commands
+                    self._print_status_bar()
                     continue
 
                 # Check if this is an agent-specific command
@@ -1780,6 +1871,10 @@ class InteractiveMode:
                 # Notify on auto-compaction
                 if result.get("compacted"):
                     self._print_system("(Context was auto-compacted)")
+                    self._fire_notification("info", "Context was auto-compacted")
+
+                # BOTTOM: persistent status bar after every response
+                self._print_status_bar()
 
         finally:
             self._running = False
@@ -1804,6 +1899,17 @@ class InteractiveMode:
                 self._print_system(
                     f"Session ended: {duration}, {total_msgs} messages, {total_tokens:,} tokens, ${cost:.4f}"
                 )
+
+                # Fire SessionEnd hook
+                self._fire_hook("SessionEnd", {
+                    "session_id": self.session.session_id,
+                    "model": self.session.model,
+                    "provider": self.session.provider,
+                    "duration": duration,
+                    "messages": total_msgs,
+                    "total_tokens": total_tokens,
+                    "cost": cost,
+                })
             except Exception:
                 logger.warning("Failed to end session cleanly", exc_info=True)
 

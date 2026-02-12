@@ -832,6 +832,105 @@ class TestHooksIntegration:
         hooks_dir = Path(_PROJECT_DIR) / ".ollama" / "hooks"
         assert hooks_dir.is_dir(), "Hooks directory missing"
 
+    def test_all_hook_events_registered(self) -> None:
+        """Verify all hook events are in settings.json."""
+        settings_path = Path(_PROJECT_DIR) / ".ollama" / "settings.json"
+        assert settings_path.is_file()
+        data = json.loads(settings_path.read_text())
+        hooks = data.get("hooks", {})
+        expected = {"PreToolUse", "PostToolUse", "SessionStart", "SessionEnd", "PreCompact", "Stop", "Notification"}
+        assert expected.issubset(set(hooks.keys())), f"Missing hooks: {expected - set(hooks.keys())}"
+
+    def test_hook_scripts_exist(self) -> None:
+        """Verify each hook event has a corresponding .py script."""
+        hooks_dir = Path(_PROJECT_DIR) / ".ollama" / "hooks"
+        expected_scripts = [
+            "pre_tool_use.py",
+            "post_tool_use.py",
+            "session_start.py",
+            "session_end.py",
+            "pre_compact.py",
+            "stop.py",
+            "notification.py",
+        ]
+        for script in expected_scripts:
+            assert (hooks_dir / script).is_file(), f"Missing hook script: {script}"
+
+    def test_fire_hook_helper(self) -> None:
+        """Test that _fire_hook returns a list even when hooks are unconfigured."""
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                (
+                    "import asyncio; import sys; sys.path.insert(0, '.');"
+                    "from model.session import Session; from cmd.interactive import InteractiveMode;"
+                    "s = Session(model='test', provider='ollama');"
+                    "asyncio.get_event_loop().run_until_complete(s.start());"
+                    "r = InteractiveMode(s);"
+                    "result = r._fire_hook('SessionStart', {'session_id': 'test'});"
+                    "assert isinstance(result, list);"
+                    "print('fire_hook_ok')"
+                ),
+            ],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_DIR,
+        )
+        assert "fire_hook_ok" in result.stdout
+
+    def test_status_bar_method_exists(self) -> None:
+        """Verify _print_status_bar method exists and runs without error."""
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                (
+                    "import asyncio; import sys; sys.path.insert(0, '.');"
+                    "from model.session import Session; from cmd.interactive import InteractiveMode;"
+                    "s = Session(model='test', provider='ollama');"
+                    "asyncio.get_event_loop().run_until_complete(s.start());"
+                    "r = InteractiveMode(s);"
+                    "r._print_status_bar();"
+                    "print('status_bar_ok')"
+                ),
+            ],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_DIR,
+        )
+        assert "status_bar_ok" in result.stdout
+
+    def test_fire_notification_helper(self) -> None:
+        """Test that _fire_notification runs without error."""
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                (
+                    "import asyncio; import sys; sys.path.insert(0, '.');"
+                    "from model.session import Session; from cmd.interactive import InteractiveMode;"
+                    "s = Session(model='test', provider='ollama');"
+                    "asyncio.get_event_loop().run_until_complete(s.start());"
+                    "r = InteractiveMode(s);"
+                    "r._fire_notification('info', 'test message');"
+                    "print('notification_ok')"
+                ),
+            ],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_DIR,
+        )
+        assert "notification_ok" in result.stdout
+
+    def test_status_lines_directory(self) -> None:
+        """Verify status_lines directory exists with expected scripts."""
+        status_dir = Path(_PROJECT_DIR) / ".ollama" / "status_lines"
+        assert status_dir.is_dir(), "status_lines directory missing"
+        expected = ["status_line_full_dashboard.py", "status_line_token_counter.py", "status_utils.py"]
+        for script in expected:
+            assert (status_dir / script).is_file(), f"Missing status line: {script}"
+
 
 # ===========================================================================
 # 9. CLI ENTRYPOINT
