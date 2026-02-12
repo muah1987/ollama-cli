@@ -31,7 +31,7 @@ jobs:
       - uses: astral-sh/setup-uv@v7
 
       - name: Install dependencies
-        run: uv sync --dev
+        run: uv sync --dev --extra dev
 
       - name: Run semantic release
         run: uv run semantic-release publish
