@@ -1,4 +1,4 @@
-[![Auto Release](https://github.com/muah1987/ollama-cli/actions/workflows/autorelease.yml/badge.svg?event=milestone)](https://github.com/muah1987/ollama-cli/actions/workflows/autorelease.yml)
+[![Auto Release](https://github.com/muah1987/ollama-cli/actions/workflows/autorelease.yml/badge.svg?event=milestone)](https://github.com/muah1987/ollama-cli/actions/workflows/autorelease.yml) [![Release](https://github.com/muah1987/ollama-cli/actions/workflows/release.yml/badge.svg)](https://github.com/muah1987/ollama-cli/actions/workflows/release.yml)
 
 # Ollama CLI Documentation
 
