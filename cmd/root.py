@@ -310,6 +310,19 @@ def build_parser() -> argparse.ArgumentParser:
         default=False,
         help="Resume the most recent conversation",
     )
+    parser.add_argument(
+        "--output-format",
+        type=str,
+        choices=["text", "json", "markdown"],
+        default=None,
+        help="Output format (text, json, markdown)",
+    )
+    parser.add_argument(
+        "--allowed-tools",
+        type=str,
+        default=None,
+        help="Comma-separated list of allowed tool names (e.g. file_read,grep_search)",
+    )
     parser.add_argument("--json", action="store_true", default=False, help="JSON output mode")
     parser.add_argument("--verbose", action="store_true", default=False, help="Verbose output")
     parser.add_argument("--no-hooks", action="store_true", default=False, help="Disable hooks")
@@ -418,7 +431,13 @@ def _extract_prompt_args(argv: list[str]) -> tuple[list[str], str | None]:
         if arg.startswith("-"):
             flags.append(arg)
             # Consume the next token if this flag expects a value
-            if arg in ("--model", "--provider", "--system-prompt") and i + 1 < len(argv):
+            if arg in (
+                "--model",
+                "--provider",
+                "--system-prompt",
+                "--output-format",
+                "--allowed-tools",
+            ) and i + 1 < len(argv):
                 i += 1
                 flags.append(argv[i])
         else:
@@ -468,27 +487,12 @@ def main() -> None:
         # Parse only the flags (no subcommand)
         args = parser.parse_args(filtered_args)
         args.prompt = direct_prompt or piped_input
-        # Apply global flag overrides to config
-        cfg = get_config()
-        if args.model:
-            cfg.ollama_model = args.model
-        if args.provider:
-            cfg.provider = args.provider
-        if args.no_hooks:
-            cfg.hooks_enabled = False
+        _apply_global_flags(args)
         cmd_run_prompt(args)
         return
 
     args = parser.parse_args()
-
-    # Apply global flag overrides to config
-    cfg = get_config()
-    if args.model:
-        cfg.ollama_model = args.model
-    if args.provider:
-        cfg.provider = args.provider
-    if args.no_hooks:
-        cfg.hooks_enabled = False
+    _apply_global_flags(args)
 
     command = args.command
     if not command:
@@ -504,6 +508,24 @@ def main() -> None:
         sys.exit(1)
 
     COMMAND_MAP[command](args)
+
+
+def _apply_global_flags(args: argparse.Namespace) -> None:
+    """Apply global CLI flags to the config singleton."""
+    cfg = get_config()
+    if args.model:
+        cfg.ollama_model = args.model
+    if args.provider:
+        cfg.provider = args.provider
+    if args.no_hooks:
+        cfg.hooks_enabled = False
+    if getattr(args, "output_format", None):
+        cfg.output_format = args.output_format  # type: ignore[attr-defined]
+    if getattr(args, "json", False) and not getattr(args, "output_format", None):
+        cfg.output_format = "json"  # type: ignore[attr-defined]
+    allowed = getattr(args, "allowed_tools", None)
+    if allowed:
+        cfg.allowed_tools = [t.strip() for t in allowed.split(",")]  # type: ignore[attr-defined]
 
 
 if __name__ == "__main__":

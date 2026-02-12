@@ -104,6 +104,12 @@ class InteractiveMode:
         "/save": "_cmd_save",
         "/load": "_cmd_load",
         "/history": "_cmd_history",
+        "/memory": "_cmd_memory",
+        "/tools": "_cmd_tools",
+        "/tool": "_cmd_tool",
+        "/diff": "_cmd_diff",
+        "/config": "_cmd_config",
+        "/bug": "_cmd_bug",
         "/help": "_cmd_help",
         "/quit": "_cmd_quit",
         "/exit": "_cmd_quit",
@@ -492,6 +498,12 @@ class InteractiveMode:
         print(f"  {_cyan('/save [name]')}      Save session to file")
         print(f"  {_cyan('/load <name>')}      Load session from file")
         print(f"  {_cyan('/history')}          Show conversation history")
+        print(f"  {_cyan('/memory [note]')}    View or add to project memory (OLLAMA.md)")
+        print(f"  {_cyan('/tools')}            List available built-in tools")
+        print(f"  {_cyan('/tool <name> ...')}  Invoke a tool (file_read, shell_exec, ...)")
+        print(f"  {_cyan('/diff')}             Show git diff of working directory")
+        print(f"  {_cyan('/config [k] [v]')}   View or set configuration")
+        print(f"  {_cyan('/bug [desc]')}       File a bug report about the session")
         print(f"  {_cyan('/set-agent-model <type:provider:model>}')}  Assign model to agent type")
         print(f"  {_cyan('/list-agent-models')} List agent model assignments")
         print(f"  {_cyan('/help')}             Show this help message")
@@ -545,6 +557,315 @@ class InteractiveMode:
             self._print_info("Agent Model Assignments:")
             for agent_type, (provider, model) in _AGENT_MODEL_MAP.items():
                 self._print_system(f"  {agent_type}: {provider}:{model}")
+        return False
+
+    # -- new commands (Gemini CLI / Claude Code / Codex parity) ----------------
+
+    def _cmd_memory(self, arg: str) -> bool:
+        """Read or append to OLLAMA.md project memory file.
+
+        Usage: ``/memory`` to view, ``/memory <note>`` to append a note.
+
+        Returns
+        -------
+        Always ``False`` (continue REPL).
+        """
+        memory_file = Path("OLLAMA.md")
+
+        if not arg:
+            # Display current memory
+            if memory_file.is_file():
+                try:
+                    content = memory_file.read_text(encoding="utf-8")
+                    self._print_info("--- Project Memory (OLLAMA.md) ---")
+                    print(content[:2000] if len(content) <= 2000 else content[:2000] + "\n...")
+                except OSError as exc:
+                    self._print_error(f"Cannot read OLLAMA.md: {exc}")
+            else:
+                self._print_system("No OLLAMA.md found. Use /memory <note> to create one.")
+            return False
+
+        # Append a note
+        try:
+            with open(memory_file, "a", encoding="utf-8") as f:
+                f.write(f"\n- {arg}\n")
+            self._print_info(f"Added to OLLAMA.md: {arg}")
+        except OSError as exc:
+            self._print_error(f"Cannot write to OLLAMA.md: {exc}")
+        return False
+
+    def _cmd_tools(self, _arg: str) -> bool:
+        """List all available built-in tools.
+
+        Returns
+        -------
+        Always ``False`` (continue REPL).
+        """
+        from skills.tools import list_tools
+
+        tools = list_tools()
+        print()
+        self._print_info("Available tools:")
+        for t in tools:
+            risk_color = {"low": _green, "medium": _cyan, "high": _red}.get(t["risk"], _dim)
+            print(f"  {_cyan(t['name']):30s} {t['description']:35s} [{risk_color(t['risk'])}]")
+        print()
+        self._print_system("Use /tool <name> [args...] to invoke a tool.")
+        print()
+        return False
+
+    def _cmd_tool(self, arg: str) -> bool:
+        """Invoke a built-in tool by name.
+
+        Usage: ``/tool file_read path/to/file``
+
+        Returns
+        -------
+        Always ``False`` (continue REPL).
+        """
+        import json as _json
+
+        from server.hook_runner import HookRunner
+        from skills.tools import get_tool
+
+        if not arg:
+            self._print_error("Usage: /tool <name> [args...]")
+            self._print_system("  Example: /tool file_read README.md")
+            return False
+
+        parts = arg.split(maxsplit=1)
+        tool_name = parts[0]
+        tool_arg = parts[1] if len(parts) > 1 else ""
+
+        entry = get_tool(tool_name)
+        if entry is None:
+            self._print_error(f"Unknown tool: {tool_name}")
+            return False
+
+        # Check allowed-tools filter
+        from api.config import get_config
+
+        cfg = get_config()
+        allowed = getattr(cfg, "allowed_tools", None)
+        if allowed and tool_name not in allowed:
+            self._print_error(f"Tool '{tool_name}' is not in --allowed-tools list.")
+            return False
+
+        # Run PreToolUse hook for approval
+        hook_payload = {"tool_name": tool_name, "arguments": tool_arg, "risk": entry["risk"]}
+        try:
+            runner = HookRunner()
+            if runner.is_enabled():
+                results = runner.run_hook("PreToolUse", hook_payload, timeout=10)
+                for r in results:
+                    decision = r.permission_decision
+                    if decision == "deny":
+                        self._print_error(f"Tool '{tool_name}' blocked by PreToolUse hook.")
+                        return False
+                    if decision == "ask":
+                        try:
+                            answer = input(f"Allow tool '{tool_name}'? [y/N] ").strip().lower()
+                        except (EOFError, KeyboardInterrupt):
+                            answer = "n"
+                        if answer != "y":
+                            self._print_system("Tool execution cancelled.")
+                            return False
+        except Exception:
+            logger.debug("PreToolUse hook check failed, proceeding", exc_info=True)
+
+        # Execute the tool
+        func = entry["function"]
+        try:
+            if tool_name == "file_read":
+                result = func(tool_arg)
+            elif tool_name == "file_write":
+                # /tool file_write path content...
+                write_parts = tool_arg.split(maxsplit=1)
+                if len(write_parts) < 2:
+                    self._print_error("Usage: /tool file_write <path> <content>")
+                    return False
+                result = func(write_parts[0], write_parts[1])
+            elif tool_name == "file_edit":
+                # /tool file_edit path|||old_text|||new_text
+                edit_parts = tool_arg.split("|||")
+                if len(edit_parts) != 3:
+                    self._print_error("Usage: /tool file_edit <path>|||<old_text>|||<new_text>")
+                    return False
+                result = func(edit_parts[0].strip(), edit_parts[1], edit_parts[2])
+            elif tool_name == "grep_search":
+                search_parts = tool_arg.split(maxsplit=1)
+                pattern = search_parts[0] if search_parts else ""
+                path = search_parts[1] if len(search_parts) > 1 else "."
+                result = func(pattern, path)
+            elif tool_name == "shell_exec":
+                result = func(tool_arg)
+            elif tool_name == "web_fetch":
+                result = func(tool_arg)
+            else:
+                result = {"error": f"No invocation handler for tool: {tool_name}"}
+        except Exception as exc:
+            result = {"error": str(exc)}
+
+        # Run PostToolUse hook
+        try:
+            runner = HookRunner()
+            if runner.is_enabled():
+                post_payload = {"tool_name": tool_name, "result": str(result)[:500]}
+                runner.run_hook("PostToolUse", post_payload, timeout=10)
+        except Exception:
+            logger.debug("PostToolUse hook failed", exc_info=True)
+
+        # Display result
+        if "error" in result:
+            self._print_error(f"Error: {result['error']}")
+        else:
+            self._print_info(f"[{tool_name}] result:")
+            print(_json.dumps(result, indent=2, default=str)[:3000])
+        return False
+
+    def _cmd_diff(self, _arg: str) -> bool:
+        """Show git diff of the working directory.
+
+        Returns
+        -------
+        Always ``False`` (continue REPL).
+        """
+        import subprocess
+
+        try:
+            proc = subprocess.run(
+                ["git", "diff", "--stat"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+            if proc.returncode != 0:
+                self._print_error("Not a git repository or git not available.")
+                return False
+            stat_output = proc.stdout.strip()
+            if not stat_output:
+                self._print_system("No uncommitted changes.")
+                return False
+            self._print_info("--- Git Diff (stat) ---")
+            print(stat_output)
+            # Also show short diff
+            proc2 = subprocess.run(
+                ["git", "diff", "--no-color"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+            diff_text = proc2.stdout.strip()
+            if diff_text:
+                print()
+                # Truncate very long diffs
+                if len(diff_text) > 3000:
+                    print(diff_text[:3000])
+                    self._print_system(f"... ({len(diff_text) - 3000} more characters)")
+                else:
+                    print(diff_text)
+        except FileNotFoundError:
+            self._print_error("git is not installed.")
+        except subprocess.TimeoutExpired:
+            self._print_error("git diff timed out.")
+        return False
+
+    def _cmd_config(self, arg: str) -> bool:
+        """View or set configuration values.
+
+        Usage: ``/config`` to view all, ``/config <key> <value>`` to set.
+
+        Returns
+        -------
+        Always ``False`` (continue REPL).
+        """
+        from api.config import get_config, save_config
+
+        cfg = get_config()
+
+        if not arg:
+            # Show current configuration
+            print()
+            self._print_info("--- Configuration ---")
+            self._print_info(f"  ollama_host:       {cfg.ollama_host}")
+            self._print_info(f"  ollama_model:      {cfg.ollama_model}")
+            self._print_info(f"  provider:          {cfg.provider}")
+            self._print_info(f"  context_length:    {cfg.context_length}")
+            self._print_info(f"  auto_compact:      {cfg.auto_compact}")
+            self._print_info(f"  compact_threshold: {cfg.compact_threshold}")
+            self._print_info(f"  hooks_enabled:     {cfg.hooks_enabled}")
+            print()
+            self._print_system("Use /config <key> <value> to change a setting.")
+            return False
+
+        parts = arg.split(maxsplit=1)
+        key = parts[0]
+        value = parts[1] if len(parts) > 1 else ""
+
+        if not hasattr(cfg, key):
+            self._print_error(f"Unknown config key: {key}")
+            return False
+
+        if not value:
+            self._print_info(f"  {key} = {getattr(cfg, key)}")
+            return False
+
+        # Type-coerce the value
+        current = getattr(cfg, key)
+        try:
+            if isinstance(current, bool):
+                coerced = value.lower() in ("1", "true", "yes", "on")
+            elif isinstance(current, int):
+                coerced = int(value)
+            elif isinstance(current, float):
+                coerced = float(value)
+            else:
+                coerced = value
+            setattr(cfg, key, coerced)
+            save_config(cfg)
+            self._print_info(f"  {key} = {coerced} (saved)")
+        except (ValueError, TypeError) as exc:
+            self._print_error(f"Invalid value for {key}: {exc}")
+        return False
+
+    def _cmd_bug(self, arg: str) -> bool:
+        """File a bug report about the current session.
+
+        Saves session context and a description to ``.ollama/bugs/``.
+
+        Returns
+        -------
+        Always ``False`` (continue REPL).
+        """
+        import json as _json
+        from datetime import datetime, timezone
+
+        description = arg or "No description provided"
+        bug_dir = Path(".ollama/bugs")
+        bug_dir.mkdir(parents=True, exist_ok=True)
+
+        bug_id = datetime.now(tz=timezone.utc).strftime("%Y%m%d_%H%M%S")
+        bug_file = bug_dir / f"bug_{bug_id}.json"
+
+        status = self.session.get_status()
+        report = {
+            "id": bug_id,
+            "description": description,
+            "session_id": status["session_id"],
+            "model": status["model"],
+            "provider": status["provider"],
+            "messages": status["messages"],
+            "token_metrics": status["token_metrics"],
+            "context_usage": status["context_usage"],
+            "recent_messages": self.session.context_manager.messages[-5:],
+            "timestamp": datetime.now(tz=timezone.utc).isoformat(),
+        }
+
+        try:
+            bug_file.write_text(_json.dumps(report, indent=2, default=str), encoding="utf-8")
+            self._print_info(f"Bug report saved: {bug_file}")
+        except OSError as exc:
+            self._print_error(f"Failed to save bug report: {exc}")
         return False
 
     def _cmd_quit(self, _arg: str) -> bool:

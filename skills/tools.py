@@ -168,11 +168,25 @@ def tool_grep_search(
         return {"error": f"Path is ignored by .ollamaignore: {path}"}
     try:
         proc = subprocess.run(
-            ["grep", "-rn", "--include=*.py", "--include=*.md", "--include=*.txt",
-             "--include=*.json", "--include=*.yaml", "--include=*.yml",
-             "--include=*.toml", "--include=*.cfg", "--include=*.ini",
-             "--include=*.js", "--include=*.ts", "--include=*.html", "--include=*.css",
-             pattern, path],
+            [
+                "grep",
+                "-rn",
+                "--include=*.py",
+                "--include=*.md",
+                "--include=*.txt",
+                "--include=*.json",
+                "--include=*.yaml",
+                "--include=*.yml",
+                "--include=*.toml",
+                "--include=*.cfg",
+                "--include=*.ini",
+                "--include=*.js",
+                "--include=*.ts",
+                "--include=*.html",
+                "--include=*.css",
+                pattern,
+                path,
+            ],
             capture_output=True,
             text=True,
             timeout=15,
@@ -312,7 +326,4 @@ def get_tool(name: str) -> dict[str, Any] | None:
 
 def list_tools() -> list[dict[str, str]]:
     """Return a summary of all available tools."""
-    return [
-        {"name": name, "description": info["description"], "risk": info["risk"]}
-        for name, info in TOOLS.items()
-    ]
+    return [{"name": name, "description": info["description"], "risk": info["risk"]} for name, info in TOOLS.items()]
