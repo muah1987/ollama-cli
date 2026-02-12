@@ -479,15 +479,22 @@ class InteractiveMode:
 
     # -- persistent bottom status bar ----------------------------------------
 
+    @staticmethod
+    def _get_terminal_height() -> int:
+        """Return the terminal height in rows, defaulting to 24."""
+        try:
+            return os.get_terminal_size().lines
+        except (ValueError, OSError):
+            return 24
+
     def _print_status_bar(self) -> None:
-        """Print the persistent bottom status bar.
+        """Render the persistent status bar pinned to the bottom of the terminal.
 
         Layout: ``cwd | session-uuid | model/status | context% | cost | job``
 
-        This bar is shown after every response and slash command so it
-        remains visible even after the TOP banner scrolls off screen.
-        The bar includes current job info so the user always has context
-        about what the CLI is doing.
+        Uses ANSI escape sequences to position the bar at the terminal's
+        last two rows while keeping the prompt input in the MID zone.
+        A scroll region is set so that normal output never overwrites the bar.
         """
         ctx = self.session.context_manager.get_context_usage()
         pct = int(ctx.get("percentage", 0))
@@ -519,8 +526,8 @@ class InteractiveMode:
         else:
             job_str = _cyan(f"◉ {job}")
 
-        bar = (
-            f"{_dim('─' * 60)}\n"
+        separator = _dim("─" * 60)
+        info_line = (
             f"{_dim('📁')} {_white(cwd)} "
             f"{_dim('│')} {_dim('🔑')} {_cyan(sid_short)} "
             f"{_dim('│')} {_dim('🦙')} {_green(self.session.model)} "
@@ -529,7 +536,27 @@ class InteractiveMode:
             f"{_dim('│')} {_green(f'${cost:.4f}')} "
             f"{_dim('│')} {job_str}"
         )
-        print(bar)
+
+        rows = self._get_terminal_height()
+
+        # Set scroll region to leave bottom 2 rows for the status bar.
+        # \033[1;{rows-2}r  — set scroll region from line 1 to rows-2
+        sys.stdout.write(f"\033[1;{rows - 2}r")
+
+        # Save cursor position
+        sys.stdout.write("\0337")
+
+        # Move to status bar area (row rows-1 for separator, row rows for info)
+        sys.stdout.write(f"\033[{rows - 1};1H")
+        sys.stdout.write("\033[K")  # clear line
+        sys.stdout.write(separator)
+        sys.stdout.write(f"\033[{rows};1H")
+        sys.stdout.write("\033[K")  # clear line
+        sys.stdout.write(info_line)
+
+        # Restore cursor position back to the MID zone
+        sys.stdout.write("\0338")
+        sys.stdout.flush()
 
     # -- llama spinner -------------------------------------------------------
 

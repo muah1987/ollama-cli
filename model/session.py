@@ -218,7 +218,9 @@ class Session:
 
         try:
             # Route through the provider router
-            response = await self.provider_router.route(task_type="agent", messages=messages, agent_type=agent_type)
+            response = await self.provider_router.route(
+                task_type="agent", messages=messages, agent_type=agent_type, model=self.model,
+            )
 
             # Extract response content and metrics
             if isinstance(response, dict):
