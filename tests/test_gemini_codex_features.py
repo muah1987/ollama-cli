@@ -159,32 +159,30 @@ class TestOllamaIgnore:
         ignore_file.write_text("secret.txt\n*.key\n")
         monkeypatch.chdir(tmp_path)
 
-        # Reset cached patterns
-        import skills.tools
+        from skills.tools import clear_ignore_cache, is_path_ignored
 
-        skills.tools._IGNORE_PATTERNS = None
+        clear_ignore_cache()
 
-        assert skills.tools.is_path_ignored("secret.txt") is True
-        assert skills.tools.is_path_ignored("my.key") is True
-        assert skills.tools.is_path_ignored("readme.md") is False
+        assert is_path_ignored("secret.txt") is True
+        assert is_path_ignored("my.key") is True
+        assert is_path_ignored("readme.md") is False
 
-        # Clean up
-        skills.tools._IGNORE_PATTERNS = None
+        clear_ignore_cache()
 
     def test_file_read_blocked_by_ignore(self, tmp_path: Path, monkeypatch) -> None:
         (tmp_path / ".ollamaignore").write_text("blocked.txt\n")
         (tmp_path / "blocked.txt").write_text("secret data")
         monkeypatch.chdir(tmp_path)
 
-        import skills.tools
+        from skills.tools import clear_ignore_cache, tool_file_read
 
-        skills.tools._IGNORE_PATTERNS = None
+        clear_ignore_cache()
 
-        result = skills.tools.tool_file_read("blocked.txt")
+        result = tool_file_read("blocked.txt")
         assert "error" in result
         assert "ignored" in result["error"].lower()
 
-        skills.tools._IGNORE_PATTERNS = None
+        clear_ignore_cache()
 
 
 # ---------------------------------------------------------------------------

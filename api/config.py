@@ -40,6 +40,8 @@ class OllamaCliConfig:
     gemini_api_key: str = ""
     openai_api_key: str = ""
     hooks_enabled: bool = True
+    output_format: str = "text"
+    allowed_tools: list[str] | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -163,10 +165,10 @@ def save_config(config: OllamaCliConfig, path: str | Path | None = None) -> Path
 
     path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Exclude sensitive keys from the persisted file
+    # Exclude sensitive and runtime-only keys from the persisted file
     data = asdict(config)
-    sensitive_keys = {"cloud_api_key", "anthropic_api_key", "gemini_api_key", "openai_api_key"}
-    for key in sensitive_keys:
+    excluded_keys = {"cloud_api_key", "anthropic_api_key", "gemini_api_key", "openai_api_key", "allowed_tools"}
+    for key in excluded_keys:
         data.pop(key, None)
 
     with open(path, "w") as f:

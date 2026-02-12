@@ -50,6 +50,12 @@ def is_path_ignored(path: str | Path) -> bool:
     return any(fnmatch.fnmatch(path_str, p) or fnmatch.fnmatch(Path(path_str).name, p) for p in patterns)
 
 
+def clear_ignore_cache() -> None:
+    """Reset the cached ``.ollamaignore`` patterns so they are reloaded on next access."""
+    global _IGNORE_PATTERNS
+    _IGNORE_PATTERNS = None
+
+
 # ---------------------------------------------------------------------------
 # Tool implementations
 # ---------------------------------------------------------------------------
@@ -57,6 +63,9 @@ def is_path_ignored(path: str | Path) -> bool:
 
 def tool_file_read(path: str, *, max_lines: int = 500) -> dict[str, Any]:
     """Read the contents of a file.
+
+    Non-UTF-8 bytes are replaced with U+FFFD so binary files can still
+    be partially inspected without raising an exception.
 
     Parameters
     ----------
@@ -264,7 +273,7 @@ def tool_web_fetch(url: str, *, max_length: int = 5000) -> dict[str, Any]:
         return {"error": "httpx not installed"}
 
     try:
-        resp = httpx.get(url, timeout=15.0, follow_redirects=True)
+        resp = httpx.get(url, timeout=15.0, follow_redirects=True, max_redirects=5)
         body = resp.text
         if len(body) > max_length:
             body = body[:max_length] + f"\n... (truncated at {max_length} chars)"

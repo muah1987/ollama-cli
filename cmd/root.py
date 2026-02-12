@@ -520,12 +520,12 @@ def _apply_global_flags(args: argparse.Namespace) -> None:
     if args.no_hooks:
         cfg.hooks_enabled = False
     if getattr(args, "output_format", None):
-        cfg.output_format = args.output_format  # type: ignore[attr-defined]
+        cfg.output_format = args.output_format
     if getattr(args, "json", False) and not getattr(args, "output_format", None):
-        cfg.output_format = "json"  # type: ignore[attr-defined]
+        cfg.output_format = "json"
     allowed = getattr(args, "allowed_tools", None)
     if allowed:
-        cfg.allowed_tools = [t.strip() for t in allowed.split(",")]  # type: ignore[attr-defined]
+        cfg.allowed_tools = [t.strip() for t in allowed.split(",")]
 
 
 if __name__ == "__main__":

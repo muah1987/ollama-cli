@@ -44,6 +44,7 @@ logger = logging.getLogger(__name__)
 _HISTORY_DIR = Path(".ollama")
 _HISTORY_FILE = _HISTORY_DIR / "history"
 _VALID_PROVIDERS = ("ollama", "claude", "gemini", "codex")
+_BUG_CONTEXT_MESSAGES = 5  # number of recent messages to include in bug reports
 
 # ---------------------------------------------------------------------------
 # ANSI escape helpers
@@ -857,7 +858,7 @@ class InteractiveMode:
             "messages": status["messages"],
             "token_metrics": status["token_metrics"],
             "context_usage": status["context_usage"],
-            "recent_messages": self.session.context_manager.messages[-5:],
+            "recent_messages": self.session.context_manager.messages[-_BUG_CONTEXT_MESSAGES:],
             "timestamp": datetime.now(tz=timezone.utc).isoformat(),
         }
 
