@@ -367,7 +367,7 @@ class InteractiveMode:
         ctx = status["context_usage"]
         compact_pct = int(self.session.context_manager.compact_threshold * 100)
         compact_status = _green("on") if self.session.context_manager.auto_compact else _red("off")
-        base_url = self.session.provider_router.config.base_url if hasattr(self.session.provider_router, "config") else "http://localhost:11434"
+        base_url = getattr(getattr(self.session.provider_router, "config", None), "base_url", "http://localhost:11434")
         mem_stats = self.session.memory_layer.get_token_savings()
         sid = self.session.session_id
         sid_short = (sid[:8] + "…") if len(sid) > 8 else sid
