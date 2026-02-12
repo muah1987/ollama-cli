@@ -52,12 +52,16 @@ def _fetch_provider_models(provider_name: str) -> list[str]:
     """
     from api.provider_router import ProviderRouter
 
-    try:
+    async def _list_and_close() -> list[str]:
         router = ProviderRouter()
         provider = router.get_provider(provider_name)
-        models = asyncio.run(provider.list_models())
-        asyncio.run(provider.close())
-        return models
+        try:
+            return await provider.list_models()
+        finally:
+            await provider.close()
+
+    try:
+        return asyncio.run(_list_and_close())
     except Exception:
         return []
 
@@ -163,9 +167,11 @@ def run_onboarding() -> OllamaCliConfig:
 
         while True:
             raw_model = Prompt.ask("Choose a model (name or number)", default=default_model)
-            if raw_model.isdigit() and 1 <= int(raw_model) <= len(fetched_models):
-                model = fetched_models[int(raw_model) - 1]
-                break
+            if raw_model.isdigit():
+                idx = int(raw_model)
+                if 1 <= idx <= len(fetched_models):
+                    model = fetched_models[idx - 1]
+                    break
             if raw_model in fetched_models or raw_model == default_model:
                 model = raw_model
                 break
