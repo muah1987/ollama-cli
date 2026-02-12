@@ -127,32 +127,14 @@ def _agent_color(agent_type: str, text: str) -> str:
 # Llama ASCII art – based on the Ollama brand llama
 # ---------------------------------------------------------------------------
 
-_LLAMA_BANNER = r"""
-       ##########                             ##########
-      #############                         #############
-     ######  ######                         ######  ######
-    ######    ######                       ######    ######
-    #####      ###### ################### ######      #####
-    #####       ###############################       #####
-    ######      ######                 ######      ######
-    ################                     ################
-   ###############                       ###############
-  ########                                       ########
- ######                                             ######
- #####          ###         ############         ###          #####
- #####         #####    ##################    #####         #####
- #####        ######  ######          ###### ######        #####
-  #####        ####  ####                ####  ####        #####
-   ######           ####     ##  ###      ####           ######
-    ######          ####     ######       ####          ######
-      ######        ####      ###        ####        ######
-       ######        ####               ####        ######
-        ######         #####         #####         ######
-         ######           ################           ######
-          #####              ############              #####
-          #####                                        #####
-          #####                                        #####
-"""
+_OLLAMA_LOGO = (
+    "  ██████╗ ██╗     ██╗      █████╗ ███╗   ███╗ █████╗     ██████╗██╗     ██╗",
+    " ██╔═══██╗██║     ██║     ██╔══██╗████╗ ████║██╔══██╗   ██╔════╝██║     ██║",
+    " ██║   ██║██║     ██║     ███████║██╔████╔██║███████║   ██║     ██║     ██║",
+    " ██║   ██║██║     ██║     ██╔══██║██║╚██╔╝██║██╔══██║   ██║     ██║     ██║",
+    " ╚██████╔╝███████╗███████╗██║  ██║██║ ╚═╝ ██║██║  ██║██╗╚██████╗███████╗██║",
+    "  ╚═════╝ ╚══════╝╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝ ╚═════╝╚══════╝╚═╝",
+)
 
 # Funny llama-themed spinner frames for "thinking" animation
 _LLAMA_SPINNER_FRAMES = [
@@ -375,7 +357,8 @@ class InteractiveMode:
     def _print_banner(self) -> None:
         """Print the welcome banner on REPL startup.
 
-        Uses the Ollama llama face branding with status info in a clean layout.
+        Uses the Ollama block-letter logo with side info panel, matching
+        the user-provided ``ollama_sideinfo_unicode.txt`` layout.
         """
         from cmd.root import VERSION
 
@@ -384,54 +367,51 @@ class InteractiveMode:
         ctx = status["context_usage"]
         compact_pct = int(self.session.context_manager.compact_threshold * 100)
         compact_status = _green("on") if self.session.context_manager.auto_compact else _red("off")
-        state = "resumed" if msg_count > 0 else "new session"
-
-        # Print llama face ASCII art in dim white
-        print()
-        for line in _LLAMA_BANNER.strip().splitlines():
-            print(_dim(line))
-
-        # Title line
-        print()
-        print(_bold(f"  ollama-cli v{VERSION}") + _dim(f"  ({state})"))
-        print()
-
-        # Status block in a box
-        w = 58
-        print(f"  ┌{'─' * w}┐")
-        print(f"  │{'':>{w}}│")
-        self._banner_line(w, "Model", self.session.model)
-        self._banner_line(w, "Provider", self.session.provider)
-        sid = self.session.session_id
-        sid_display = (sid[:24] + "…") if len(sid) > 25 else sid
-        self._banner_line(w, "Session", sid_display)
-        self._banner_line(w, "Context", f"{ctx['used']:,}/{ctx['max']:,} tokens ({ctx['percentage']}%)")
-        self._banner_line(w, "Compact", f"auto-compact {compact_status} (threshold {compact_pct}%)")
-        if msg_count > 0:
-            self._banner_line(w, "History", f"{msg_count} messages")
+        base_url = self.session.provider_router.config.base_url if hasattr(self.session.provider_router, "config") else "http://localhost:11434"
         mem_stats = self.session.memory_layer.get_token_savings()
+        sid = self.session.session_id
+        sid_short = (sid[:8] + "…") if len(sid) > 8 else sid
+
+        # Build side-info lines that appear to the right of the logo
+        side: list[str] = [
+            f"Ollama CLI v{VERSION}",
+            f"Model: {self.session.model}  •  Context: {ctx['max']:,}",
+            f"Runtime: {self.session.provider}  •  API: {base_url}",
+            f"Session: {sid_short}  •  Compact: {compact_status} ({compact_pct}%)",
+        ]
         if mem_stats["total_entries"] > 0:
-            self._banner_line(w, "Memory", f"{mem_stats['total_entries']} entries ({mem_stats['context_tokens_used']:,} tokens)")
-        print(f"  │{'':>{w}}│")
-        print(f"  └{'─' * w}┘")
+            side.append(f"Memory: {mem_stats['total_entries']} entries ({mem_stats['context_tokens_used']:,} tokens)")
+        if msg_count > 0:
+            side.append(f"History: {msg_count} messages  •  {ctx['used']:,}/{ctx['max']:,} tokens ({ctx['percentage']}%)")
+        else:
+            side.append(f"Context: {ctx['used']:,}/{ctx['max']:,} tokens ({ctx['percentage']}%)")
+        side.append("• /memory to edit  •  /model to switch  •  /help for commands")
 
-        # Tips footer
+        # Print the logo lines with side info
         print()
-        print(_dim("  💡 /help for commands • /tools for built-in tools"))
-        print(_dim("  🦙 /compact to free memory • /agents to see the herd"))
-        print(_dim("  ⌨  Ctrl+C to cancel • Ctrl+D or /quit to exit"))
+        for idx, logo_line in enumerate(_OLLAMA_LOGO):
+            info = f"   {side[idx]}" if idx < len(side) else ""
+            print(_bold(logo_line) + _dim(info))
+        # Extra side-info lines if there are more than logo lines
+        for idx in range(len(_OLLAMA_LOGO), len(side)):
+            padding = " " * len(_OLLAMA_LOGO[0])
+            print(padding + _dim(f"   {side[idx]}"))
         print()
 
-    @staticmethod
-    def _banner_line(width: int, label: str, value: str) -> None:
-        """Print a single line inside the banner box."""
-        content = f"  {_cyan(f'{label}:')}  {value}"
-        # We need to account for ANSI escape codes in the padding
-        visible_len = len(f"  {label}:  {value}")
-        padding = width - visible_len
-        if padding < 0:
-            padding = 0
-        print(f"  │{content}{' ' * padding}│")
+        # Tips section
+        print(_dim("Tips for getting started:"))
+        print(_dim("  1. Ask questions, edit files, or run commands."))
+        print(_dim("  2. Be specific for the best results."))
+        print(_dim("  3. /help for more information."))
+        print()
+
+        # Status line
+        print(_dim(f"› Try \"ollama run {self.session.model}\""))
+        print(_dim("» shift+tab to cycle  •  /settings to configure"))
+        ctx_pct = f"{ctx['percentage']}% used"
+        tokens_left = max(0, ctx["max"] - ctx["used"])
+        print(_dim(f"[{self.session.model}] | {ctx_pct} | ~{tokens_left:,} left | {sid_short}"))
+        print()
 
     # -- input reading -------------------------------------------------------
 
@@ -1108,6 +1088,21 @@ class InteractiveMode:
         else:
             self._print_info(f"[{tool_name}] result:")
             print(_json.dumps(result, indent=2, default=str)[:3000])
+
+            # Store tool result in shared memory so agents can recall it
+            result_summary = _json.dumps(result, default=str)[:200]
+            self.session.memory_layer.store(
+                key=f"tool:{tool_name}:{tool_arg[:40]}",
+                content=result_summary,
+                category="fact",
+                importance=2,
+            )
+
+            # Broadcast tool result via agent comm bus
+            self.session.agent_comm.broadcast(
+                sender_id="tool_runner",
+                content=f"Tool {tool_name} executed: {result_summary[:100]}",
+            )
         return False
 
     def _cmd_diff(self, _arg: str) -> bool:
@@ -1310,11 +1305,33 @@ class InteractiveMode:
             f"# Plan: {arg[:80]}\n"
         )
 
+        # Create a sub-context for the planner agent so it gets its own context
+        # window while sharing the session's agent_comm and memory_layer.
+        planner_ctx_id = f"plan-{slug}"
+        self.session.create_sub_context(planner_ctx_id)
+
+        # Inject relevant memories into the planning prompt if available
+        memory_block = self.session.memory_layer.get_context_block(max_tokens=300)
+        if memory_block:
+            planning_prompt += f"\n\n## Recalled project context\n{memory_block}\n"
+
+        # Announce planning via agent comm bus
+        self.session.agent_comm.send(
+            sender_id="orchestrator",
+            recipient_id="planner",
+            content=f"Planning task: {arg[:120]}",
+            message_type="task",
+        )
+
         try:
             spinner = self._spinner(_LLAMA_PLAN_SPINNER)
             spinner.start()
             try:
-                result = await self.session.send(planning_prompt)
+                result = await self.session.send(
+                    planning_prompt,
+                    agent_type="plan",
+                    context_id=planner_ctx_id,
+                )
             finally:
                 spinner.stop()
         except Exception as exc:
@@ -1325,6 +1342,22 @@ class InteractiveMode:
         if not plan_content or plan_content.startswith("[placeholder]"):
             self._print_error("Model returned an empty or placeholder plan.")
             return False
+
+        # Store plan summary in shared memory so /build agents can recall it
+        self.session.memory_layer.store(
+            key=f"plan:{slug}",
+            content=f"Plan for: {arg[:200]}",
+            category="fact",
+            importance=5,
+        )
+
+        # Notify via comm bus that planning is complete
+        self.session.agent_comm.send(
+            sender_id="planner",
+            recipient_id="orchestrator",
+            content=f"Plan complete: {slug} ({len(plan_content)} chars)",
+            message_type="result",
+        )
 
         # Write the plan
         try:
@@ -1376,6 +1409,8 @@ class InteractiveMode:
         self._print_info("✅ Implementation Plan Created")
         self._print_info(f"  File: {plan_file}")
         self._print_info(f"  Topic: {arg[:100]}")
+        comm_stats = self.session.agent_comm.get_token_savings()
+        self._print_system(f"  Agent messages: {comm_stats['total_messages']} • Token savings: {comm_stats['context_tokens_saved']:,}")
         print()
         self._print_system(f"To execute this plan, run: /build {plan_file}")
         print()
@@ -1415,8 +1450,14 @@ class InteractiveMode:
         self._print_system(f"Building from plan: {plan_path}")
         self._print_system(f"  ({len(plan_content)} chars)")
 
-        # Update task status if a matching task record exists
         task_id = plan_path.stem
+
+        # Create a sub-context for the builder agent so it gets its own context
+        # window while sharing the session's agent_comm and memory_layer.
+        builder_ctx_id = f"build-{task_id}"
+        self.session.create_sub_context(builder_ctx_id)
+
+        # Update task status if a matching task record exists
         task_file = Path(".ollama/tasks") / f"{task_id}.json"
         if task_file.is_file():
             try:
@@ -1426,18 +1467,45 @@ class InteractiveMode:
             except Exception as exc:  # noqa: BLE001
                 logger.warning("Failed to update task status for %s: %s", task_file, exc)
 
+        # Recall relevant memories from shared memory layer
+        memory_block = self.session.memory_layer.get_context_block(max_tokens=300)
+
+        # Announce build via agent comm bus
+        self.session.agent_comm.send(
+            sender_id="orchestrator",
+            recipient_id="builder",
+            content=f"Building plan: {task_id} ({len(plan_content)} chars)",
+            message_type="task",
+        )
+
+        # Check for messages from planner agent
+        planner_messages = self.session.agent_comm.receive("builder")
+        planner_context = ""
+        if planner_messages:
+            planner_context = "\n\n## Messages from other agents\n"
+            for msg in planner_messages[-3:]:  # Last 3 messages
+                planner_context += f"- [{msg.sender_id}]: {msg.content}\n"
+
         build_prompt = (
             "You are implementing a plan. Read the plan below carefully and "
             "execute it step by step. Follow the plan's instructions precisely.\n\n"
-            f"--- PLAN START ---\n{plan_content}\n--- PLAN END ---\n\n"
-            "Implement this plan now. Report what was completed for each step."
+            f"--- PLAN START ---\n{plan_content}\n--- PLAN END ---\n"
         )
+        if memory_block:
+            build_prompt += f"\n## Recalled project context\n{memory_block}\n"
+        if planner_context:
+            build_prompt += planner_context
+        build_prompt += "\nImplement this plan now. Report what was completed for each step."
 
         try:
             spinner = self._spinner(_LLAMA_BUILD_SPINNER)
             spinner.start()
             try:
-                result = await self.session.send(build_prompt)
+                result = await self.session.send(
+                    build_prompt,
+                    agent_type="builder",
+                    context_id=builder_ctx_id,
+                )
             finally:
                 spinner.stop()
         except Exception as exc:
@@ -1447,11 +1515,30 @@ class InteractiveMode:
         content = result.get("content", "")
         self._print_response(content)
 
+        # Store build result summary in shared memory
+        summary = content[:200] if content else "No output"
+        self.session.memory_layer.store(
+            key=f"build:{task_id}",
+            content=f"Build result: {summary}",
+            category="fact",
+            importance=4,
+        )
+
+        # Notify via comm bus that build is complete
+        self.session.agent_comm.send(
+            sender_id="builder",
+            recipient_id="orchestrator",
+            content=f"Build complete: {task_id}",
+            message_type="result",
+        )
+
         # Show token usage
         metrics = result.get("metrics", {})
         total = metrics.get("total_tokens", 0)
         cost = metrics.get("cost_estimate", 0.0)
+        comm_stats = self.session.agent_comm.get_token_savings()
         self._print_system(f"  tokens: {total:,} | cost: ${cost:.4f}")
+        self._print_system(f"  agent messages: {comm_stats['total_messages']} • token savings: {comm_stats['context_tokens_saved']:,}")
 
         # Mark task as completed
         if task_file.is_file():
