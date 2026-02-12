@@ -43,6 +43,18 @@ uv sync
 # Create .env from sample if not exists
 [ ! -f .env ] && cp .env.sample .env 2>/dev/null || true
 
+# Create wrapper script in ~/.local/bin so ollama-cli is on PATH
+BIN_DIR="${HOME}/.local/bin"
+mkdir -p "$BIN_DIR"
+
+WRAPPER="$BIN_DIR/ollama-cli"
+cat > "$WRAPPER" << 'WRAPPER_EOF'
+#!/bin/bash
+exec uv run --project "${HOME}/.ollama-cli" ollama-cli "$@"
+WRAPPER_EOF
+chmod +x "$WRAPPER"
+echo "Installed ollama-cli command to $WRAPPER"
+
 # Install Ollama if not present
 echo ""
 echo "=== Ollama Installation Check ==="
@@ -85,12 +97,25 @@ fi
 echo ""
 echo "=== Installation Complete ==="
 echo ""
-echo "Add this to your shell profile (~/.bashrc or ~/.zshrc):"
-echo "  alias ollama-cli='uv run $INSTALL_DIR/src/cli.py'"
+
+# Check if ~/.local/bin is on PATH
+if echo "$PATH" | tr ':' '\n' | grep -qx "$BIN_DIR"; then
+    echo "You can now run:"
+    echo "  ollama-cli --help"
+else
+    echo "Add ~/.local/bin to your PATH by adding this to your shell profile (~/.bashrc or ~/.zshrc):"
+    echo "  export PATH=\"\$HOME/.local/bin:\$PATH\""
+    echo ""
+    echo "Then restart your shell or run:"
+    echo "  source ~/.bashrc"
+    echo ""
+    echo "After that, you can run:"
+    echo "  ollama-cli --help"
+fi
 echo ""
-echo "Start Ollama server:"
+echo "Start Ollama server (if not already running):"
 echo "  ollama serve"
 echo ""
 echo "Then start chatting:"
-echo "  ollama-cli interactive"
+echo "  ollama-cli"
 echo ""

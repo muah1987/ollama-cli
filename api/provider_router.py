@@ -215,14 +215,16 @@ class OllamaProvider(BaseProvider):
     """Provider backed by a local (or remote) Ollama instance.
 
     Wraps :class:`src.api_client.OllamaClient` so that it conforms to the
-    :class:`BaseProvider` interface.
+    :class:`BaseProvider` interface.  Supports cloud Ollama via
+    ``OLLAMA_API_KEY`` for authenticated requests.
     """
 
     name = "ollama"
 
-    def __init__(self, host: str | None = None) -> None:
+    def __init__(self, host: str | None = None, api_key: str | None = None) -> None:
         self._host = host or os.environ.get("OLLAMA_HOST", "http://localhost:11434")
-        self._client = OllamaClient(host=self._host)
+        self._api_key = api_key or os.environ.get("OLLAMA_API_KEY", "")
+        self._client = OllamaClient(host=self._host, api_key=self._api_key or None)
         self._default_model = os.environ.get("OLLAMA_MODEL", _DEFAULT_MODELS["ollama"])
 
     # -- BaseProvider implementation ----------------------------------------

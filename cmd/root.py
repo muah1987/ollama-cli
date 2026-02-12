@@ -50,6 +50,7 @@ except ImportError:
 # Constants
 # ---------------------------------------------------------------------------
 VERSION = "0.1.0"
+_INTERACTIVE_COMMANDS = frozenset({"interactive", "i", "chat"})
 
 console = Console()
 
@@ -61,10 +62,14 @@ console = Console()
 def print_banner() -> None:
     """Print a startup banner showing current config."""
     cfg = get_config()
+    compact_status = "on" if cfg.auto_compact else "off"
     console.print(f"[bold cyan]ollama-cli[/bold cyan] v{VERSION}")
     console.print(f"  provider : [green]{cfg.provider}[/green]")
     console.print(f"  model    : [green]{cfg.ollama_model}[/green]")
     console.print(f"  context  : [green]{cfg.context_length}[/green] tokens")
+    console.print(
+        f"  compact  : auto-compact [green]{compact_status}[/green] (threshold {int(cfg.compact_threshold * 100)}%)"
+    )
     console.print()
 
 
@@ -73,11 +78,9 @@ def print_banner() -> None:
 # ---------------------------------------------------------------------------
 
 
-def cmd_chat(_args: argparse.Namespace) -> None:
-    """Start interactive chat session with a model."""
-    print_banner()
-    console.print("[yellow]Chat mode coming soon...[/yellow]")
-    console.print("Use the interactive mode for now: [bold]ollama-cli interactive[/bold]")
+def cmd_chat(args: argparse.Namespace) -> None:
+    """Start interactive chat session with a model (alias for interactive)."""
+    cmd_interactive(args)
 
 
 def cmd_list(args: argparse.Namespace) -> None:
@@ -174,7 +177,7 @@ def cmd_version(_args: argparse.Namespace) -> None:
     print(f"ollama-cli v{VERSION}")
 
 
-def cmd_interactive(_args: argparse.Namespace) -> None:
+def cmd_interactive(args: argparse.Namespace) -> None:
     """Start the interactive REPL mode."""
     # Import here to avoid circular imports
     from model.session import Session
@@ -182,7 +185,20 @@ def cmd_interactive(_args: argparse.Namespace) -> None:
     from .interactive import InteractiveMode
 
     cfg = get_config()
-    session = Session(model=cfg.ollama_model, provider=cfg.provider)
+
+    # Resume the most recent session if --resume was passed
+    session = None
+    if getattr(args, "resume", False):
+        latest_id = _find_latest_session()
+        if latest_id:
+            try:
+                session = Session.load(latest_id)
+                console.print(f"[green]Resumed session:[/green] {latest_id}")
+            except Exception as exc:
+                console.print(f"[yellow]Could not resume session ({exc}), starting new one.[/yellow]")
+
+    if session is None:
+        session = Session(model=cfg.ollama_model, provider=cfg.provider)
 
     async def _run() -> None:
         await session.start()
@@ -192,6 +208,49 @@ def cmd_interactive(_args: argparse.Namespace) -> None:
     import asyncio
 
     asyncio.run(_run())
+
+
+def cmd_run_prompt(args: argparse.Namespace) -> None:
+    """Run a one-shot prompt and print the response.
+
+    Routes through :class:`Session` / :class:`ProviderRouter` so that the
+    ``--provider``, ``--model``, and ``--output-format`` flags are honoured.
+    """
+    cfg = get_config()
+    prompt_text = getattr(args, "prompt", None)
+    if not prompt_text:
+        console.print("[red]Error:[/red] No prompt provided.")
+        sys.exit(1)
+
+    from model.session import Session
+
+    session = Session(model=cfg.ollama_model, provider=cfg.provider)
+
+    import asyncio
+
+    async def _run() -> dict:
+        await session.start()
+        if getattr(args, "system_prompt", None):
+            session.context_manager.add_message("system", args.system_prompt)
+        result = await session.send(prompt_text)
+        await session.end()
+        return result
+
+    try:
+        result = asyncio.run(_run())
+    except Exception as exc:
+        console.print(f"[red]Error:[/red] {exc}")
+        sys.exit(1)
+
+    content = result.get("content", "")
+    output_fmt = cfg.output_format or "text"
+
+    if output_fmt == "json" or getattr(args, "json", False):
+        print(json.dumps(result, indent=2))
+    elif output_fmt == "markdown":
+        print(content)
+    else:
+        print(content)
 
 
 # ---------------------------------------------------------------------------
@@ -233,10 +292,16 @@ def build_parser() -> argparse.ArgumentParser:
     """Build the top-level argument parser with all subcommands."""
     parser = argparse.ArgumentParser(
         prog="ollama-cli",
-        description="Full-featured AI coding assistant powered by Ollama",
+        usage="ollama-cli [options] [command] [prompt]",
+        description=(
+            "Ollama CLI - an AI coding assistant powered by Ollama. "
+            "Starts an interactive session by default. "
+            "Use -p/--print for non-interactive output."
+        ),
     )
 
     # Global flags
+    parser.add_argument("-v", "--version", action="version", version=f"ollama-cli v{VERSION}")
     parser.add_argument("--model", type=str, default=None, help="Override model")
     parser.add_argument(
         "--provider",
@@ -245,9 +310,38 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Override provider",
     )
+    parser.add_argument(
+        "-p",
+        "--print",
+        action="store_true",
+        default=False,
+        dest="print_mode",
+        help="Print response and exit (non-interactive mode)",
+    )
+    parser.add_argument(
+        "-r",
+        "--resume",
+        action="store_true",
+        default=False,
+        help="Resume the most recent conversation",
+    )
+    parser.add_argument(
+        "--output-format",
+        type=str,
+        choices=["text", "json", "markdown"],
+        default=None,
+        help="Output format (text, json, markdown)",
+    )
+    parser.add_argument(
+        "--allowed-tools",
+        type=str,
+        default=None,
+        help="Comma-separated list of allowed tool names (e.g. file_read,grep_search)",
+    )
     parser.add_argument("--json", action="store_true", default=False, help="JSON output mode")
     parser.add_argument("--verbose", action="store_true", default=False, help="Verbose output")
     parser.add_argument("--no-hooks", action="store_true", default=False, help="Disable hooks")
+    parser.add_argument("--system-prompt", type=str, default=None, help="System prompt to use")
 
     subparsers = parser.add_subparsers(dest="command")
 
@@ -303,7 +397,9 @@ def build_parser() -> argparse.ArgumentParser:
         from .accelerate import register_commands
 
         register_commands(subparsers)
-    except ImportError:
+    except (ImportError, AttributeError):
+        # AttributeError: register_commands may call methods not available
+        # on the subparsers action (pre-existing issue in accelerate.py).
         pass
 
     return parser
@@ -315,6 +411,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 COMMAND_MAP = {
     "chat": cmd_chat,
+    "run": cmd_run_prompt,
     "list": cmd_list,
     "pull": cmd_pull,
     "show": cmd_show,
@@ -333,12 +430,109 @@ COMMAND_MAP = {
 }
 
 
+def _extract_prompt_args(argv: list[str]) -> tuple[list[str], str | None]:
+    """Separate a direct prompt from CLI arguments.
+
+    If the first non-flag argument is not a known subcommand, treat all
+    remaining positional tokens as a direct prompt.  Returns the filtered
+    argv (flags only) and the extracted prompt string (or *None*).
+    """
+    known_commands = set(COMMAND_MAP.keys())
+    flags: list[str] = []
+    positionals: list[str] = []
+
+    i = 0
+    while i < len(argv):
+        arg = argv[i]
+        if arg.startswith("-"):
+            flags.append(arg)
+            # Consume the next token if this flag expects a value
+            if arg in (
+                "--model",
+                "--provider",
+                "--system-prompt",
+                "--output-format",
+                "--allowed-tools",
+            ) and i + 1 < len(argv):
+                i += 1
+                flags.append(argv[i])
+        else:
+            positionals.append(arg)
+            # Collect everything after first positional
+            positionals.extend(argv[i + 1 :])
+            break
+        i += 1
+
+    if positionals and positionals[0] not in known_commands:
+        return flags, " ".join(positionals)
+    return argv, None
+
+
+def _find_latest_session() -> str | None:
+    """Find the most recently saved session file.
+
+    Returns
+    -------
+    The session ID of the latest session, or ``None`` if none exist.
+    """
+    sessions_dir = Path(".ollama/sessions")
+    if not sessions_dir.is_dir():
+        return None
+
+    session_files = sorted(sessions_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+    if not session_files:
+        return None
+
+    return session_files[0].stem
+
+
 def main() -> None:
     """Entry point."""
     parser = build_parser()
-    args = parser.parse_args()
 
-    # Apply global flag overrides to config
+    raw_args = sys.argv[1:]
+
+    # Support piped stdin: `echo "fix this" | ollama-cli`
+    # Only treat piped stdin as a prompt when no explicit subcommand is present.
+    piped_input = None
+    if (
+        not sys.stdin.isatty()
+        and not any(a in raw_args for a in _INTERACTIVE_COMMANDS)
+        and not any(arg in COMMAND_MAP for arg in raw_args)
+    ):
+        piped_input = sys.stdin.read().strip()
+
+    filtered_args, direct_prompt = _extract_prompt_args(raw_args)
+
+    if direct_prompt is not None or piped_input:
+        # Parse only the flags (no subcommand)
+        args = parser.parse_args(filtered_args)
+        args.prompt = direct_prompt or piped_input
+        _apply_global_flags(args)
+        cmd_run_prompt(args)
+        return
+
+    args = parser.parse_args()
+    _apply_global_flags(args)
+
+    command = args.command
+    if not command:
+        if args.print_mode:
+            console.print("[red]Error:[/red] --print requires a prompt.")
+            console.print('Usage: ollama-cli -p "your prompt here"')
+            sys.exit(1)
+        # Default to interactive mode
+        command = "interactive"
+
+    if command not in COMMAND_MAP:
+        parser.print_help()
+        sys.exit(1)
+
+    COMMAND_MAP[command](args)
+
+
+def _apply_global_flags(args: argparse.Namespace) -> None:
+    """Apply global CLI flags to the config singleton."""
     cfg = get_config()
     if args.model:
         cfg.ollama_model = args.model
@@ -346,15 +540,13 @@ def main() -> None:
         cfg.provider = args.provider
     if args.no_hooks:
         cfg.hooks_enabled = False
-
-    # Default to interactive if no subcommand given
-    command = args.command or "chat"
-
-    if command not in COMMAND_MAP:
-        parser.print_help()
-        sys.exit(1)
-
-    COMMAND_MAP[command](args)
+    if getattr(args, "output_format", None):
+        cfg.output_format = args.output_format
+    if getattr(args, "json", False) and not getattr(args, "output_format", None):
+        cfg.output_format = "json"
+    allowed = getattr(args, "allowed_tools", None)
+    if allowed:
+        cfg.allowed_tools = [t.strip() for t in allowed.split(",")]
 
 
 if __name__ == "__main__":

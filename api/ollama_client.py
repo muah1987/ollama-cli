@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 from collections.abc import AsyncIterator
 from typing import Any
 
@@ -69,21 +70,33 @@ _BACKOFF_BASE = 1.0  # seconds; retries at 1s, 2s, 4s
 class OllamaClient:
     """Async client for the Ollama REST API.
 
+    Supports both local Ollama (``http://localhost:11434``) and cloud Ollama
+    (``https://ollama.com``) with API key authentication.
+
     Parameters
     ----------
     host:
-        Base URL of the Ollama server (e.g. ``http://localhost:11434``).
+        Base URL of the Ollama server (e.g. ``http://localhost:11434``
+        or ``https://ollama.com``).
     timeout:
         Default request timeout in seconds.
+    api_key:
+        Optional API key for authenticated requests (``Authorization:
+        Bearer <key>``).  When *not provided* (``None``), the
+        ``OLLAMA_API_KEY`` environment variable is checked.  An explicit
+        empty string disables env-based auth.  Local servers typically
+        need no key.
     """
 
     def __init__(
         self,
         host: str = _DEFAULT_HOST,
         timeout: float = _DEFAULT_TIMEOUT,
+        api_key: str | None = None,
     ) -> None:
         self.host = host.rstrip("/")
         self.timeout = timeout
+        self._api_key: str = api_key if api_key is not None else os.environ.get("OLLAMA_API_KEY", "")
         self._client: httpx.AsyncClient | None = None
 
     # -- lifecycle -----------------------------------------------------------
@@ -91,9 +104,13 @@ class OllamaClient:
     def _get_client(self) -> httpx.AsyncClient:
         """Return the shared async client, creating it lazily."""
         if self._client is None or self._client.is_closed:
+            headers: dict[str, str] = {}
+            if self._api_key:
+                headers["Authorization"] = f"Bearer {self._api_key}"
             self._client = httpx.AsyncClient(
                 base_url=self.host,
                 timeout=httpx.Timeout(self.timeout),
+                headers=headers,
             )
         return self._client
 
