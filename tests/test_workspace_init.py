@@ -216,6 +216,21 @@ class TestSessionStartHookPayload:
         assert hasattr(cm, "max_context_length")
         assert cm.max_context_length == 4096
 
+    def test_session_start_hook_payload_builds_without_error(self) -> None:
+        """Building the SessionStart hook payload must not raise AttributeError."""
+        from model.session import Session
+
+        session = Session(model="test-model", provider="ollama")
+        # Construct the same payload as InteractiveMode.run() does
+        payload = {
+            "session_id": session.session_id,
+            "model": session.model,
+            "provider": session.provider,
+            "source": "interactive",
+            "context_length": session.context_manager.max_context_length,
+        }
+        assert payload["context_length"] == 4096
+
 
 class TestInitInCommandTable:
     """Verify /init is registered in the command table."""
