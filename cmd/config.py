@@ -31,16 +31,13 @@ from api.config import OllamaCliConfig, get_config, save_config  # noqa: E402
 version = "0.1.0"
 console = Console()
 
-# Keys that should never be displayed or set via the CLI
-_SENSITIVE_KEYS = frozenset({
-    "cloud_api_key",
-    "ollama_api_key",
-    "anthropic_api_key",
-    "gemini_api_key",
-    "openai_api_key",
-    "hf_token",
-    "gh_token",
-})
+# Suffixes that identify sensitive config keys (API keys, tokens, secrets)
+_SENSITIVE_SUFFIXES = ("_api_key", "_token", "_secret")
+
+
+def _is_sensitive_key(key: str) -> bool:
+    """Return True if the key name matches a sensitive pattern."""
+    return any(key.endswith(suffix) for suffix in _SENSITIVE_SUFFIXES)
 
 
 def handle_config(args: argparse.Namespace) -> None:
@@ -83,9 +80,9 @@ def _show_config(cfg: OllamaCliConfig, use_json: bool) -> None:
     """Display the full configuration."""
     data = asdict(cfg)
 
-    # Mask sensitive values
-    for key in _SENSITIVE_KEYS:
-        if key in data and data[key]:
+    # Mask sensitive values by pattern
+    for key in data:
+        if _is_sensitive_key(key) and data[key]:
             data[key] = "****"
 
     if use_json:
@@ -109,7 +106,7 @@ def _get_config_key(cfg: OllamaCliConfig, key: str, use_json: bool) -> None:
         sys.exit(1)
 
     val = getattr(cfg, key)
-    if key in _SENSITIVE_KEYS and val:
+    if _is_sensitive_key(key) and val:
         val = "****"
 
     if use_json:
@@ -124,12 +121,18 @@ def _set_config_key(cfg: OllamaCliConfig, key: str, value: str) -> None:
         console.print(f"[red]Error:[/red] Unknown config key: {key}")
         sys.exit(1)
 
-    if key in _SENSITIVE_KEYS:
+    if _is_sensitive_key(key):
         console.print(f"[red]Error:[/red] Cannot set sensitive key '{key}' via CLI. Use environment variables.")
         sys.exit(1)
 
     # Type-coerce the value based on the current type
     current = getattr(cfg, key)
+
+    # Reject non-scalar fields (list, dict) — they cannot be reliably set via a single CLI value
+    if isinstance(current, (list, dict)):
+        console.print(f"[red]Error:[/red] Cannot set structured key '{key}' via CLI. Edit the config file directly.")
+        sys.exit(1)
+
     if isinstance(current, bool):
         coerced: object = value.lower() in ("1", "true", "yes", "on")
     elif isinstance(current, int):

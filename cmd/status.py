@@ -52,7 +52,7 @@ def handle_status(args: argparse.Namespace) -> None:
         model_count = len(data.get("models", []))
         server_ok = True
     except (httpx.ConnectError, httpx.HTTPStatusError):
-        pass
+        pass  # Server unreachable or returned an error — report as offline
 
     # Try to get running models
     if server_ok:
@@ -62,7 +62,7 @@ def handle_status(args: argparse.Namespace) -> None:
             ps_data = ps_resp.json()
             running_models = ps_data.get("models", [])
         except (httpx.ConnectError, httpx.HTTPStatusError):
-            pass
+            pass  # Running-model info is optional — degrade gracefully
 
     # Gather session info
     sessions_dir = Path(".ollama/sessions")

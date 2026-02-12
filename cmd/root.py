@@ -174,7 +174,7 @@ def cmd_config(args: argparse.Namespace) -> None:
 
 
 def cmd_status(args: argparse.Namespace) -> None:
-    """Show current session status."""
+    """Show current session status, server status, and configuration summary."""
     from .status import handle_status
 
     handle_status(args)

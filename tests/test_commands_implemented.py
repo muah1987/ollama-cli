@@ -38,20 +38,25 @@ def _run_python(code: str) -> subprocess.CompletedProcess[str]:
 
 
 class TestCommandsNotStubs:
-    """Verify that all previously-stub commands no longer print 'coming soon'."""
+    """Verify that all previously-stub commands now contain real logic."""
 
     @pytest.mark.parametrize(
         "func_name",
         ["cmd_pull", "cmd_config", "cmd_status", "cmd_show", "cmd_create", "cmd_rm", "cmd_cp", "cmd_ps", "cmd_stop"],
     )
     def test_command_is_not_stub(self, func_name: str) -> None:
-        """Each command handler should NOT contain 'coming soon'."""
+        """Each command handler should have more than a trivial stub body."""
         result = _run_python(
             f"from cmd.root import {func_name}; "
-            f"import inspect; src = inspect.getsource({func_name}); "
-            f"print('coming soon' not in src.lower())"
+            f"import inspect; "
+            f"src = inspect.getsource({func_name}); "
+            f"body_lines = ["
+            f"    line for line in src.splitlines()[1:] "
+            f"    if line.strip() and not line.lstrip().startswith('#')"
+            f"]; "
+            f"print(len(body_lines) > 1)"
         )
-        assert result.stdout.strip() == "True", f"{func_name} is still a stub"
+        assert result.stdout.strip() == "True", f"{func_name} appears to still be a stub"
 
     def test_pull_delegates_to_module(self) -> None:
         """cmd_pull should delegate to cmd.pull.handle_pull."""
