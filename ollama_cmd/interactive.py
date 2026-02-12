@@ -292,6 +292,10 @@ class InteractiveMode:
             pass
         except OSError:
             logger.warning("Could not read history file %s", _HISTORY_FILE, exc_info=True)
+            try:
+                _HISTORY_FILE.unlink(missing_ok=True)
+            except OSError:
+                pass
 
         readline.set_history_length(1000)
 
