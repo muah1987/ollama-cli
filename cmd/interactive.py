@@ -715,7 +715,7 @@ class InteractiveMode:
                 self._print_system("No memories stored. Use /remember <key> <content> to add.")
                 return False
             self._print_info(f"Stored Memories ({stats['total_entries']} entries):")
-            for entry in self.session.memory_layer._entries.values():
+            for entry in self.session.memory_layer.get_all_entries():
                 self._print_info(f"  [{entry.category}] {entry.key}: {entry.content}")
             return False
 

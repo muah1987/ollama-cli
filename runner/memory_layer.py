@@ -353,6 +353,15 @@ class MemoryLayer:
         self._entries.clear()
         logger.debug("Cleared all memory entries")
 
+    def get_all_entries(self) -> list[MemoryEntry]:
+        """Return all stored memory entries.
+
+        Returns
+        -------
+        List of all :class:`MemoryEntry` instances.
+        """
+        return list(self._entries.values())
+
     # -- private helpers -----------------------------------------------------
 
     @staticmethod
