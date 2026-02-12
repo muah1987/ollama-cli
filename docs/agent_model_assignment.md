@@ -238,6 +238,26 @@ Create `.ollama/settings.json`:
 ollama-cli --agent-model code:mistralai/Mistral-7B-Instruct-v0.3 --agent-provider code:hf run "Write a Python function"
 ```
 
+## Orchestrator Auto-Allocation
+
+When using `/chain` for multi-wave orchestration, the chain controller
+automatically maps each agent role to the best agent type for model routing.
+This means if you've configured `code`, `review`, `plan`, etc. agent types
+with specific models, the orchestrator will use them automatically:
+
+| Orchestrator Role | Agent Type Used | Task |
+|-------------------|----------------|------|
+| `analyzer_a`, `analyzer_b` | `analysis` | Problem analysis from different perspectives |
+| `planner` | `plan` | Solution planning and structuring |
+| `validator`, `monitor` | `review` | Validation and quality checking |
+| `optimizer` | `debug` | Optimization and edge-case analysis |
+| `executor_1`, `executor_2` | `code` | Concrete implementation and code generation |
+| `reporter`, `cleaner` | `docs` | Formatting, reporting, and cleanup |
+
+The `--model` flag sets only the **primary/default** model for the session.
+Agent-specific models configured via `/set-agent-model`, environment variables,
+or `.ollama/settings.json` take priority when the orchestrator dispatches work.
+
 ## Benefits
 
 1. **Specialization**: Different agents can use models optimized for their specific tasks

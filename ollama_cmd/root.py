@@ -403,13 +403,19 @@ def build_parser() -> argparse.ArgumentParser:
 
     # Global flags
     parser.add_argument("-v", "--version", action="version", version=f"ollama-cli v{VERSION}")
-    parser.add_argument("--model", type=str, default=None, help="Override model")
+    parser.add_argument("--model", type=str, default=None, help="Override the default model for this session")
     parser.add_argument(
         "--provider",
         type=str,
-        choices=["ollama", "claude", "gemini", "codex"],
+        choices=["ollama", "claude", "gemini", "codex", "hf"],
         default=None,
         help="Override provider",
+    )
+    parser.add_argument(
+        "--api",
+        type=str,
+        default=None,
+        help="Override the Ollama API host URL (e.g. http://localhost:11434)",
     )
     parser.add_argument(
         "-p",
@@ -551,6 +557,7 @@ def _extract_prompt_args(argv: list[str]) -> tuple[list[str], str | None]:
             if arg in (
                 "--model",
                 "--provider",
+                "--api",
                 "--system-prompt",
                 "--output-format",
                 "--allowed-tools",
@@ -639,6 +646,8 @@ def _apply_global_flags(args: argparse.Namespace) -> None:
         cfg.ollama_model = args.model
     if args.provider:
         cfg.provider = args.provider
+    if getattr(args, "api", None):
+        cfg.ollama_host = args.api
     if args.no_hooks:
         cfg.hooks_enabled = False
     if getattr(args, "output_format", None):

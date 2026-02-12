@@ -302,28 +302,28 @@ class TestResponseContentExtraction:
 
 
 # ---------------------------------------------------------------------------
-# /skill command tests
+# /model command tests (model listing, switching, and provider switching)
 # ---------------------------------------------------------------------------
 
 
-class TestSkillCommand:
-    """Tests for the /skill slash command (model and provider switching)."""
+class TestModelCommand:
+    """Tests for the /model slash command (model and provider switching)."""
 
-    def test_skill_command_registered(self) -> None:
-        """The /skill command should be in the command table."""
+    def test_model_command_registered(self) -> None:
+        """The /model command should be in the command table."""
         from ollama_cmd.interactive import InteractiveMode
 
-        assert "/skill" in InteractiveMode._COMMAND_TABLE
+        assert "/model" in InteractiveMode._COMMAND_TABLE
 
-    def test_bare_skill_shows_menu(self) -> None:
-        """Bare /skill should display the skills menu without error."""
+    def test_bare_model_shows_listing(self) -> None:
+        """Bare /model should display model listing without error."""
         script = (
             "import asyncio\n"
             "from model.session import Session\n"
             "from ollama_cmd.interactive import InteractiveMode\n"
             "s = Session(model='test', provider='ollama')\n"
             "r = InteractiveMode(s)\n"
-            "result = asyncio.run(r._dispatch_command('/skill'))\n"
+            "result = asyncio.run(r._dispatch_command('/model'))\n"
             "assert result is False\n"
             "print('OK')\n"
         )
@@ -336,15 +336,15 @@ class TestSkillCommand:
         assert result.returncode == 0, f"stderr: {result.stderr}"
         assert "OK" in result.stdout
 
-    def test_skill_model_switches(self) -> None:
-        """``/skill model <name>`` should switch the session model."""
+    def test_model_switches(self) -> None:
+        """``/model <name>`` should switch the session model."""
         script = (
             "import asyncio\n"
             "from model.session import Session\n"
             "from ollama_cmd.interactive import InteractiveMode\n"
             "s = Session(model='old-model', provider='ollama')\n"
             "r = InteractiveMode(s)\n"
-            "result = asyncio.run(r._dispatch_command('/skill model new-model'))\n"
+            "result = asyncio.run(r._dispatch_command('/model new-model'))\n"
             "assert result is False\n"
             "assert s.model == 'new-model', f'model={s.model}'\n"
             "print('OK')\n"
@@ -358,15 +358,15 @@ class TestSkillCommand:
         assert result.returncode == 0, f"stderr: {result.stderr}"
         assert "OK" in result.stdout
 
-    def test_skill_provider_switches(self) -> None:
-        """``/skill provider <name>`` should switch the session provider."""
+    def test_model_provider_switches(self) -> None:
+        """``/model provider <name>`` should switch the session provider."""
         script = (
             "import asyncio\n"
             "from model.session import Session\n"
             "from ollama_cmd.interactive import InteractiveMode\n"
             "s = Session(model='test', provider='ollama')\n"
             "r = InteractiveMode(s)\n"
-            "result = asyncio.run(r._dispatch_command('/skill provider gemini'))\n"
+            "result = asyncio.run(r._dispatch_command('/model provider gemini'))\n"
             "assert result is False\n"
             "assert s.provider == 'gemini', f'provider={s.provider}'\n"
             "print('OK')\n"
@@ -380,15 +380,15 @@ class TestSkillCommand:
         assert result.returncode == 0, f"stderr: {result.stderr}"
         assert "OK" in result.stdout
 
-    def test_skill_provider_rejects_invalid(self) -> None:
-        """``/skill provider invalid`` should not change the provider."""
+    def test_model_provider_rejects_invalid(self) -> None:
+        """``/model provider invalid`` should not change the provider."""
         script = (
             "import asyncio\n"
             "from model.session import Session\n"
             "from ollama_cmd.interactive import InteractiveMode\n"
             "s = Session(model='test', provider='ollama')\n"
             "r = InteractiveMode(s)\n"
-            "result = asyncio.run(r._dispatch_command('/skill provider nonexistent'))\n"
+            "result = asyncio.run(r._dispatch_command('/model provider nonexistent'))\n"
             "assert result is False\n"
             "assert s.provider == 'ollama', f'provider={s.provider}'\n"
             "print('OK')\n"
@@ -402,15 +402,15 @@ class TestSkillCommand:
         assert result.returncode == 0, f"stderr: {result.stderr}"
         assert "OK" in result.stdout
 
-    def test_skill_model_no_arg_lists(self) -> None:
-        """``/skill model`` with no arg should list models without error."""
+    def test_model_provider_no_arg_lists(self) -> None:
+        """``/model provider`` with no arg should list providers without error."""
         script = (
             "import asyncio\n"
             "from model.session import Session\n"
             "from ollama_cmd.interactive import InteractiveMode\n"
             "s = Session(model='test', provider='ollama')\n"
             "r = InteractiveMode(s)\n"
-            "result = asyncio.run(r._dispatch_command('/skill model'))\n"
+            "result = asyncio.run(r._dispatch_command('/model provider'))\n"
             "assert result is False\n"
             "print('OK')\n"
         )
@@ -423,26 +423,11 @@ class TestSkillCommand:
         assert result.returncode == 0, f"stderr: {result.stderr}"
         assert "OK" in result.stdout
 
-    def test_skill_provider_no_arg_lists(self) -> None:
-        """``/skill provider`` with no arg should list providers without error."""
-        script = (
-            "import asyncio\n"
-            "from model.session import Session\n"
-            "from ollama_cmd.interactive import InteractiveMode\n"
-            "s = Session(model='test', provider='ollama')\n"
-            "r = InteractiveMode(s)\n"
-            "result = asyncio.run(r._dispatch_command('/skill provider'))\n"
-            "assert result is False\n"
-            "print('OK')\n"
-        )
-        result = subprocess.run(
-            [sys.executable, "-c", script],
-            capture_output=True,
-            text=True,
-            cwd=_PROJECT_ROOT,
-        )
-        assert result.returncode == 0, f"stderr: {result.stderr}"
-        assert "OK" in result.stdout
+    def test_skill_command_removed(self) -> None:
+        """The /skill command should no longer be in the command table."""
+        from ollama_cmd.interactive import InteractiveMode
+
+        assert "/skill" not in InteractiveMode._COMMAND_TABLE
 
 
 # ---------------------------------------------------------------------------
@@ -503,3 +488,122 @@ class TestPullCommandAndTool:
         from ollama_cmd.interactive import _VALID_PROVIDERS
 
         assert "hf" in _VALID_PROVIDERS
+
+
+# ---------------------------------------------------------------------------
+# CLI flags: --model, --provider, --api
+# ---------------------------------------------------------------------------
+
+
+class TestCLIFlags:
+    """Tests for CLI global flags."""
+
+    def test_api_flag_accepted(self) -> None:
+        """The --api flag should be accepted by the argument parser."""
+        from ollama_cmd.root import build_parser
+
+        parser = build_parser()
+        args = parser.parse_args(["--api", "http://myhost:1234"])
+        assert args.api == "http://myhost:1234"
+
+    def test_model_flag_accepted(self) -> None:
+        """The --model flag should be accepted by the argument parser."""
+        from ollama_cmd.root import build_parser
+
+        parser = build_parser()
+        args = parser.parse_args(["--model", "codestral:latest"])
+        assert args.model == "codestral:latest"
+
+    def test_provider_flag_includes_hf(self) -> None:
+        """The --provider flag should accept 'hf'."""
+        from ollama_cmd.root import build_parser
+
+        parser = build_parser()
+        args = parser.parse_args(["--provider", "hf"])
+        assert args.provider == "hf"
+
+    def test_apply_global_flags_sets_api(self) -> None:
+        """_apply_global_flags should set ollama_host when --api is provided."""
+        import argparse
+
+        from ollama_cmd.root import _apply_global_flags
+
+        args = argparse.Namespace(
+            model=None, provider=None, api="http://custom:9999",
+            no_hooks=False, output_format=None, json=False, allowed_tools=None,
+        )
+        _apply_global_flags(args)
+
+        from api.config import get_config
+
+        cfg = get_config()
+        assert cfg.ollama_host == "http://custom:9999"
+
+
+# ---------------------------------------------------------------------------
+# Orchestrator auto-allocation
+# ---------------------------------------------------------------------------
+
+
+class TestOrchestratorAutoAllocation:
+    """Tests for chain controller model auto-allocation."""
+
+    def test_agent_role_optimization_mapping_exists(self) -> None:
+        """AGENT_ROLE_OPTIMIZATION should map all default wave agents."""
+        from runner.chain_controller import AGENT_ROLE_OPTIMIZATION, DEFAULT_WAVES
+
+        all_agents = set()
+        for wave in DEFAULT_WAVES:
+            all_agents.update(wave.agents)
+
+        for agent in all_agents:
+            assert agent in AGENT_ROLE_OPTIMIZATION, f"{agent} not in mapping"
+
+    def test_auto_allocate_returns_all_roles(self) -> None:
+        """auto_allocate_models should return an entry for every mapped role."""
+        from model.session import Session
+        from runner.chain_controller import AGENT_ROLE_OPTIMIZATION, ChainController
+
+        s = Session(model="test-model", provider="ollama")
+        ctrl = ChainController(s)
+        allocations = ctrl.auto_allocate_models()
+
+        for role in AGENT_ROLE_OPTIMIZATION:
+            assert role in allocations, f"Missing allocation for {role}"
+
+    def test_auto_allocate_defaults_to_session_model(self) -> None:
+        """Without explicit agent configs, unassigned roles use the session model."""
+        from model.session import Session
+        from runner.chain_controller import AGENT_ROLE_OPTIMIZATION, ChainController
+
+        s = Session(model="my-model", provider="gemini")
+        ctrl = ChainController(s)
+        allocations = ctrl.auto_allocate_models()
+
+        # Every role should have a valid allocation
+        for role in AGENT_ROLE_OPTIMIZATION:
+            assert role in allocations, f"Missing allocation for {role}"
+            prov, model = allocations[role]
+            assert isinstance(prov, str) and len(prov) > 0
+            assert isinstance(model, str) and len(model) > 0
+
+    def test_ingest_calls_auto_allocate(self) -> None:
+        """ingest() should populate allocations."""
+        from model.session import Session
+        from runner.chain_controller import ChainController
+
+        s = Session(model="test", provider="ollama")
+        ctrl = ChainController(s)
+        ctrl.ingest("test prompt")
+
+        assert len(ctrl.allocations) > 0
+
+    def test_run_wave_uses_optimized_agent_type(self) -> None:
+        """run_wave should pass the optimized agent_type, not the raw role."""
+        import inspect
+
+        from runner.chain_controller import ChainController
+
+        source = inspect.getsource(ChainController.run_wave)
+        assert "AGENT_ROLE_OPTIMIZATION" in source
+        assert "optimized_type" in source

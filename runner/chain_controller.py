@@ -118,6 +118,34 @@ AGENT_CONTRACTS: dict[str, str] = {
 }
 
 # ---------------------------------------------------------------------------
+# Agent role → optimal model type mapping
+# ---------------------------------------------------------------------------
+# Maps each orchestrator agent role to the best agent_type category for
+# model assignment.  The provider router uses these agent_type keys to look
+# up per-agent model overrides from _AGENT_MODEL_MAP or env vars.
+#
+# Categories:
+#   code     — code generation, implementation, execution
+#   review   — validation, monitoring, quality checks
+#   plan     — planning, structuring, organizing
+#   docs     — reporting, documentation, formatting
+#   analysis — analysis, research, investigation
+#   debug    — optimization, edge cases, risk assessment
+
+AGENT_ROLE_OPTIMIZATION: dict[str, str] = {
+    "analyzer_a": "analysis",
+    "analyzer_b": "analysis",
+    "planner": "plan",
+    "validator": "review",
+    "optimizer": "debug",
+    "executor_1": "code",
+    "executor_2": "code",
+    "monitor": "review",
+    "reporter": "docs",
+    "cleaner": "docs",
+}
+
+# ---------------------------------------------------------------------------
 # Wave definitions
 # ---------------------------------------------------------------------------
 
@@ -323,6 +351,7 @@ class ChainController:
         self.waves = waves or DEFAULT_WAVES
         self._state = SharedState()
         self._results: list[WaveResult] = []
+        self._allocations: dict[str, tuple[str, str]] = {}
 
     @property
     def state(self) -> SharedState:
@@ -334,10 +363,62 @@ class ChainController:
         """Return all wave results collected so far."""
         return self._results
 
+    @property
+    def allocations(self) -> dict[str, tuple[str, str]]:
+        """Return the auto-allocated model assignments per agent role."""
+        return self._allocations
+
+    # -- model auto-allocation -----------------------------------------------
+
+    def auto_allocate_models(self) -> dict[str, tuple[str, str]]:
+        """Auto-allocate optimal models to each agent role.
+
+        Inspects the provider router for explicitly configured agent models
+        and available providers, then assigns the best model to each
+        orchestrator agent role based on :data:`AGENT_ROLE_OPTIMIZATION`.
+
+        Already-configured agent models (via ``/set-agent-model``, env vars,
+        or ``.ollama/settings.json``) take priority.  Unassigned roles
+        fall back to the session's current model and provider.
+
+        Returns
+        -------
+        Dict mapping agent role to ``(provider, model)`` tuple.
+        """
+        from api.provider_router import _AGENT_MODEL_MAP
+
+        allocations: dict[str, tuple[str, str]] = {}
+        session_default = (self.session.provider, self.session.model)
+
+        for agent_role in AGENT_ROLE_OPTIMIZATION:
+            agent_type = AGENT_ROLE_OPTIMIZATION[agent_role]
+
+            # 1. Check if this agent_type has an explicit assignment
+            if agent_type in _AGENT_MODEL_MAP:
+                allocations[agent_role] = _AGENT_MODEL_MAP[agent_type]
+                continue
+
+            # 2. Fall back to session default
+            allocations[agent_role] = session_default
+
+        self._allocations = allocations
+
+        allocated_types = {v for v in allocations.values()}
+        logger.info(
+            "Chain auto-allocated %d roles across %d model configs",
+            len(allocations),
+            len(allocated_types),
+        )
+
+        return allocations
+
     # -- wave 0: ingest ------------------------------------------------------
 
     def ingest(self, prompt: str) -> SharedState:
         """Wave 0: Parse prompt, extract constraints, initialize shared state.
+
+        Also runs :meth:`auto_allocate_models` to assign optimal models to
+        each agent role before the waves begin.
 
         Parameters
         ----------
@@ -352,6 +433,10 @@ class ChainController:
             run_id=str(uuid.uuid4())[:8],
             problem_statement=prompt,
         )
+
+        # Auto-allocate models before any waves run
+        self.auto_allocate_models()
+
         logger.info("Chain %s: ingested prompt (%d chars)", self._state.run_id, len(prompt))
         return self._state
 
@@ -393,18 +478,21 @@ class ChainController:
             ctx_id = f"chain-{self._state.run_id}-{wave.name}-{agent_role}"
             self.session.create_sub_context(ctx_id)
 
+            # Resolve the optimized agent_type for model routing
+            optimized_type = AGENT_ROLE_OPTIMIZATION.get(agent_role, agent_role)
+
             # Announce via agent comm bus
             self.session.agent_comm.send(
                 sender_id="chain_controller",
                 recipient_id=agent_role,
-                content=f"Wave '{wave.name}': executing {agent_role}",
+                content=f"Wave '{wave.name}': executing {agent_role} (as {optimized_type})",
                 message_type="task",
             )
 
             try:
                 result = await self.session.send(
                     agent_prompt,
-                    agent_type=agent_role,
+                    agent_type=optimized_type,
                     context_id=ctx_id,
                 )
                 content = result.get("content", "")

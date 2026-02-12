@@ -349,7 +349,6 @@ class InteractiveMode:
         "/chain": "_cmd_chain",
         "/init": "_cmd_init",
         "/pull": "_cmd_pull",
-        "/skill": "_cmd_skill",
     }
 
     def __init__(self, session: Session) -> None:
@@ -770,9 +769,8 @@ class InteractiveMode:
         # Group commands by category for cleaner display
         categories: dict[str, list[tuple[str, str]]] = {
             "Session": [
-                ("/model <name>", "Switch active model"),
+                ("/model", "List models, switch model, or change provider"),
                 ("/provider <name>", "Switch provider"),
-                ("/skill [action]", "Skills: model/provider switching with discovery"),
                 ("/status", "Show session status"),
                 ("/save [name]", "Save session"),
                 ("/load <name>", "Load session"),
@@ -825,25 +823,37 @@ class InteractiveMode:
     # -- slash command handlers -----------------------------------------------
 
     def _cmd_model(self, arg: str) -> bool:
-        """Switch the active model.
+        """Switch the active model, list available models, or change provider.
+
+        Usage:
+          ``/model``                   — List available models and current status
+          ``/model <name>``            — Switch to a new model
+          ``/model provider [name]``   — Switch provider or list available providers
 
         Parameters
         ----------
         arg:
-            The model name to switch to.
+            Model name, or ``provider [name]`` for provider switching.
 
         Returns
         -------
         Always ``False`` (continue REPL).
         """
         if not arg:
-            self._print_error("Usage: /model <name>")
-            self._print_system(f"  Current model: {self.session.model}")
-            return False
+            return self._model_list()
 
+        parts = arg.split(maxsplit=1)
+        sub = parts[0].lower()
+
+        if sub == "provider":
+            provider_arg = parts[1].strip() if len(parts) > 1 else ""
+            return self._model_change_provider(provider_arg)
+
+        # Direct model switch
         old_model = self.session.model
         self.session.model = arg
-        self._print_info(f"Model switched: {old_model} -> {arg}")
+        self._print_info(f"🦙 Model switched: {old_model} → {arg}")
+        self._print_status_bar()
         return False
 
     def _cmd_provider(self, arg: str) -> bool:
@@ -1108,9 +1118,9 @@ class InteractiveMode:
         """
         print()
         self._print_info("Available commands:")
-        print(f"  {_cyan('/model <name>')}     Switch active model")
-        print(f"  {_cyan('/provider <name>')}  Switch provider (ollama|claude|gemini|codex|hf)")
-        print(f"  {_cyan('/skill [action]')}   Skills menu (model, provider — with discovery)")
+        print(f"  {_cyan('/model [name]')}     List models or switch active model")
+        print(f"  {_cyan('/model provider [name]')}  Switch provider (ollama|claude|gemini|codex|hf)")
+        print(f"  {_cyan('/provider <name>')}  Switch provider (shortcut)")
         print(f"  {_cyan('/compact')}          Force context compaction")
         print(f"  {_cyan('/status')}           Show session status (tokens, context, uptime)")
         print(f"  {_cyan('/clear')}            Clear conversation history")
@@ -1593,72 +1603,13 @@ class InteractiveMode:
 
         return False
 
-    def _cmd_skill(self, arg: str) -> bool:
-        """Run a skill action: switch model, switch provider, or list skills.
-
-        Usage:
-          ``/skill``                   — List available skills
-          ``/skill model <name>``      — Switch to a new model
-          ``/skill provider <name>``   — Switch to a new provider
-          ``/skill model``             — List available local models and pick one
-          ``/skill provider``          — List available providers and pick one
-
-        Parameters
-        ----------
-        arg:
-            Skill name and optional argument.
-
-        Returns
-        -------
-        Always ``False`` (continue REPL).
-        """
-        if not arg:
-            self._show_skills_menu()
-            return False
-
-        parts = arg.split(maxsplit=1)
-        skill_name = parts[0].lower()
-        skill_arg = parts[1].strip() if len(parts) > 1 else ""
-
-        if skill_name == "model":
-            return self._skill_change_model(skill_arg)
-        elif skill_name == "provider":
-            return self._skill_change_provider(skill_arg)
-        else:
-            self._print_error(f"Unknown skill: {skill_name}")
-            self._show_skills_menu()
-            return False
-
-    def _show_skills_menu(self) -> None:
-        """Display available skills."""
-        print()
-        self._print_info("🦙 Available Skills")
+    def _model_list(self) -> bool:
+        """List available models and current status."""
+        self._print_info("🦙 Model & Provider Status")
         self._print_system("─" * 40)
-        print(f"  {_cyan('/skill model [name]')}     Switch the active AI model")
-        print(f"  {_cyan('/skill provider [name]')}  Switch the AI provider")
-        print()
         self._print_system(f"  Current model:    {_green(self.session.model)}")
         self._print_system(f"  Current provider: {_green(self.session.provider)}")
         print()
-        self._print_system("  Run /skill model or /skill provider without")
-        self._print_system("  a name to see available options.")
-        print()
-
-    def _skill_change_model(self, model_name: str) -> bool:
-        """Skill to change the active AI model.
-
-        When called without a name, lists locally available models.
-        """
-        if model_name:
-            old = self.session.model
-            self.session.model = model_name
-            self._print_info(f"🦙 Model switched: {old} → {model_name}")
-            self._print_status_bar()
-            return False
-
-        # No name given — list available models for the user to pick
-        self._print_info("🦙 Available Models")
-        self._print_system("─" * 40)
 
         # Try to fetch local Ollama models
         from api.config import get_config
@@ -1685,16 +1636,13 @@ class InteractiveMode:
             print(f"    {_dim(prov):12s} {model}{_green(marker)}")
 
         print()
-        self._print_system(f"  Current: {_green(self.session.model)} ({self.session.provider})")
-        self._print_system("  Use /skill model <name> to switch.")
+        self._print_system("  Use /model <name> to switch model.")
+        self._print_system("  Use /model provider <name> to switch provider.")
         print()
         return False
 
-    def _skill_change_provider(self, provider_name: str) -> bool:
-        """Skill to change the active AI provider.
-
-        When called without a name, lists available providers with status.
-        """
+    def _model_change_provider(self, provider_name: str) -> bool:
+        """Switch the active AI provider or list available providers."""
         if provider_name:
             name = provider_name.lower()
             if name not in _VALID_PROVIDERS:
@@ -1738,7 +1686,7 @@ class InteractiveMode:
 
         print()
         self._print_system(f"  Current: {_green(self.session.provider)}")
-        self._print_system("  Use /skill provider <name> to switch.")
+        self._print_system("  Use /model provider <name> to switch.")
         print()
         return False
 
