@@ -171,13 +171,16 @@ class InteractiveMode:
 
     def _print_banner(self) -> None:
         """Print the welcome banner on REPL startup."""
+        from cmd.root import VERSION
+
+        msg_count = self.session.get_status()["messages"]
         print()
-        print(_bold(f"╭─ ollama-cli v0.1.0 ({'resumed' if self.session._message_count > 0 else 'new session'})"))
+        print(_bold(f"╭─ ollama-cli v{VERSION} ({'resumed' if msg_count > 0 else 'new session'})"))
         self._print_info(f"│  model:    {self.session.model}")
         self._print_info(f"│  provider: {self.session.provider}")
         self._print_info(f"│  session:  {self.session.session_id}")
-        if self.session._message_count > 0:
-            self._print_info(f"│  history:  {self.session._message_count} messages")
+        if msg_count > 0:
+            self._print_info(f"│  history:  {msg_count} messages")
         self._print_system("╰─ Type /help for commands, /quit to exit")
         print()
 
@@ -635,7 +638,10 @@ class InteractiveMode:
             try:
                 self.session.save()
             except Exception:
-                logger.warning("Failed to auto-save session", exc_info=True)
+                logger.warning(
+                    "Failed to auto-save session; --resume may not work for this session",
+                    exc_info=True,
+                )
 
             # End the session
             try:

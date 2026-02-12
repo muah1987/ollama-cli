@@ -50,6 +50,7 @@ except ImportError:
 # Constants
 # ---------------------------------------------------------------------------
 VERSION = "0.1.0"
+_INTERACTIVE_COMMANDS = frozenset({"interactive", "i", "chat"})
 
 console = Console()
 
@@ -189,8 +190,8 @@ def cmd_interactive(args: argparse.Namespace) -> None:
             try:
                 session = Session.load(latest_id)
                 console.print(f"[green]Resumed session:[/green] {latest_id}")
-            except Exception:
-                console.print("[yellow]Could not resume session, starting new one.[/yellow]")
+            except Exception as exc:
+                console.print(f"[yellow]Could not resume session ({exc}), starting new one.[/yellow]")
 
     if session is None:
         session = Session(model=cfg.ollama_model, provider=cfg.provider)
@@ -458,7 +459,7 @@ def main() -> None:
 
     # Support piped stdin: `echo "fix this" | ollama-cli`
     piped_input = None
-    if not sys.stdin.isatty() and not any(a in raw_args for a in ("interactive", "i", "chat")):
+    if not sys.stdin.isatty() and not any(a in raw_args for a in _INTERACTIVE_COMMANDS):
         piped_input = sys.stdin.read().strip()
 
     filtered_args, direct_prompt = _extract_prompt_args(raw_args)
