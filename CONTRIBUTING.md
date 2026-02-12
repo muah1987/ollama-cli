@@ -158,3 +158,13 @@ Example:
 ```
 feat: add streaming support for run command
 ```
+
+---
+
+## Migration Notice
+
+The CLI frontend is planned to migrate to
+[BubbleTea](https://github.com/charmbracelet/bubbletea) (Go).  Contributions
+to the current Python codebase are still welcome — all features and fixes will
+be carried forward during the migration.  See the [ROADMAP](ROADMAP.md) for
+the full plan.

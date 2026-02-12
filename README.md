@@ -422,6 +422,14 @@ uv run ruff format .
 - **GitHub Issues:** [Report bugs or request features](https://github.com/muah1987/ollama-cli/issues)
 - **Ollama:** [Official Ollama website](https://ollama.ai)
 
+## Migration Notice
+
+The CLI frontend is planned to migrate from Python to
+[Go](https://go.dev/) using the
+[BubbleTea](https://github.com/charmbracelet/bubbletea) TUI framework.
+The current Python version remains fully supported until the migration is
+complete.  See the [ROADMAP](ROADMAP.md) for details.
+
 ## License
 
 MIT License — see [LICENSE](LICENSE) for details.
