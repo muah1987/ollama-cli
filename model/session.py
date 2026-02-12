@@ -159,19 +159,20 @@ class Session:
         if memory_path.is_file():
             self.memory_layer.load(str(memory_path))
 
+        # Build the system prompt with tool awareness
+        system_prompt = self._build_system_prompt()
+
         # Load OLLAMA.md as project context if it exists
         ollama_md = self._find_ollama_md()
         if ollama_md is not None:
             try:
                 content = ollama_md.read_text(encoding="utf-8")
-                system_prompt = (
-                    "You are an AI coding assistant.  The following project context "
-                    "was loaded from OLLAMA.md:\n\n" + content
-                )
-                self.context_manager.set_system_message(system_prompt)
+                system_prompt += "\n\nThe following project context was loaded from OLLAMA.md:\n\n" + content
                 logger.info("Loaded project context from %s (%d chars)", ollama_md, len(content))
             except OSError:
                 logger.warning("Found OLLAMA.md but failed to read it", exc_info=True)
+
+        self.context_manager.set_system_message(system_prompt)
 
     async def send(
         self,
@@ -219,18 +220,58 @@ class Session:
         try:
             # Route through the provider router
             response = await self.provider_router.route(
-                task_type="agent", messages=messages, agent_type=agent_type, model=self.model, provider=self.provider,
+                task_type="agent",
+                messages=messages,
+                agent_type=agent_type,
+                model=self.model,
+                provider=self.provider,
             )
 
             # Extract response content and metrics
             if isinstance(response, dict):
-                # Handle non-streaming response
+                # Handle non-streaming response -- multiple provider formats
+                # 1. OpenAI/Codex/HF format: {"choices": [{"message": {"content": ...}}]}
                 choices = response.get("choices", [])
                 if choices and isinstance(choices, list) and len(choices) > 0:
                     message_content = choices[0].get("message", {})
                     response_content = message_content.get("content", "[empty response]")
+                # 2. Ollama native format: {"message": {"role": "assistant", "content": ...}}
+                elif "message" in response and isinstance(response["message"], dict):
+                    response_content = response["message"].get("content", "[empty response]")
+                # 3. Anthropic format: {"content": [{"text": ...}]}
+                elif "content" in response and isinstance(response["content"], list):
+                    parts = response["content"]
+                    response_content = (
+                        " ".join(p.get("text", "") for p in parts if isinstance(p, dict) and p.get("text"))
+                        or "[empty response]"
+                    )
+                # 4. Gemini format: {"candidates": [{"content": {"parts": [{"text": ...}]}}]}
+                elif "candidates" in response:
+                    candidates = response["candidates"]
+                    if isinstance(candidates, list) and candidates:
+                        first = candidates[0]
+                        if isinstance(first, dict):
+                            cparts = first.get("content", {})
+                            if isinstance(cparts, dict):
+                                part_list = cparts.get("parts", [])
+                                if isinstance(part_list, list) and part_list:
+                                    response_content = str(part_list[0].get("text", "[empty response]"))
+                                else:
+                                    response_content = "[empty response]"
+                            else:
+                                response_content = "[empty response]"
+                        else:
+                            response_content = "[empty response]"
+                    else:
+                        response_content = "[empty response]"
+                # 5. Direct content string or fallback
+                elif "content" in response:
+                    response_content = str(response["content"])
+                # 6. Ollama generate format: {"response": "..."}
+                elif "response" in response:
+                    response_content = str(response["response"])
                 else:
-                    response_content = str(response.get("content", "[no content]"))
+                    response_content = "[no content]"
 
                 # Extract token usage
                 usage = response.get("usage", {})
@@ -522,6 +563,47 @@ class Session:
         return session
 
     # -- private helpers -----------------------------------------------------
+
+    @staticmethod
+    def _build_system_prompt() -> str:
+        """Build a system prompt that includes available tools and skills.
+
+        Returns
+        -------
+        A system prompt string informing the AI about its capabilities.
+        """
+        try:
+            from skills.tools import list_tools
+
+            tools = list_tools()
+        except Exception:
+            tools = []
+
+        prompt = (
+            "You are an AI coding assistant powered by ollama-cli. "
+            "You help users with coding tasks, file operations, and project management.\n\n"
+        )
+
+        if tools:
+            prompt += "You have access to the following built-in tools:\n"
+            for t in tools:
+                prompt += f"- {t['name']}: {t['description']}\n"
+            prompt += (
+                "\nWhen a user asks you to perform an action that requires a tool "
+                "(e.g. reading files, editing code, running shell commands, fetching URLs, "
+                "or searching files), explain which tool to use and suggest the "
+                "appropriate /tool command. For example:\n"
+                "- To read a file: /tool file_read <path>\n"
+                "- To run a command: /tool shell_exec <command>\n"
+                "- To search: /tool grep_search <pattern>\n"
+                "- To fetch a URL: /tool web_fetch <url>\n"
+                "- To clone a repo: /tool shell_exec git clone <url>\n"
+                "\nAlways provide actionable suggestions using available tools "
+                "when the user's request involves file system operations, "
+                "shell commands, or web resources.\n"
+            )
+
+        return prompt
 
     @staticmethod
     def _find_ollama_md() -> Path | None:

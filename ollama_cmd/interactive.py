@@ -115,15 +115,15 @@ def _white(text: str) -> str:
 # ---------------------------------------------------------------------------
 
 _AGENT_COLORS: dict[str, str] = {
-    "code": "\033[36m",       # cyan
-    "review": "\033[35m",     # magenta
-    "test": "\033[33m",       # yellow
-    "plan": "\033[34m",       # blue
-    "docs": "\033[32m",       # green
-    "debug": "\033[31m",      # red
-    "default": "\033[37m",    # white
+    "code": "\033[36m",  # cyan
+    "review": "\033[35m",  # magenta
+    "test": "\033[33m",  # yellow
+    "plan": "\033[34m",  # blue
+    "docs": "\033[32m",  # green
+    "debug": "\033[31m",  # red
+    "default": "\033[37m",  # white
     "orchestrator": "\033[95m",  # bright magenta
-    "builder": "\033[96m",    # bright cyan
+    "builder": "\033[96m",  # bright cyan
     "validator": "\033[93m",  # bright yellow
 }
 
@@ -160,17 +160,24 @@ _LLAMA_SPINNER_FRAMES = [
 ]
 
 _LLAMA_PLAN_SPINNER = [
-    "🦙📋 Assembling the herd...",
-    "🦙📋 Planning the trail...",
-    "🦙📋 Mapping the pasture...",
-    "🦙📋 Organizing the caravan...",
+    "🦙📋 [ollama-cli] Assembling the herd...",
+    "🦙📋 [ollama-cli] Planning the trail...",
+    "🦙📋 [ollama-cli] Mapping the pasture...",
+    "🦙📋 [ollama-cli] Organizing the caravan...",
 ]
 
 _LLAMA_BUILD_SPINNER = [
-    "🦙🔨 Building the barn...",
-    "🦙🔨 Hammering away...",
-    "🦙🔨 Laying foundation...",
-    "🦙🔨 Constructing...",
+    "🦙🔨 [ollama-cli] Building the barn...",
+    "🦙🔨 [ollama-cli] Hammering away...",
+    "🦙🔨 [ollama-cli] Laying foundation...",
+    "🦙🔨 [ollama-cli] Constructing...",
+]
+
+_LLAMA_TEST_SPINNER = [
+    "🦙🧪 [ollama-cli] Running tests...",
+    "🦙🧪 [ollama-cli] Checking assertions...",
+    "🦙🧪 [ollama-cli] Validating output...",
+    "🦙🧪 [ollama-cli] Verifying results...",
 ]
 
 
@@ -221,7 +228,9 @@ class _LlamaSpinner:
         idx = 0
         while not self._stop_event.is_set():
             frame = self._frames[idx % len(self._frames)]
-            sys.stdout.write(f"\r\033[2m{frame}\033[0m")
+            # \r returns to start of line, \033[K clears to end of line
+            # to prevent leftover text from longer previous frames
+            sys.stdout.write(f"\r\033[K\033[2m{frame}\033[0m")
             sys.stdout.flush()
             idx += 1
             self._stop_event.wait(self._interval)
@@ -275,11 +284,7 @@ def _import_instruction_files() -> list[str]:
             continue
         if not content:
             continue
-        sections.append(
-            f"\n{marker}\n"
-            f"## Imported from {filepath}\n\n"
-            f"{content}\n"
-        )
+        sections.append(f"\n{marker}\n## Imported from {filepath}\n\n{content}\n")
         imported.append(str(filepath))
 
     if sections:
@@ -502,12 +507,15 @@ class InteractiveMode:
 
     def _fire_notification(self, ntype: str, message: str) -> None:
         """Fire a Notification hook with the given type and message."""
-        self._fire_hook("Notification", {
-            "type": ntype,
-            "message": message,
-            "session_id": self.session.session_id,
-            "model": self.session.model,
-        })
+        self._fire_hook(
+            "Notification",
+            {
+                "type": ntype,
+                "message": message,
+                "session_id": self.session.session_id,
+                "model": self.session.model,
+            },
+        )
 
     # -- persistent bottom status bar ----------------------------------------
 
@@ -631,7 +639,9 @@ class InteractiveMode:
         if mem_stats["total_entries"] > 0:
             side.append(f"Memory: {mem_stats['total_entries']} entries ({mem_stats['context_tokens_used']:,} tokens)")
         if msg_count > 0:
-            side.append(f"History: {msg_count} messages  •  {ctx['used']:,}/{ctx['max']:,} tokens ({ctx['percentage']}%)")
+            side.append(
+                f"History: {msg_count} messages  •  {ctx['used']:,}/{ctx['max']:,} tokens ({ctx['percentage']}%)"
+            )
         else:
             side.append(f"Context: {ctx['used']:,}/{ctx['max']:,} tokens ({ctx['percentage']}%)")
         side.append("• /memory to edit  •  /model to switch  •  /help for commands")
@@ -655,7 +665,7 @@ class InteractiveMode:
         print()
 
         # Status line
-        print(_dim(f"› Try \"ollama run {self.session.model}\""))
+        print(_dim(f'› Try "ollama run {self.session.model}"'))
         print(_dim("» shift+tab to cycle  •  /settings to configure"))
         ctx_pct = f"{ctx['percentage']}% used"
         tokens_left = max(0, ctx["max"] - ctx["used"])
@@ -731,6 +741,11 @@ class InteractiveMode:
         cmd = parts[0].lower()
         arg = parts[1].strip() if len(parts) > 1 else ""
 
+        # Bare "/" shows the command menu
+        if cmd == "/":
+            self._show_command_menu()
+            return False
+
         handler_name = self._COMMAND_TABLE.get(cmd)
         if handler_name is None:
             self._print_error(f"Unknown command: {cmd}")
@@ -745,6 +760,63 @@ class InteractiveMode:
             result = await result
 
         return bool(result)
+
+    # -- command menu --------------------------------------------------------
+
+    def _show_command_menu(self) -> None:
+        """Display an interactive command menu when the user types ``/``."""
+        # Group commands by category for cleaner display
+        categories: dict[str, list[tuple[str, str]]] = {
+            "Session": [
+                ("/model <name>", "Switch active model"),
+                ("/provider <name>", "Switch provider"),
+                ("/status", "Show session status"),
+                ("/save [name]", "Save session"),
+                ("/load <name>", "Load session"),
+                ("/clear", "Clear history"),
+                ("/history", "Show conversation history"),
+            ],
+            "Tools & Skills": [
+                ("/tools", "List available tools"),
+                ("/tool <name> ...", "Invoke a tool (file_read, shell_exec, ...)"),
+                ("/diff", "Show git diff"),
+                ("/mcp [action]", "Manage MCP servers"),
+            ],
+            "Memory & Context": [
+                ("/memory [note]", "View/add project memory"),
+                ("/remember <k> <v>", "Store a memory entry"),
+                ("/recall [query]", "Recall stored memories"),
+                ("/compact", "Force context compaction"),
+            ],
+            "Agents & Orchestration": [
+                ("/agents", "List active agents"),
+                ("/set-agent-model", "Assign model to agent type"),
+                ("/list-agent-models", "List agent model assignments"),
+                ("/chain <prompt>", "Multi-wave chain orchestration"),
+                ("/team_planning ...", "Generate implementation plan"),
+                ("/build <plan>", "Execute a saved plan"),
+                ("/resume [id]", "List/resume previous tasks"),
+            ],
+            "Project": [
+                ("/init", "Initialize project (OLLAMA.md + .ollama/)"),
+                ("/config [k] [v]", "View/set configuration"),
+                ("/bug [desc]", "File a bug report"),
+            ],
+            "Other": [
+                ("/help", "Full help message"),
+                ("/quit", "Exit the session"),
+            ],
+        }
+
+        print()
+        self._print_info("⚡ Available Commands")
+        self._print_system("─" * 50)
+        for category, cmds in categories.items():
+            print(f"  {_bold(category)}")
+            for cmd_str, desc in cmds:
+                print(f"    {_cyan(cmd_str):35s} {_dim(desc)}")
+            print()
+        self._print_system("Type a command or press Tab to autocomplete.")
 
     # -- slash command handlers -----------------------------------------------
 
@@ -828,14 +900,17 @@ class InteractiveMode:
             return False
 
         # Fire PreCompact hook before compaction
-        self._fire_hook("PreCompact", {
-            "session_id": self.session.session_id,
-            "context_used": usage_before.get("used", 0),
-            "context_max": usage_before.get("max", 0),
-            "context_percentage": usage_before.get("percentage", 0),
-            "message_count": len(cm.messages),
-            "trigger": "manual",
-        })
+        self._fire_hook(
+            "PreCompact",
+            {
+                "session_id": self.session.session_id,
+                "context_used": usage_before.get("used", 0),
+                "context_max": usage_before.get("max", 0),
+                "context_percentage": usage_before.get("percentage", 0),
+                "message_count": len(cm.messages),
+                "trigger": "manual",
+            },
+        )
 
         try:
             self._current_job = "compacting"
@@ -1140,9 +1215,10 @@ class InteractiveMode:
 
         # Show color legend
         print()
-        self._print_system("  Agent colors: " + " ".join(
-            _agent_color(t, f"●{t}") for t in ["code", "review", "test", "plan", "docs", "debug"]
-        ))
+        self._print_system(
+            "  Agent colors: "
+            + " ".join(_agent_color(t, f"●{t}") for t in ["code", "review", "test", "plan", "docs", "debug"])
+        )
         print()
         return False
 
@@ -1418,12 +1494,15 @@ class InteractiveMode:
         if "error" in result:
             self._print_error(f"Error: {result['error']}")
             # Fire PostToolUseFailure hook
-            self._fire_hook("PostToolUseFailure", {
-                "tool_name": tool_name,
-                "tool_input": tool_arg,
-                "error": result["error"],
-                "session_id": self.session.session_id,
-            })
+            self._fire_hook(
+                "PostToolUseFailure",
+                {
+                    "tool_name": tool_name,
+                    "tool_input": tool_arg,
+                    "error": result["error"],
+                    "session_id": self.session.session_id,
+                },
+            )
         else:
             self._print_info(f"[{tool_name}] result:")
             print(_json.dumps(result, indent=2, default=str)[:3000])
@@ -1752,7 +1831,9 @@ class InteractiveMode:
         self._print_info(f"  File: {plan_file}")
         self._print_info(f"  Topic: {arg[:100]}")
         comm_stats = self.session.agent_comm.get_token_savings()
-        self._print_system(f"  Agent messages: {comm_stats['total_messages']} • Token savings: {comm_stats['context_tokens_saved']:,}")
+        self._print_system(
+            f"  Agent messages: {comm_stats['total_messages']} • Token savings: {comm_stats['context_tokens_saved']:,}"
+        )
         print()
         self._print_system(f"To execute this plan, run: /build {plan_file}")
         print()
@@ -1884,7 +1965,9 @@ class InteractiveMode:
         cost = metrics.get("cost_estimate", 0.0)
         comm_stats = self.session.agent_comm.get_token_savings()
         self._print_system(f"  tokens: {total:,} | cost: ${cost:.4f}")
-        self._print_system(f"  agent messages: {comm_stats['total_messages']} • token savings: {comm_stats['context_tokens_saved']:,}")
+        self._print_system(
+            f"  agent messages: {comm_stats['total_messages']} • token savings: {comm_stats['context_tokens_saved']:,}"
+        )
 
         # Mark task as completed
         if task_file.is_file():
@@ -2209,8 +2292,7 @@ class InteractiveMode:
         # Show token usage and comm stats
         comm_stats = self.session.agent_comm.get_token_savings()
         self._print_system(
-            f"  agent messages: {comm_stats['total_messages']} • "
-            f"token savings: {comm_stats['context_tokens_saved']:,}"
+            f"  agent messages: {comm_stats['total_messages']} • token savings: {comm_stats['context_tokens_saved']:,}"
         )
         print()
         return False
@@ -2242,22 +2324,28 @@ class InteractiveMode:
             self._prompt_workspace_trust()
 
         # Fire Setup hook (init trigger)
-        self._fire_hook("Setup", {
-            "trigger": "init",
-            "session_id": self.session.session_id,
-            "model": self.session.model,
-            "provider": self.session.provider,
-            "cwd": os.getcwd(),
-        })
+        self._fire_hook(
+            "Setup",
+            {
+                "trigger": "init",
+                "session_id": self.session.session_id,
+                "model": self.session.model,
+                "provider": self.session.provider,
+                "cwd": os.getcwd(),
+            },
+        )
 
         # Fire SessionStart hook
-        self._fire_hook("SessionStart", {
-            "session_id": self.session.session_id,
-            "model": self.session.model,
-            "provider": self.session.provider,
-            "source": "interactive",
-            "context_length": self.session.context_manager.max_context_length,
-        })
+        self._fire_hook(
+            "SessionStart",
+            {
+                "session_id": self.session.session_id,
+                "model": self.session.model,
+                "provider": self.session.provider,
+                "source": "interactive",
+                "context_length": self.session.context_manager.max_context_length,
+            },
+        )
 
         # Show initial bottom status bar
         self._print_status_bar()
@@ -2302,23 +2390,29 @@ class InteractiveMode:
                         agent_type = parts[0][1:]  # Remove the @ symbol
                         stripped = parts[1]
                         # Fire SubagentStart hook for agent-specific commands
-                        self._fire_hook("SubagentStart", {
-                            "agent_id": f"{agent_type}-{self.session.session_id[:8]}",
-                            "agent_type": agent_type,
-                            "session_id": self.session.session_id,
-                            "model": self.session.model,
-                            "prompt_preview": stripped[:100],
-                        })
+                        self._fire_hook(
+                            "SubagentStart",
+                            {
+                                "agent_id": f"{agent_type}-{self.session.session_id[:8]}",
+                                "agent_type": agent_type,
+                                "session_id": self.session.session_id,
+                                "model": self.session.model,
+                                "prompt_preview": stripped[:100],
+                            },
+                        )
 
                 # Fire UserPromptSubmit hook before processing
-                prompt_results = self._fire_hook("UserPromptSubmit", {
-                    "prompt": stripped,
-                    "session_id": self.session.session_id,
-                    "model": self.session.model,
-                    "timestamp": __import__("datetime").datetime.now(
-                        tz=__import__("datetime").timezone.utc
-                    ).isoformat(),
-                })
+                prompt_results = self._fire_hook(
+                    "UserPromptSubmit",
+                    {
+                        "prompt": stripped,
+                        "session_id": self.session.session_id,
+                        "model": self.session.model,
+                        "timestamp": __import__("datetime")
+                        .datetime.now(tz=__import__("datetime").timezone.utc)
+                        .isoformat(),
+                    },
+                )
                 # Check if the prompt was denied by the hook
                 prompt_denied = False
                 for pr in prompt_results:
@@ -2349,20 +2443,26 @@ class InteractiveMode:
                 self._print_response(content, agent_type=agent_type)
 
                 # Fire Stop hook (model finished responding)
-                self._fire_hook("Stop", {
-                    "session_id": self.session.session_id,
-                    "model": self.session.model,
-                    "stop_hook_active": True,
-                })
+                self._fire_hook(
+                    "Stop",
+                    {
+                        "session_id": self.session.session_id,
+                        "model": self.session.model,
+                        "stop_hook_active": True,
+                    },
+                )
 
                 # Fire SubagentStop for agent-specific commands
                 if agent_type:
-                    self._fire_hook("SubagentStop", {
-                        "agent_id": f"{agent_type}-{self.session.session_id[:8]}",
-                        "agent_type": agent_type,
-                        "session_id": self.session.session_id,
-                        "stop_hook_active": True,
-                    })
+                    self._fire_hook(
+                        "SubagentStop",
+                        {
+                            "agent_id": f"{agent_type}-{self.session.session_id[:8]}",
+                            "agent_type": agent_type,
+                            "session_id": self.session.session_id,
+                            "stop_hook_active": True,
+                        },
+                    )
 
                 # Show token usage after each response (like Claude Code)
                 metrics = result.get("metrics", {})
@@ -2408,15 +2508,18 @@ class InteractiveMode:
                 )
 
                 # Fire SessionEnd hook
-                self._fire_hook("SessionEnd", {
-                    "session_id": self.session.session_id,
-                    "model": self.session.model,
-                    "provider": self.session.provider,
-                    "duration": duration,
-                    "messages": total_msgs,
-                    "total_tokens": total_tokens,
-                    "cost": cost,
-                })
+                self._fire_hook(
+                    "SessionEnd",
+                    {
+                        "session_id": self.session.session_id,
+                        "model": self.session.model,
+                        "provider": self.session.provider,
+                        "duration": duration,
+                        "messages": total_msgs,
+                        "total_tokens": total_tokens,
+                        "cost": cost,
+                    },
+                )
             except Exception:
                 logger.warning("Failed to end session cleanly", exc_info=True)
 
