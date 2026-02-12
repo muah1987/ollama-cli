@@ -1,3 +1,5 @@
+[![Auto Release](https://github.com/muah1987/ollama-cli/actions/workflows/autorelease.yml/badge.svg?event=milestone)](https://github.com/muah1987/ollama-cli/actions/workflows/autorelease.yml)
+
 # Ollama CLI Documentation
 
 Comprehensive documentation for Ollama CLI - a full-featured AI coding assistant powered by Ollama with multi-provider support.
