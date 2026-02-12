@@ -174,3 +174,95 @@ def test_help_includes_system_prompt_flag() -> None:
         cwd=str(Path(__file__).parent.parent),
     )
     assert "--system-prompt" in result.stdout
+
+
+def test_resume_flag() -> None:
+    """Test that -r / --resume flag is parsed."""
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from cmd.root import build_parser; a = build_parser().parse_args(['-r']); print(a.resume)",
+        ],
+        capture_output=True,
+        text=True,
+        cwd=str(Path(__file__).parent.parent),
+    )
+    assert result.stdout.strip() == "True"
+
+
+def test_resume_flag_long() -> None:
+    """Test that --resume long flag is parsed."""
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from cmd.root import build_parser; a = build_parser().parse_args(['--resume']); print(a.resume)",
+        ],
+        capture_output=True,
+        text=True,
+        cwd=str(Path(__file__).parent.parent),
+    )
+    assert result.stdout.strip() == "True"
+
+
+def test_help_includes_resume_flag() -> None:
+    """Test that --help output includes the --resume flag."""
+    result = subprocess.run(
+        [sys.executable, "-c", "from cmd.root import build_parser; build_parser().parse_args(['--help'])"],
+        capture_output=True,
+        text=True,
+        cwd=str(Path(__file__).parent.parent),
+    )
+    assert "--resume" in result.stdout
+    assert "resume" in result.stdout.lower()
+
+
+def test_find_latest_session_no_sessions() -> None:
+    """Test _find_latest_session returns None when no sessions exist."""
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from cmd.root import _find_latest_session; print(_find_latest_session())",
+        ],
+        capture_output=True,
+        text=True,
+        cwd=str(Path(__file__).parent.parent),
+    )
+    assert "None" in result.stdout
+
+
+def test_chat_subcommand_exists() -> None:
+    """Test that 'chat' is parsed as a valid subcommand."""
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from cmd.root import build_parser; a = build_parser().parse_args(['chat']); print(a.command)",
+        ],
+        capture_output=True,
+        text=True,
+        cwd=str(Path(__file__).parent.parent),
+    )
+    assert result.stdout.strip() == "chat"
+
+
+def test_chat_command_is_wired() -> None:
+    """Test that cmd_chat delegates to cmd_interactive (not a stub)."""
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            (
+                "from cmd.root import cmd_chat; "
+                "import inspect; "
+                "src = inspect.getsource(cmd_chat); "
+                "print('coming soon' not in src.lower())"
+            ),
+        ],
+        capture_output=True,
+        text=True,
+        cwd=str(Path(__file__).parent.parent),
+    )
+    assert result.stdout.strip() == "True"

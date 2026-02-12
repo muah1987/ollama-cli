@@ -172,11 +172,13 @@ class InteractiveMode:
     def _print_banner(self) -> None:
         """Print the welcome banner on REPL startup."""
         print()
-        print(_bold("ollama-cli interactive mode"))
-        self._print_info(f"  model:    {self.session.model}")
-        self._print_info(f"  provider: {self.session.provider}")
-        self._print_info(f"  session:  {self.session.session_id}")
-        self._print_system("  Type /help for commands, Ctrl+D to exit.")
+        print(_bold(f"╭─ ollama-cli v0.1.0 ({'resumed' if self.session._message_count > 0 else 'new session'})"))
+        self._print_info(f"│  model:    {self.session.model}")
+        self._print_info(f"│  provider: {self.session.provider}")
+        self._print_info(f"│  session:  {self.session.session_id}")
+        if self.session._message_count > 0:
+            self._print_info(f"│  history:  {self.session._message_count} messages")
+        self._print_system("╰─ Type /help for commands, /quit to exit")
         print()
 
     # -- input reading -------------------------------------------------------
@@ -613,6 +615,14 @@ class InteractiveMode:
                 content = result.get("content", "")
                 self._print_response(content)
 
+                # Show token usage after each response (like Claude Code)
+                metrics = result.get("metrics", {})
+                total = metrics.get("total_tokens", 0)
+                cost = metrics.get("cost_estimate", 0.0)
+                context = self.session.context_manager.get_context_usage()
+                pct = context.get("percentage", 0)
+                self._print_system(f"  tokens: {total:,} | context: {pct}% | cost: ${cost:.4f}")
+
                 # Notify on auto-compaction
                 if result.get("compacted"):
                     self._print_system("(Context was auto-compacted)")
@@ -621,13 +631,22 @@ class InteractiveMode:
             self._running = False
             self._save_history()
 
+            # Auto-save the session so --resume can pick it up
+            try:
+                self.session.save()
+            except Exception:
+                logger.warning("Failed to auto-save session", exc_info=True)
+
             # End the session
             try:
                 summary = await self.session.end()
                 duration = summary.get("duration_str", "unknown")
                 total_msgs = summary.get("messages", 0)
                 total_tokens = summary.get("total_tokens", 0)
-                self._print_system(f"Session ended: {duration}, {total_msgs} messages, {total_tokens:,} tokens")
+                cost = summary.get("cost_estimate", 0.0)
+                self._print_system(
+                    f"Session ended: {duration}, {total_msgs} messages, {total_tokens:,} tokens, ${cost:.4f}"
+                )
             except Exception:
                 logger.warning("Failed to end session cleanly", exc_info=True)
 

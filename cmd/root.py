@@ -73,11 +73,9 @@ def print_banner() -> None:
 # ---------------------------------------------------------------------------
 
 
-def cmd_chat(_args: argparse.Namespace) -> None:
-    """Start interactive chat session with a model."""
-    print_banner()
-    console.print("[yellow]Chat mode coming soon...[/yellow]")
-    console.print("Use the interactive mode for now: [bold]ollama-cli interactive[/bold]")
+def cmd_chat(args: argparse.Namespace) -> None:
+    """Start interactive chat session with a model (alias for interactive)."""
+    cmd_interactive(args)
 
 
 def cmd_list(args: argparse.Namespace) -> None:
@@ -174,7 +172,7 @@ def cmd_version(_args: argparse.Namespace) -> None:
     print(f"ollama-cli v{VERSION}")
 
 
-def cmd_interactive(_args: argparse.Namespace) -> None:
+def cmd_interactive(args: argparse.Namespace) -> None:
     """Start the interactive REPL mode."""
     # Import here to avoid circular imports
     from model.session import Session
@@ -182,7 +180,20 @@ def cmd_interactive(_args: argparse.Namespace) -> None:
     from .interactive import InteractiveMode
 
     cfg = get_config()
-    session = Session(model=cfg.ollama_model, provider=cfg.provider)
+
+    # Resume the most recent session if --resume was passed
+    session = None
+    if getattr(args, "resume", False):
+        latest_id = _find_latest_session()
+        if latest_id:
+            try:
+                session = Session.load(latest_id)
+                console.print(f"[green]Resumed session:[/green] {latest_id}")
+            except Exception:
+                console.print("[yellow]Could not resume session, starting new one.[/yellow]")
+
+    if session is None:
+        session = Session(model=cfg.ollama_model, provider=cfg.provider)
 
     async def _run() -> None:
         await session.start()
@@ -290,6 +301,13 @@ def build_parser() -> argparse.ArgumentParser:
         default=False,
         dest="print_mode",
         help="Print response and exit (non-interactive mode)",
+    )
+    parser.add_argument(
+        "-r",
+        "--resume",
+        action="store_true",
+        default=False,
+        help="Resume the most recent conversation",
     )
     parser.add_argument("--json", action="store_true", default=False, help="JSON output mode")
     parser.add_argument("--verbose", action="store_true", default=False, help="Verbose output")
@@ -414,17 +432,41 @@ def _extract_prompt_args(argv: list[str]) -> tuple[list[str], str | None]:
     return argv, None
 
 
+def _find_latest_session() -> str | None:
+    """Find the most recently saved session file.
+
+    Returns
+    -------
+    The session ID of the latest session, or ``None`` if none exist.
+    """
+    sessions_dir = Path(".ollama/sessions")
+    if not sessions_dir.is_dir():
+        return None
+
+    session_files = sorted(sessions_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+    if not session_files:
+        return None
+
+    return session_files[0].stem
+
+
 def main() -> None:
     """Entry point."""
     parser = build_parser()
 
     raw_args = sys.argv[1:]
+
+    # Support piped stdin: `echo "fix this" | ollama-cli`
+    piped_input = None
+    if not sys.stdin.isatty() and not any(a in raw_args for a in ("interactive", "i", "chat")):
+        piped_input = sys.stdin.read().strip()
+
     filtered_args, direct_prompt = _extract_prompt_args(raw_args)
 
-    if direct_prompt is not None:
+    if direct_prompt is not None or piped_input:
         # Parse only the flags (no subcommand)
         args = parser.parse_args(filtered_args)
-        args.prompt = direct_prompt
+        args.prompt = direct_prompt or piped_input
         # Apply global flag overrides to config
         cfg = get_config()
         if args.model:
