@@ -587,7 +587,9 @@ class InteractiveMode:
                 try:
                     content = memory_file.read_text(encoding="utf-8")
                     self._print_info("--- Project Memory (OLLAMA.md) ---")
-                    print(content[:2000] if len(content) <= 2000 else content[:2000] + "\n...")
+                    print(content[:2000])
+                    if len(content) > 2000:
+                        print("...")
                 except OSError as exc:
                     self._print_error(f"Cannot read OLLAMA.md: {exc}")
             else:
@@ -905,7 +907,7 @@ class InteractiveMode:
         specs_dir.mkdir(parents=True, exist_ok=True)
 
         # Derive a kebab-case filename from the first few words
-        slug = re.sub(r"[^a-z0-9]+", "-", arg.lower()[:60]).strip("-")
+        slug = re.sub(r"[^a-z0-9]+", "-", arg.lower()).strip("-")[:60]
         plan_file = specs_dir / f"{slug}.md"
 
         self._print_system("Generating implementation plan ...")
@@ -1111,7 +1113,9 @@ class InteractiveMode:
                     task_type = data.get("type", "unknown")
                     desc = data.get("description", "")[:60]
                     status_color = {"planned": _cyan, "in_progress": _bold, "completed": _green}.get(status, _dim)
-                    print(f"  {_cyan(data.get('id', tf.stem)):30s} [{status_color(status):10s}] {task_type}: {desc}")
+                    task_id = data.get("id", tf.stem)
+                    padded_status = f"{status:<10s}"
+                    print(f"  {_cyan(task_id):30s} [{status_color(padded_status)}] {task_type}: {desc}")
                 except Exception:
                     print(f"  {_dim(tf.stem)}")
             print()

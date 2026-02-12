@@ -60,6 +60,24 @@ def clear_ignore_cache() -> None:
 # Tool implementations
 # ---------------------------------------------------------------------------
 
+# File extensions searched by grep_search.  Extend this tuple to include
+# additional file types in project-wide searches.
+_GREP_INCLUDE_EXTENSIONS: tuple[str, ...] = (
+    "*.py",
+    "*.md",
+    "*.txt",
+    "*.json",
+    "*.yaml",
+    "*.yml",
+    "*.toml",
+    "*.cfg",
+    "*.ini",
+    "*.js",
+    "*.ts",
+    "*.html",
+    "*.css",
+)
+
 
 def tool_file_read(path: str, *, max_lines: int = 500) -> dict[str, Any]:
     """Read the contents of a file.
@@ -176,26 +194,9 @@ def tool_grep_search(
     if is_path_ignored(path):
         return {"error": f"Path is ignored by .ollamaignore: {path}"}
     try:
+        include_args = [f"--include={ext}" for ext in _GREP_INCLUDE_EXTENSIONS]
         proc = subprocess.run(
-            [
-                "grep",
-                "-rn",
-                "--include=*.py",
-                "--include=*.md",
-                "--include=*.txt",
-                "--include=*.json",
-                "--include=*.yaml",
-                "--include=*.yml",
-                "--include=*.toml",
-                "--include=*.cfg",
-                "--include=*.ini",
-                "--include=*.js",
-                "--include=*.ts",
-                "--include=*.html",
-                "--include=*.css",
-                pattern,
-                path,
-            ],
+            ["grep", "-rn", *include_args, pattern, path],
             capture_output=True,
             text=True,
             timeout=15,
