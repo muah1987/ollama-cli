@@ -50,8 +50,8 @@ class TestRunOnboarding:
         ):
             # Simulate user choosing gemini provider, default model, skip api key
             mock_ask.side_effect = [
-                "gemini",      # provider choice
-                "",            # API key (empty)
+                "gemini",  # provider choice
+                "",  # API key (empty)
                 "gemini-2.5-flash",  # model
             ]
             result = run_onboarding()
@@ -73,9 +73,9 @@ class TestRunOnboarding:
             patch("ollama_cmd.onboarding.console"),
         ):
             mock_ask.side_effect = [
-                "ollama",                    # provider
-                "llama3.2",                  # model
-                "http://localhost:11434",     # host
+                "ollama",  # provider
+                "llama3.2",  # model
+                "http://localhost:11434",  # host
             ]
             result = run_onboarding()
 
@@ -96,12 +96,35 @@ class TestRunOnboarding:
             patch("ollama_cmd.onboarding.console"),
         ):
             mock_ask.side_effect = [
-                "claude",          # provider
-                "sk-test-key",     # API key
+                "claude",  # provider
+                "sk-test-key",  # API key
                 "claude-sonnet-4-20250514",  # model
             ]
             result = run_onboarding()
 
         assert result.provider == "claude"
         assert result.anthropic_api_key == "sk-test-key"
+        assert result.onboarding_complete is True
+
+    def test_run_onboarding_numeric_provider_selection(self, tmp_path: Path) -> None:
+        """Wizard accepts a 1-based number to choose a provider."""
+        cfg = OllamaCliConfig()
+        config_path = tmp_path / "config.json"
+
+        with (
+            patch("ollama_cmd.onboarding.get_config", return_value=cfg),
+            patch("ollama_cmd.onboarding.save_config", return_value=config_path),
+            patch("rich.prompt.Prompt.ask") as mock_ask,
+            patch("ollama_cmd.onboarding.console"),
+        ):
+            mock_ask.side_effect = [
+                "1",  # provider by number (ollama)
+                "llama3.2",  # model
+                "http://localhost:11434",  # host
+            ]
+            result = run_onboarding()
+
+        assert result.provider == "ollama"
+        assert result.ollama_model == "llama3.2"
+        assert result.ollama_host == "http://localhost:11434"
         assert result.onboarding_complete is True

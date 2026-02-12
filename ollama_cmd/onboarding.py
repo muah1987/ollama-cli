@@ -77,11 +77,20 @@ def run_onboarding() -> OllamaCliConfig:
         console.print(f"  {i}. {prov}  {label}")
     console.print()
 
-    provider_choice = Prompt.ask(
-        "Choose a provider",
-        choices=provider_list,
-        default="ollama",
-    )
+    choices_display = "/".join(provider_list)
+    while True:
+        raw = Prompt.ask(
+            f"Choose a provider [{choices_display}]",
+            default="ollama",
+        )
+        # Accept a 1-based index as well as the provider name.
+        if raw.isdigit() and 1 <= int(raw) <= len(provider_list):
+            provider_choice = provider_list[int(raw) - 1]
+            break
+        if raw in provider_list:
+            provider_choice = raw
+            break
+        console.print(f"[prompt.invalid]Please enter a provider name or number (1-{len(provider_list)})")
     cfg.provider = provider_choice
 
     # --- 2. API key (if cloud provider) -------------------------------------
