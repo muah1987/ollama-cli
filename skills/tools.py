@@ -62,8 +62,8 @@ def is_path_ignored(path: str | Path) -> bool:
         if not pattern:
             continue
         # Directory-style pattern (e.g. "secrets/") – match any path under that directory
-        if pattern.endswith(("/", "\\")):
-            dir_pat = os.path.normpath(pattern.rstrip("/\\"))
+        if pattern.endswith("/"):
+            dir_pat = os.path.normpath(pattern.rstrip("/"))
             if rel_path == dir_pat or rel_path.startswith(dir_pat + os.sep):
                 return True
             continue
