@@ -49,6 +49,14 @@ _VALID_PROVIDERS = ("ollama", "claude", "gemini", "codex")
 _BUG_CONTEXT_MESSAGES = 5  # number of recent messages to include in bug reports
 _PROJECT_MEMORY_FILE = Path("OLLAMA.md")
 
+# Instruction files from other AI tools that /init can import context from
+_KNOWN_INSTRUCTION_FILES: tuple[Path, ...] = (
+    Path("CLAUDE.md"),
+    Path("GEMINI.md"),
+    Path("AGENT.md"),
+    Path(".github/copilot-instructions.md"),
+)
+
 # ---------------------------------------------------------------------------
 # ANSI escape helpers
 # ---------------------------------------------------------------------------
@@ -226,6 +234,65 @@ class _LlamaSpinner:
 
 
 # ---------------------------------------------------------------------------
+# Instruction file importer
+# ---------------------------------------------------------------------------
+
+
+def _import_instruction_files() -> list[str]:
+    """Detect and import instruction files from other AI tools into OLLAMA.md.
+
+    Scans the current directory for known instruction files (``CLAUDE.md``,
+    ``GEMINI.md``, ``AGENT.md``, ``.github/copilot-instructions.md``).  If any
+    are found and their content has not already been imported, appends a
+    clearly-marked section to ``OLLAMA.md``.
+
+    Returns
+    -------
+    list[str]
+        Names of the files whose content was imported.
+    """
+    if not _PROJECT_MEMORY_FILE.exists():
+        return []
+
+    try:
+        existing = _PROJECT_MEMORY_FILE.read_text(encoding="utf-8")
+    except OSError:
+        return []
+
+    imported: list[str] = []
+    sections: list[str] = []
+
+    for filepath in _KNOWN_INSTRUCTION_FILES:
+        if not filepath.is_file():
+            continue
+        marker = f"<!-- imported: {filepath} -->"
+        if marker in existing:
+            continue  # already imported
+        try:
+            content = filepath.read_text(encoding="utf-8").strip()
+        except OSError:
+            continue
+        if not content:
+            continue
+        sections.append(
+            f"\n{marker}\n"
+            f"## Imported from {filepath}\n\n"
+            f"{content}\n"
+        )
+        imported.append(str(filepath))
+
+    if sections:
+        try:
+            with open(_PROJECT_MEMORY_FILE, "a", encoding="utf-8") as f:
+                for section in sections:
+                    f.write(section)
+        except OSError:
+            return []
+
+    return imported
+
+
+# ---------------------------------------------------------------------------
 # InteractiveMode
 # ---------------------------------------------------------------------------
 
@@ -341,12 +408,20 @@ class InteractiveMode:
         """Prompt the user to trust the current folder when OLLAMA.md is missing.
 
         Displays a one-time notice asking whether the folder is trusted and
-        suggests running ``/init`` to create project files.
+        suggests running ``/init`` to create project files.  Also reports any
+        instruction files from other AI tools detected in the folder.
         """
         cwd = os.getcwd()
         print()
         self._print_info(f"📁 New workspace detected: {cwd}")
         self._print_system("No OLLAMA.md found in this folder.")
+
+        # Report detected instruction files
+        found = [str(p) for p in _KNOWN_INSTRUCTION_FILES if p.is_file()]
+        if found:
+            self._print_info(f"Detected instruction files: {', '.join(found)}")
+            self._print_system("Run /init to import them into OLLAMA.md.")
+
         try:
             answer = input(_dim("Do you trust this folder? [Y/n] ")).strip().lower()
         except (EOFError, KeyboardInterrupt):
@@ -1097,7 +1172,10 @@ class InteractiveMode:
         """Initialize the current folder as an ollama-cli project.
 
         Creates ``OLLAMA.md`` (project memory) and ``.ollama/`` (local config
-        directory) if they do not already exist.  Safe to run multiple times.
+        directory) if they do not already exist.  Also detects instruction
+        files from other AI tools (``CLAUDE.md``, ``GEMINI.md``, ``AGENT.md``,
+        ``.github/copilot-instructions.md``) and imports their content into
+        ``OLLAMA.md``.  Safe to run multiple times.
 
         Returns
         -------
@@ -1132,9 +1210,14 @@ class InteractiveMode:
             except OSError as exc:
                 self._print_error(f"Cannot create .ollama/: {exc}")
 
+        # 3. Detect and import instruction files from other AI tools
+        imported = _import_instruction_files()
+        if imported:
+            self._print_info(f"Imported context from: {', '.join(imported)}")
+
         if created:
             self._print_info(f"Project initialized — created: {', '.join(created)}")
-        else:
+        elif not imported:
             self._print_system("Project already initialized. Nothing to do.")
 
         return False

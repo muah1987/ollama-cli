@@ -5,7 +5,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from ollama_cmd.interactive import InteractiveMode, _PROJECT_MEMORY_FILE
+from ollama_cmd.interactive import (
+    InteractiveMode,
+    _KNOWN_INSTRUCTION_FILES,
+    _PROJECT_MEMORY_FILE,
+    _import_instruction_files,
+)
 
 
 class TestCmdInit:
@@ -71,6 +76,110 @@ class TestCmdInit:
         assert result is False
 
 
+class TestImportInstructionFiles:
+    """Verify detection and import of instruction files from other AI tools."""
+
+    def test_imports_claude_md(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """CLAUDE.md content is appended to OLLAMA.md."""
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "OLLAMA.md").write_text("# proj\n", encoding="utf-8")
+        (tmp_path / "CLAUDE.md").write_text("Use type hints everywhere.", encoding="utf-8")
+
+        imported = _import_instruction_files()
+
+        assert "CLAUDE.md" in imported
+        content = (tmp_path / "OLLAMA.md").read_text(encoding="utf-8")
+        assert "Use type hints everywhere." in content
+        assert "<!-- imported: CLAUDE.md -->" in content
+
+    def test_imports_copilot_instructions(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """.github/copilot-instructions.md is imported."""
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "OLLAMA.md").write_text("# proj\n", encoding="utf-8")
+        gh_dir = tmp_path / ".github"
+        gh_dir.mkdir()
+        (gh_dir / "copilot-instructions.md").write_text("Follow PEP-8.", encoding="utf-8")
+
+        imported = _import_instruction_files()
+
+        assert ".github/copilot-instructions.md" in imported
+        content = (tmp_path / "OLLAMA.md").read_text(encoding="utf-8")
+        assert "Follow PEP-8." in content
+
+    def test_skips_already_imported(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Files already imported (marker present) are not duplicated."""
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "OLLAMA.md").write_text(
+            "# proj\n<!-- imported: CLAUDE.md -->\n## Imported from CLAUDE.md\nold\n",
+            encoding="utf-8",
+        )
+        (tmp_path / "CLAUDE.md").write_text("new content", encoding="utf-8")
+
+        imported = _import_instruction_files()
+
+        assert imported == []
+        content = (tmp_path / "OLLAMA.md").read_text(encoding="utf-8")
+        assert "new content" not in content
+
+    def test_no_files_returns_empty(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """When no instruction files exist, nothing is imported."""
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "OLLAMA.md").write_text("# proj\n", encoding="utf-8")
+
+        imported = _import_instruction_files()
+
+        assert imported == []
+
+    def test_no_ollama_md_returns_empty(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """When OLLAMA.md doesn't exist, nothing is imported."""
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "CLAUDE.md").write_text("some content", encoding="utf-8")
+
+        imported = _import_instruction_files()
+
+        assert imported == []
+
+    def test_imports_multiple_files(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Multiple instruction files are imported in one call."""
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "OLLAMA.md").write_text("# proj\n", encoding="utf-8")
+        (tmp_path / "CLAUDE.md").write_text("Claude rules", encoding="utf-8")
+        (tmp_path / "GEMINI.md").write_text("Gemini rules", encoding="utf-8")
+
+        imported = _import_instruction_files()
+
+        assert "CLAUDE.md" in imported
+        assert "GEMINI.md" in imported
+        content = (tmp_path / "OLLAMA.md").read_text(encoding="utf-8")
+        assert "Claude rules" in content
+        assert "Gemini rules" in content
+
+    def test_init_calls_import(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """/init detects and imports instruction files."""
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "CLAUDE.md").write_text("Claude instructions", encoding="utf-8")
+
+        mode = MagicMock(spec=InteractiveMode)
+        mode._print_info = InteractiveMode._print_info
+        mode._print_system = InteractiveMode._print_system
+        mode._print_error = InteractiveMode._print_error
+
+        InteractiveMode._cmd_init(mode, "")
+
+        content = (tmp_path / "OLLAMA.md").read_text(encoding="utf-8")
+        assert "Claude instructions" in content
+
+
+class TestKnownInstructionFiles:
+    """Verify the constant listing known instruction files."""
+
+    def test_known_files_include_expected(self) -> None:
+        assert Path("CLAUDE.md") in _KNOWN_INSTRUCTION_FILES
+        assert Path("GEMINI.md") in _KNOWN_INSTRUCTION_FILES
+        assert Path("AGENT.md") in _KNOWN_INSTRUCTION_FILES
+        assert Path(".github/copilot-instructions.md") in _KNOWN_INSTRUCTION_FILES
+
+
 class TestWorkspaceTrustPrompt:
     """Verify the workspace trust prompt fires when OLLAMA.md is missing."""
 
@@ -92,8 +201,6 @@ class TestWorkspaceTrustPrompt:
         monkeypatch.chdir(tmp_path)
         (tmp_path / "OLLAMA.md").write_text("# test", encoding="utf-8")
 
-        # The run() method checks _PROJECT_MEMORY_FILE.exists() before calling
-        # _prompt_workspace_trust, so we verify the constant points to the right file.
         assert _PROJECT_MEMORY_FILE == Path("OLLAMA.md")
 
 
