@@ -25,8 +25,8 @@ def test_modules_exist():
 
 def test_commands_module_exists():
     """Test that the commands module exists."""
-    cmd_dir = os.path.join(os.path.dirname(__file__), "..", "cmd")
-    assert os.path.exists(cmd_dir), "cmd directory does not exist"
+    cmd_dir = os.path.join(os.path.dirname(__file__), "..", "ollama_cmd")
+    assert os.path.exists(cmd_dir), "ollama_cmd directory does not exist"
 
     expected_commands = [
         "create.py",

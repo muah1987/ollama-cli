@@ -445,7 +445,7 @@ class InteractiveMode:
         Uses the Ollama block-letter logo with side info panel, matching
         the user-provided ``ollama_sideinfo_unicode.txt`` layout.
         """
-        from cmd.root import VERSION
+        from .root import VERSION
 
         status = self.session.get_status()
         msg_count = status["messages"]

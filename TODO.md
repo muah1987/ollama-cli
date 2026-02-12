@@ -19,7 +19,7 @@ Current task priorities and pending work for the Ollama CLI project.
 - [x] Update pyproject.toml with all dependencies, `skills` in wheel, classifiers, URLs
 - [x] Agent communication bus (`runner/agent_comm.py`)
 - [x] Memory layer (`runner/memory_layer.py`)
-- [x] Interactive REPL with 25+ slash commands (`cmd/interactive.py`)
+- [x] Interactive REPL with 25+ slash commands (`ollama_cmd/interactive.py`)
 - [x] Session persistence with save/load/resume
 - [x] Auto-compact context management at 85% threshold
 - [x] Token tracking and cost estimation across all providers

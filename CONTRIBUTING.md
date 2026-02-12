@@ -73,7 +73,7 @@ Run tests with pytest:
 pytest
 
 # Run with coverage
-pytest --cov=cmd --cov=api --cov=model --cov=server --cov=runner
+pytest --cov=ollama_cmd --cov=api --cov=model --cov=server --cov=runner
 
 # Run specific test file
 pytest tests/test_api.py
@@ -106,9 +106,9 @@ ruff check .
 
 ## Adding Commands
 
-Follow the existing command structure in `cmd/`:
+Follow the existing command structure in `ollama_cmd/`:
 
-1. Create a new command file in `cmd/`
+1. Create a new command file in `ollama_cmd/`
 2. Import necessary modules from `api/`, `model/`, etc.
 3. Add a function following the pattern:
 ```python
@@ -116,7 +116,7 @@ def cmd_mycommand(args: argparse.Namespace) -> None:
     """Description of the command."""
     pass
 ```
-4. Add the command to `cmd/root.py` in the `build_parser()` function and `COMMAND_MAP`
+4. Add the command to `ollama_cmd/root.py` in the `build_parser()` function and `COMMAND_MAP`
 
 ---
 
@@ -124,7 +124,7 @@ def cmd_mycommand(args: argparse.Namespace) -> None:
 
 ```
 ollama-cli/
-├── cmd/              # CLI entry points per command
+├── ollama_cmd/       # CLI entry points per command
 ├── api/              # API client, provider router, MCP client, config
 ├── model/            # Model management and sessions
 ├── server/           # Server utilities (hook runner)

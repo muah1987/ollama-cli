@@ -29,6 +29,14 @@ fi
 if [ -d "$INSTALL_DIR" ]; then
     echo "Updating existing installation..."
     cd "$INSTALL_DIR" && git pull
+
+    # Migration: remove old cmd/ directory (renamed to ollama_cmd/ to avoid
+    # collision with Python's stdlib cmd module).  The directory may linger
+    # after git pull because __pycache__ or .pyc files are untracked.
+    if [ -d "$INSTALL_DIR/cmd" ]; then
+        echo "Migrating: removing old cmd/ directory (renamed to ollama_cmd/)..."
+        rm -rf "$INSTALL_DIR/cmd"
+    fi
 else
     echo "Cloning repository..."
     git clone "$REPO_URL" "$INSTALL_DIR"

@@ -175,7 +175,7 @@ class TestChainCommand:
                 "-c",
                 (
                     "from model.session import Session; "
-                    "from cmd.interactive import InteractiveMode; "
+                    "from ollama_cmd.interactive import InteractiveMode; "
                     "s = Session(model='llama3.2', provider='ollama'); "
                     "r = InteractiveMode(s); "
                     "print('/chain' in r._COMMAND_TABLE)"

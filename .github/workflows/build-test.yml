@@ -50,7 +50,7 @@ jobs:
       - name: Validate codebase structure
         run: |
           echo "Validating codebase structure..."
-          dirs=("cmd" "api" "model" "server" "runner" "tests" "docs")
+          dirs=("ollama_cmd" "api" "model" "server" "runner" "tests" "docs")
           for dir in "${dirs[@]}"; do
             if [ -d "$dir" ]; then
               echo "✓ $dir/ directory exists"
@@ -73,7 +73,7 @@ jobs:
       - name: Validate production folder
         run: |
           echo "Validating production folder structure..."
-          if [ ! -d "cmd" ]; then echo "ERROR: cmd/ directory missing"; exit 1; fi
+          if [ ! -d "ollama_cmd" ]; then echo "ERROR: ollama_cmd/ directory missing"; exit 1; fi
           if [ ! -d "api" ]; then echo "ERROR: api/ directory missing"; exit 1; fi
           if [ ! -d "model" ]; then echo "ERROR: model/ directory missing"; exit 1; fi
           if [ ! -d "server" ]; then echo "ERROR: server/ directory missing"; exit 1; fi

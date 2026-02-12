@@ -143,7 +143,7 @@ Development follows the ATLAS Workflow:
 
 ```
 ollama-cli/
-  cmd/
+  ollama_cmd/
     root.py              -- Main CLI entry point
     run.py               -- Run model with streaming
     list.py              -- List local models
@@ -185,7 +185,7 @@ Contributions are welcome. Here is how to get started:
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/my-feature`)
 3. Make your changes
-4. Run tests and linting (`uv run ruff check cmd/ api/ model/ server/ runner/`)
+4. Run tests and linting (`uv run ruff check ollama_cmd/ api/ model/ server/ runner/`)
 5. Commit your changes (`git commit -m "Add my feature"`)
 6. Push to your branch (`git push origin feature/my-feature`)
 7. Open a Pull Request
