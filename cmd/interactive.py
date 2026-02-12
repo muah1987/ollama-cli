@@ -18,6 +18,7 @@ import asyncio
 import logging
 import readline
 import sys
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -50,30 +51,191 @@ _BUG_CONTEXT_MESSAGES = 5  # number of recent messages to include in bug reports
 # ANSI escape helpers
 # ---------------------------------------------------------------------------
 
+_RESET = "\033[0m"
+
 
 def _green(text: str) -> str:
     """Wrap *text* in green ANSI escape codes."""
-    return f"\033[32m{text}\033[0m"
+    return f"\033[32m{text}{_RESET}"
 
 
 def _dim(text: str) -> str:
     """Wrap *text* in dim/gray ANSI escape codes."""
-    return f"\033[2m{text}\033[0m"
+    return f"\033[2m{text}{_RESET}"
 
 
 def _red(text: str) -> str:
     """Wrap *text* in red ANSI escape codes."""
-    return f"\033[31m{text}\033[0m"
+    return f"\033[31m{text}{_RESET}"
 
 
 def _cyan(text: str) -> str:
     """Wrap *text* in cyan ANSI escape codes."""
-    return f"\033[36m{text}\033[0m"
+    return f"\033[36m{text}{_RESET}"
 
 
 def _bold(text: str) -> str:
     """Wrap *text* in bold ANSI escape codes."""
-    return f"\033[1m{text}\033[0m"
+    return f"\033[1m{text}{_RESET}"
+
+
+def _yellow(text: str) -> str:
+    """Wrap *text* in yellow ANSI escape codes."""
+    return f"\033[33m{text}{_RESET}"
+
+
+def _magenta(text: str) -> str:
+    """Wrap *text* in magenta ANSI escape codes."""
+    return f"\033[35m{text}{_RESET}"
+
+
+def _blue(text: str) -> str:
+    """Wrap *text* in blue ANSI escape codes."""
+    return f"\033[34m{text}{_RESET}"
+
+
+def _white(text: str) -> str:
+    """Wrap *text* in bright white ANSI escape codes."""
+    return f"\033[97m{text}{_RESET}"
+
+
+# ---------------------------------------------------------------------------
+# Agent color scheme – each agent type gets a unique color
+# ---------------------------------------------------------------------------
+
+_AGENT_COLORS: dict[str, str] = {
+    "code": "\033[36m",       # cyan
+    "review": "\033[35m",     # magenta
+    "test": "\033[33m",       # yellow
+    "plan": "\033[34m",       # blue
+    "docs": "\033[32m",       # green
+    "debug": "\033[31m",      # red
+    "default": "\033[37m",    # white
+    "orchestrator": "\033[95m",  # bright magenta
+    "builder": "\033[96m",    # bright cyan
+    "validator": "\033[93m",  # bright yellow
+}
+
+
+def _agent_color(agent_type: str, text: str) -> str:
+    """Colorize text for a specific agent type."""
+    color = _AGENT_COLORS.get(agent_type, _AGENT_COLORS["default"])
+    return f"{color}{text}{_RESET}"
+
+
+# ---------------------------------------------------------------------------
+# Llama ASCII art – based on the Ollama brand llama
+# ---------------------------------------------------------------------------
+
+_LLAMA_BANNER = r"""
+       ##########                             ##########
+      #############                         #############
+     ######  ######                         ######  ######
+    ######    ######                       ######    ######
+    #####      ###### ################### ######      #####
+    #####       ###############################       #####
+    ######      ######                 ######      ######
+    ################                     ################
+   ###############                       ###############
+  ########                                       ########
+ ######                                             ######
+ #####          ###         ############         ###          #####
+ #####         #####    ##################    #####         #####
+ #####        ######  ######          ###### ######        #####
+  #####        ####  ####                ####  ####        #####
+   ######           ####     ##  ###      ####           ######
+    ######          ####     ######       ####          ######
+      ######        ####      ###        ####        ######
+       ######        ####               ####        ######
+        ######         #####         #####         ######
+         ######           ################           ######
+          #####              ############              #####
+          #####                                        #####
+          #####                                        #####
+"""
+
+# Funny llama-themed spinner frames for "thinking" animation
+_LLAMA_SPINNER_FRAMES = [
+    "🦙 Thinking...",
+    "🦙 Chewing on that...",
+    "🦙 Ruminating...",
+    "🦙 Spitting ideas...",
+    "🦙 Grazing for answers...",
+    "🦙 Trotting through context...",
+    "🦙 Llama-nating...",
+    "🦙 Herding tokens...",
+]
+
+_LLAMA_PLAN_SPINNER = [
+    "🦙📋 Assembling the herd...",
+    "🦙📋 Planning the trail...",
+    "🦙📋 Mapping the pasture...",
+    "🦙📋 Organizing the caravan...",
+]
+
+_LLAMA_BUILD_SPINNER = [
+    "🦙🔨 Building the barn...",
+    "🦙🔨 Hammering away...",
+    "🦙🔨 Laying foundation...",
+    "🦙🔨 Constructing...",
+]
+
+
+# ---------------------------------------------------------------------------
+# Llama spinner – funny animated waiting indicator
+# ---------------------------------------------------------------------------
+
+
+class _LlamaSpinner:
+    """Threaded spinner that cycles through funny llama-themed messages.
+
+    Usage::
+
+        spinner = _LlamaSpinner(_LLAMA_SPINNER_FRAMES)
+        spinner.start()
+        try:
+            await some_long_operation()
+        finally:
+            spinner.stop()
+    """
+
+    def __init__(self, frames: list[str], interval: float = 0.0) -> None:
+        self._frames = frames
+        self._interval = interval if interval > 0 else 0.8
+        self._stop_event = threading.Event()
+        self._thread: threading.Thread | None = None
+
+    def start(self) -> None:
+        """Start the spinner in a background thread."""
+        self._stop_event.clear()
+        self._thread = threading.Thread(target=self._run, daemon=True)
+        self._thread.start()
+
+    def stop(self) -> None:
+        """Stop the spinner and clear the line."""
+        self._stop_event.set()
+        if self._thread is not None:
+            self._thread.join(timeout=2.0)
+        # Clear the spinner line
+        sys.stdout.write("\r\033[K")
+        sys.stdout.flush()
+
+    def _run(self) -> None:
+        """Cycle through frames until stopped."""
+        idx = 0
+        while not self._stop_event.is_set():
+            frame = self._frames[idx % len(self._frames)]
+            sys.stdout.write(f"\r\033[2m{frame}\033[0m")
+            sys.stdout.flush()
+            idx += 1
+            self._stop_event.wait(self._interval)
+
+    def __enter__(self) -> "_LlamaSpinner":
+        self.start()
+        return self
+
+    def __exit__(self, *_: object) -> None:
+        self.stop()
 
 
 # ---------------------------------------------------------------------------
@@ -178,15 +340,39 @@ class InteractiveMode:
         """Print informational text in cyan."""
         print(_cyan(text))
 
-    def _print_response(self, text: str) -> None:
-        """Print an assistant response with a green model-name prefix."""
-        prefix = _green(f"[{self.session.model}] ")
+    def _print_response(self, text: str, agent_type: str | None = None) -> None:
+        """Print an assistant response with a colored model-name prefix.
+
+        Parameters
+        ----------
+        text:
+            The response text to display.
+        agent_type:
+            Optional agent type for color-coded output.
+        """
+        if agent_type:
+            prefix = _agent_color(agent_type, f"[{agent_type}:{self.session.model}] ")
+        else:
+            prefix = _green(f"[{self.session.model}] ")
         print(f"{prefix}{text}")
+
+    # -- llama spinner -------------------------------------------------------
+
+    @staticmethod
+    def _spinner(frames: list[str], duration: float = 0.0) -> "_LlamaSpinner":
+        """Return a llama-themed spinner context manager.
+
+        Usage::
+
+            with self._spinner(_LLAMA_SPINNER_FRAMES):
+                await some_long_operation()
+        """
+        return _LlamaSpinner(frames, duration)
 
     def _print_banner(self) -> None:
         """Print the welcome banner on REPL startup.
 
-        Uses Ollama llama branding with a clean, professional layout.
+        Uses the Ollama llama face branding with status info in a clean layout.
         """
         from cmd.root import VERSION
 
@@ -194,40 +380,53 @@ class InteractiveMode:
         msg_count = status["messages"]
         ctx = status["context_usage"]
         compact_pct = int(self.session.context_manager.compact_threshold * 100)
-        compact_status = "on" if self.session.context_manager.auto_compact else "off"
+        compact_status = _green("on") if self.session.context_manager.auto_compact else _red("off")
         state = "resumed" if msg_count > 0 else "new session"
 
-        # Ollama llama ASCII art (inspired by ollama.com branding)
-        llama = [
-            r"  \\",
-            r"   \\ ",
-            r"    \\   ^__^",
-            r"     \\  (oo)\\_______",
-            r"        (__)\\       )\\/\\",
-            r"            ||----w |",
-            r"            ||     ||",
-        ]
-
+        # Print llama face ASCII art in dim white
         print()
-        for line in llama:
+        for line in _LLAMA_BANNER.strip().splitlines():
             print(_dim(line))
+
+        # Title line
         print()
         print(_bold(f"  ollama-cli v{VERSION}") + _dim(f"  ({state})"))
         print()
-        self._print_info(f"  Model:    {self.session.model}")
-        self._print_info(f"  Provider: {self.session.provider}")
-        self._print_info(f"  Session:  {self.session.session_id}")
-        self._print_info(f"  Context:  {ctx['used']:,}/{ctx['max']:,} tokens ({ctx['percentage']}%)")
-        self._print_info(f"  Compact:  auto-compact {compact_status} (threshold {compact_pct}%)")
+
+        # Status block in a box
+        w = 58
+        print(f"  ┌{'─' * w}┐")
+        print(f"  │{'':>{w}}│")
+        self._banner_line(w, "Model", self.session.model)
+        self._banner_line(w, "Provider", self.session.provider)
+        self._banner_line(w, "Session", self.session.session_id[:24] + "…")
+        self._banner_line(w, "Context", f"{ctx['used']:,}/{ctx['max']:,} tokens ({ctx['percentage']}%)")
+        self._banner_line(w, "Compact", f"auto-compact {compact_status} (threshold {compact_pct}%)")
         if msg_count > 0:
-            self._print_info(f"  History:  {msg_count} messages")
+            self._banner_line(w, "History", f"{msg_count} messages")
         mem_stats = self.session.memory_layer.get_token_savings()
         if mem_stats["total_entries"] > 0:
-            self._print_info(f"  Memory:   {mem_stats['total_entries']} entries ({mem_stats['context_tokens_used']:,} tokens)")
+            self._banner_line(w, "Memory", f"{mem_stats['total_entries']} entries ({mem_stats['context_tokens_used']:,} tokens)")
+        print(f"  │{'':>{w}}│")
+        print(f"  └{'─' * w}┘")
+
+        # Tips footer
         print()
-        print(_dim("  /help for commands • /tools for built-in tools • /compact to free memory"))
-        print(_dim("  Ctrl+C to cancel • Ctrl+D or /quit to exit"))
+        print(_dim("  💡 /help for commands • /tools for built-in tools"))
+        print(_dim("  🦙 /compact to free memory • /agents to see the herd"))
+        print(_dim("  ⌨  Ctrl+C to cancel • Ctrl+D or /quit to exit"))
         print()
+
+    @staticmethod
+    def _banner_line(width: int, label: str, value: str) -> None:
+        """Print a single line inside the banner box."""
+        content = f"  {_cyan(f'{label}:')}  {value}"
+        # We need to account for ANSI escape codes in the padding
+        visible_len = len(f"  {label}:  {value}")
+        padding = width - visible_len
+        if padding < 0:
+            padding = 0
+        print(f"  │{content}{' ' * padding}│")
 
     # -- input reading -------------------------------------------------------
 
@@ -649,7 +848,7 @@ class InteractiveMode:
     # -- new commands (Gemini CLI / Claude Code / Codex parity) ----------------
 
     def _cmd_agents(self, _arg: str) -> bool:
-        """List all active sub-agents and communication stats.
+        """List all active sub-agents with color-coded types and communication stats.
 
         Returns
         -------
@@ -657,18 +856,31 @@ class InteractiveMode:
         """
         sub_contexts = self.session.context_manager._sub_contexts
         if sub_contexts:
-            self._print_info("Active Sub-Agents:")
+            print()
+            self._print_info("🦙 Active Sub-Agents (the herd):")
             for cid, sub in sub_contexts.items():
                 usage = sub.get_context_usage()
-                self._print_info(f"  {cid}: {usage['used']:,}/{usage['max']:,} tokens ({usage['percentage']}%)")
+                # Color-code each agent by type
+                agent_type = cid.split("-")[0] if "-" in cid else cid
+                colored_name = _agent_color(agent_type, cid)
+                dot = _agent_color(agent_type, "●")
+                print(f"  {dot} {colored_name}: {usage['used']:,}/{usage['max']:,} tokens ({usage['percentage']}%)")
         else:
-            self._print_system("No active sub-agents.")
+            self._print_system("🦙 No active sub-agents. The herd is resting.")
 
+        print()
         comm_stats = self.session.agent_comm.get_token_savings()
-        self._print_info("Agent Communication:")
-        self._print_info(f"  Total messages: {comm_stats['total_messages']}")
-        self._print_info(f"  Direct tokens:  {comm_stats['direct_tokens']:,}")
-        self._print_info(f"  Tokens saved:   ~{comm_stats['context_tokens_saved']:,}")
+        self._print_info("📡 Agent Communication:")
+        self._print_info(f"  Messages:     {comm_stats['total_messages']}")
+        self._print_info(f"  Direct tokens: {comm_stats['direct_tokens']:,}")
+        self._print_info(f"  Tokens saved:  ~{comm_stats['context_tokens_saved']:,}")
+
+        # Show color legend
+        print()
+        self._print_system("  Agent colors: " + " ".join(
+            _agent_color(t, f"●{t}") for t in ["code", "review", "test", "plan", "docs", "debug"]
+        ))
+        print()
         return False
 
     def _cmd_remember(self, arg: str) -> bool:
@@ -1094,7 +1306,12 @@ class InteractiveMode:
         )
 
         try:
-            result = await self.session.send(planning_prompt)
+            spinner = self._spinner(_LLAMA_PLAN_SPINNER)
+            spinner.start()
+            try:
+                result = await self.session.send(planning_prompt)
+            finally:
+                spinner.stop()
         except Exception as exc:
             self._print_error(f"Failed to generate plan: {exc}")
             return False
@@ -1212,7 +1429,12 @@ class InteractiveMode:
         )
 
         try:
-            result = await self.session.send(build_prompt)
+            spinner = self._spinner(_LLAMA_BUILD_SPINNER)
+            spinner.start()
+            try:
+                result = await self.session.send(build_prompt)
+            finally:
+                spinner.stop()
         except Exception as exc:
             self._print_error(f"Build failed: {exc}")
             return False
@@ -1438,17 +1660,22 @@ class InteractiveMode:
                         agent_type = parts[0][1:]  # Remove the @ symbol
                         stripped = parts[1]
 
-                # Regular message -> send to session
+                # Regular message -> send to session with llama spinner
                 try:
-                    result = await self.session.send(stripped, agent_type=agent_type)
+                    spinner = self._spinner(_LLAMA_SPINNER_FRAMES)
+                    spinner.start()
+                    try:
+                        result = await self.session.send(stripped, agent_type=agent_type)
+                    finally:
+                        spinner.stop()
                 except Exception as exc:
                     self._print_error(f"Error: {exc}")
                     logger.exception("Failed to send message")
                     continue
 
-                # Display response
+                # Display response with agent-colored output
                 content = result.get("content", "")
-                self._print_response(content)
+                self._print_response(content, agent_type=agent_type)
 
                 # Show token usage after each response (like Claude Code)
                 metrics = result.get("metrics", {})

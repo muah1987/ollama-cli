@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+import sys
 import tempfile
 import time
 from datetime import datetime, timezone
+from pathlib import Path
 
 from runner.agent_comm import AgentCommBus
 from runner.memory_layer import MemoryLayer
+
+_PROJECT_DIR = str(Path(__file__).resolve().parent.parent)
 
 # ===========================================================================
 # AgentCommBus tests
@@ -271,21 +275,48 @@ class TestInteractiveCommands:
 
     def test_interactive_agents_command(self) -> None:
         """/agents is registered."""
-        from cmd.interactive import InteractiveMode
+        import subprocess
 
-        assert "/agents" in InteractiveMode._COMMAND_TABLE
-        assert InteractiveMode._COMMAND_TABLE["/agents"] == "_cmd_agents"
+        result = subprocess.run(
+            [sys.executable, "-c",
+             "import sys; sys.path.insert(0, '.');\n"
+             "from cmd.interactive import InteractiveMode\n"
+             "assert '/agents' in InteractiveMode._COMMAND_TABLE\n"
+             "assert InteractiveMode._COMMAND_TABLE['/agents'] == '_cmd_agents'\n"
+             "print('OK')"],
+            capture_output=True, text=True, cwd=_PROJECT_DIR,
+        )
+        assert result.returncode == 0
+        assert "OK" in result.stdout
 
     def test_interactive_remember_command(self) -> None:
         """/remember is registered."""
-        from cmd.interactive import InteractiveMode
+        import subprocess
 
-        assert "/remember" in InteractiveMode._COMMAND_TABLE
-        assert InteractiveMode._COMMAND_TABLE["/remember"] == "_cmd_remember"
+        result = subprocess.run(
+            [sys.executable, "-c",
+             "import sys; sys.path.insert(0, '.');\n"
+             "from cmd.interactive import InteractiveMode\n"
+             "assert '/remember' in InteractiveMode._COMMAND_TABLE\n"
+             "assert InteractiveMode._COMMAND_TABLE['/remember'] == '_cmd_remember'\n"
+             "print('OK')"],
+            capture_output=True, text=True, cwd=_PROJECT_DIR,
+        )
+        assert result.returncode == 0
+        assert "OK" in result.stdout
 
     def test_interactive_recall_command(self) -> None:
         """/recall is registered."""
-        from cmd.interactive import InteractiveMode
+        import subprocess
 
-        assert "/recall" in InteractiveMode._COMMAND_TABLE
-        assert InteractiveMode._COMMAND_TABLE["/recall"] == "_cmd_recall"
+        result = subprocess.run(
+            [sys.executable, "-c",
+             "import sys; sys.path.insert(0, '.');\n"
+             "from cmd.interactive import InteractiveMode\n"
+             "assert '/recall' in InteractiveMode._COMMAND_TABLE\n"
+             "assert InteractiveMode._COMMAND_TABLE['/recall'] == '_cmd_recall'\n"
+             "print('OK')"],
+            capture_output=True, text=True, cwd=_PROJECT_DIR,
+        )
+        assert result.returncode == 0
+        assert "OK" in result.stdout
