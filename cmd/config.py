@@ -26,7 +26,7 @@ api_dir = Path(__file__).resolve().parent.parent
 if str(api_dir) not in sys.path:
     sys.path.insert(0, str(api_dir))
 
-from api.config import get_config, save_config  # noqa: E402
+from api.config import OllamaCliConfig, get_config, save_config  # noqa: E402
 
 version = "0.1.0"
 console = Console()
@@ -79,9 +79,9 @@ def handle_config(args: argparse.Namespace) -> None:
     sys.exit(1)
 
 
-def _show_config(cfg: object, use_json: bool) -> None:
+def _show_config(cfg: OllamaCliConfig, use_json: bool) -> None:
     """Display the full configuration."""
-    data = asdict(cfg)  # type: ignore[arg-type]
+    data = asdict(cfg)
 
     # Mask sensitive values
     for key in _SENSITIVE_KEYS:
@@ -102,7 +102,7 @@ def _show_config(cfg: object, use_json: bool) -> None:
     console.print(table)
 
 
-def _get_config_key(cfg: object, key: str, use_json: bool) -> None:
+def _get_config_key(cfg: OllamaCliConfig, key: str, use_json: bool) -> None:
     """Display a single configuration value."""
     if not hasattr(cfg, key):
         console.print(f"[red]Error:[/red] Unknown config key: {key}")
@@ -118,7 +118,7 @@ def _get_config_key(cfg: object, key: str, use_json: bool) -> None:
         console.print(f"[cyan]{key}[/cyan] = [green]{val}[/green]")
 
 
-def _set_config_key(cfg: object, key: str, value: str) -> None:
+def _set_config_key(cfg: OllamaCliConfig, key: str, value: str) -> None:
     """Set a configuration value and save it."""
     if not hasattr(cfg, key):
         console.print(f"[red]Error:[/red] Unknown config key: {key}")
@@ -148,7 +148,7 @@ def _set_config_key(cfg: object, key: str, value: str) -> None:
         coerced = value
 
     setattr(cfg, key, coerced)
-    save_config(cfg)  # type: ignore[arg-type]
+    save_config(cfg)
     console.print(f"[green]✓[/green] Set [cyan]{key}[/cyan] = [green]{coerced}[/green]")
 
 

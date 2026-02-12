@@ -73,6 +73,7 @@ def _stream_pull_progress(response: httpx.Response, model_name: str) -> None:
 
     task_id = None
     current_status = ""
+    current_total = 0
 
     with progress:
         for line in response.iter_lines():
@@ -90,15 +91,17 @@ def _stream_pull_progress(response: httpx.Response, model_name: str) -> None:
             if status != current_status:
                 current_status = status
                 if task_id is not None:
-                    progress.update(task_id, completed=progress.tasks[task_id].total or 0)
+                    progress.update(task_id, completed=current_total or 0)
+                current_total = total
                 task_id = progress.add_task(status, total=total or None)
 
             if task_id is not None and total > 0:
+                current_total = total
                 progress.update(task_id, completed=completed, total=total)
 
             if status == "success":
                 if task_id is not None:
-                    progress.update(task_id, completed=total or 0)
+                    progress.update(task_id, completed=current_total or 0)
                 break
 
     console.print(f"[green]✓[/green] Successfully pulled [bold]{model_name}[/bold]")

@@ -116,9 +116,8 @@ def handle_status(args: argparse.Namespace) -> None:
             else:
                 size_str = f"{size_bytes} B"
             expires = str(m.get("expires_at", "unknown"))
-            if isinstance(expires, str) and "T" in expires:
-                expires = expires.split("T")[0]
-            table.add_row(name, size_str, expires)
+            expires_display = expires.split("T")[0] if isinstance(expires, str) and "T" in expires else expires
+            table.add_row(name, size_str, expires_display)
         console.print(table)
 
     # Config panel
