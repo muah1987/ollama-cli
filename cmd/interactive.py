@@ -272,6 +272,7 @@ class InteractiveMode:
         "/remember": "_cmd_remember",
         "/recall": "_cmd_recall",
         "/mcp": "_cmd_mcp",
+        "/chain": "_cmd_chain",
     }
 
     def __init__(self, session: Session) -> None:
@@ -876,6 +877,7 @@ class InteractiveMode:
         print(f"  {_cyan('/remember <k> <v>')} Store a memory entry for token-efficient recall")
         print(f"  {_cyan('/recall [query]')}   Recall stored memories (all or by keyword)")
         print(f"  {_cyan('/mcp [action]')}     Manage MCP servers (enable|disable|tools|invoke)")
+        print(f"  {_cyan('/chain <prompt>')}   Run multi-wave chain orchestration (analyze→plan→execute→finalize)")
         print(f"  {_cyan('/help')}             Show this help message")
         print(f"  {_cyan('/quit')}             Exit the session")
         print()
@@ -1905,6 +1907,81 @@ class InteractiveMode:
         else:
             self._print_error("Usage: /mcp [enable|disable|tools|invoke] <name>")
 
+        return False
+
+    async def _cmd_chain(self, arg: str) -> bool:
+        """Run a multi-wave chain orchestration pipeline.
+
+        Usage: ``/chain <prompt>``
+
+        Executes the chain controller pipeline:
+        Wave 0: Ingest → Wave 1: Analysis → Wave 2: Plan/Validate/Optimize →
+        Wave 3: Execution → Wave 4: Finalize → Deliver.
+
+        Each wave runs multiple subagents in sequence, merges their outputs,
+        and feeds the result into the next wave via a Shared State object.
+
+        Returns
+        -------
+        Always ``False`` (continue REPL).
+        """
+        if not arg:
+            self._print_error("Usage: /chain <prompt>")
+            self._print_system("  Runs a multi-wave chain: analyze → plan → execute → finalize")
+            return False
+
+        from runner.chain_controller import ChainController
+
+        print()
+        self._print_info("🔗 Chain Orchestration")
+        self._print_system(f"  Prompt: {arg[:100]}{'...' if len(arg) > 100 else ''}")
+        print()
+
+        controller = ChainController(self.session)
+
+        # Run the chain with llama spinner
+        try:
+            self._current_job = "chain"
+            spinner = self._spinner(_LLAMA_SPINNER_FRAMES)
+            spinner.start()
+            try:
+                result = await controller.run_chain(arg)
+            finally:
+                spinner.stop()
+        except Exception as exc:
+            self._current_job = "idle"
+            self._print_error(f"Chain failed: {exc}")
+            logger.exception("Chain orchestration failed")
+            return False
+
+        self._current_job = "idle"
+
+        # Display wave summary
+        run_id = result.get("run_id", "???")
+        total_duration = result.get("total_duration", 0)
+        wave_count = result.get("wave_count", 0)
+
+        print()
+        self._print_info(f"📊 Chain Complete (run: {run_id})")
+        self._print_system(f"  Waves: {wave_count} | Duration: {total_duration:.1f}s")
+
+        for wr in result.get("wave_results", []):
+            self._print_system(f"  • {wr['wave']}: {wr['agents']} agents, {wr['duration']:.1f}s")
+
+        # Display final output
+        final_output = result.get("final_output", "")
+        if final_output:
+            print()
+            self._print_info("📝 Final Output")
+            self._print_response(final_output)
+
+        # Show token usage and comm stats
+        comm_stats = self.session.agent_comm.get_token_savings()
+        self._print_system(
+            f"  agent messages: {comm_stats['total_messages']} • "
+            f"token savings: {comm_stats['context_tokens_saved']:,}"
+        )
+        print()
         return False
 
     def _cmd_quit(self, _arg: str) -> bool:

@@ -2,29 +2,79 @@
 
 ## Project Overview
 
-Ollama CLI is a full-featured AI coding assistant powered by Ollama with multi-provider support (Ollama, Claude, Gemini, Codex/OpenAI). It is a Python 3.11+ CLI tool built with `httpx`, `rich`, and `python-dotenv`, packaged via `hatchling`, and managed with `uv`.
+Ollama CLI is a full-featured AI coding assistant powered by Ollama with multi-provider support (Ollama, Claude, Gemini, Codex/OpenAI, Hugging Face). It is a Python 3.11+ CLI tool built with `httpx`, `rich`, and `python-dotenv`, packaged via `hatchling`, and managed with `uv`.
 
 ## Repository Structure
 
 ```
 ollama-cli/
 ├── cmd/           # CLI commands (root.py is the entry point)
-├── api/           # API client, provider router, RDMA client, config
+├── api/           # API client, provider router, RDMA client, MCP client, config
 ├── model/         # Model management and sessions
 ├── server/        # Server utilities (hook runner)
 ├── runner/        # Context manager, token counter, RDMA manager
-├── skills/        # Skill modules (EXO, MLX, RDMA)
+├── skills/        # Skill modules (EXO, MLX, RDMA) with hook trigger pipeline
 ├── specs/         # Integration specifications
 ├── tests/         # Pytest test suite
-├── docs/          # Documentation (API, CLI, hooks, RDMA, providers, etc.)
-├── .ollama/       # Hooks, status lines, settings
-│   ├── hooks/     # Pre/post-execution hooks
-│   └── status_lines/  # Status display modules
+├── docs/          # Documentation (API, CLI, hooks, MCP, RDMA, providers, etc.)
+├── .ollama/       # Hooks, status lines, settings, MCP config
+│   ├── hooks/     # 13 lifecycle hook scripts (skill→hook→.py pipeline)
+│   ├── status_lines/  # Status display modules
+│   ├── settings.json  # Hook config + agent_models
+│   └── mcp.json       # MCP server configuration
 ├── pyproject.toml # Project config, dependencies, ruff, pytest, semantic-release
 ├── uv.lock        # Locked dependency versions
 ├── .env.sample    # Environment variable template
 └── install.sh     # One-line installer script
 ```
+
+## Hook Lifecycle (13 Events)
+
+The hook system follows the skill→hook→.py pipeline:
+
+1. **Setup** — On init/maintenance (loads git status, injects context)
+2. **SessionStart** — When a session begins
+3. **SessionEnd** — When a session ends
+4. **UserPromptSubmit** — Before processing user input (can deny)
+5. **PreToolUse** — Before tool execution (can deny/ask/allow)
+6. **PostToolUse** — After tool completion
+7. **PostToolUseFailure** — When a tool execution fails
+8. **PermissionRequest** — On permission dialog (auto-allow read-only ops)
+9. **SkillTrigger** — When a skill invokes a hook (skill→hook→.py)
+10. **PreCompact** — Before context compaction
+11. **Stop** — When the model finishes responding
+12. **SubagentStart** — When a subagent spawns
+13. **SubagentStop** — When a subagent finishes
+14. **Notification** — On notable events
+
+## Multi-Model Agent Configuration
+
+Up to 10+ agent types can be assigned specific providers and models:
+
+```json
+// .ollama/settings.json
+{
+  "agent_models": {
+    "code": {"provider": "ollama", "model": "codestral:latest"},
+    "review": {"provider": "claude", "model": "claude-sonnet"},
+    "test": {"provider": "gemini", "model": "gemini-flash"},
+    "plan": {"provider": "ollama", "model": "llama3.2"},
+    "docs": {"provider": "hf", "model": "mistral-7b"}
+  }
+}
+```
+
+Or via environment variables: `OLLAMA_CLI_AGENT_CODE_PROVIDER=ollama`, `OLLAMA_CLI_AGENT_CODE_MODEL=codestral:latest`.
+
+## MCP Integration
+
+MCP (Model Context Protocol) servers are configured in `.ollama/mcp.json`:
+- **GitHub MCP** — Auto-enabled when `GH_TOKEN` is set
+- **Docker MCP** — Container management
+- **Filesystem MCP** — File operations
+- **Memory MCP** — Persistent knowledge graph
+
+Use `/mcp` in the REPL to manage servers.
 
 ## How to Run Locally
 
@@ -82,7 +132,8 @@ A change is "green" when all three pass: `pytest` exits 0, `ruff check .` exits 
 - **No secrets in code.** API keys must come from environment variables (see `.env.sample`).
 - **No hardcoded credentials.** Use `python-dotenv` and `os.environ`.
 - **HTTPS only** for cloud provider connections.
-- **Validate user input** before processing.
+- **Validate user input** before processing (UserPromptSubmit hook).
+- **PermissionRequest hook** auto-allows read-only ops, asks for risky operations.
 - Refer to `SECURITY.md` for the full security policy.
 
 ## PR Expectations

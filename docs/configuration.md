@@ -21,7 +21,9 @@ Configure Ollama CLI to suit your needs.
 | `ANTHROPIC_API_KEY` | API key for Claude provider |
 | `GEMINI_API_KEY` | API key for Gemini provider |
 | `OPENAI_API_KEY` | API key for Codex/OpenAI provider |
-| `OLLAMA_CLI_PROVIDER` | Default provider (ollama, claude, gemini, codex) |
+| `HF_TOKEN` | API key for Hugging Face provider |
+| `GH_TOKEN` | GitHub token (auto-enables GitHub MCP server) |
+| `OLLAMA_CLI_PROVIDER` | Default provider (ollama, claude, gemini, codex, hf) |
 
 ### Context Compaction
 
@@ -52,6 +54,8 @@ OLLAMA_MODEL=llama3.2
 ANTHROPIC_API_KEY=sk-ant-...
 GEMINI_API_KEY=AI...
 OPENAI_API_KEY=sk-...
+HF_TOKEN=hf_...
+GH_TOKEN=ghp_...
 OLLAMA_CLI_PROVIDER=ollama
 AUTO_COMPACT=true
 COMPACT_THRESHOLD=0.85
@@ -60,22 +64,54 @@ HOOKS_ENABLED=true
 
 ### `.ollama/settings.json`
 
-Configuration for the hook system:
+Configuration for the hook system and multi-model agent assignments:
 
 ```json
 {
   "hooks": {
-    "SessionStart": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python .ollama/hooks/session_start.py"
-          }
-        ]
-      }
-    ]
+    "Setup": [...],
+    "SessionStart": [...],
+    "SessionEnd": [...],
+    "UserPromptSubmit": [...],
+    "PreToolUse": [...],
+    "PostToolUse": [...],
+    "PostToolUseFailure": [...],
+    "PermissionRequest": [...],
+    "SkillTrigger": [...],
+    "PreCompact": [...],
+    "Stop": [...],
+    "SubagentStart": [...],
+    "SubagentStop": [...],
+    "Notification": [...]
+  },
+  "agent_models": {
+    "code": {"provider": "ollama", "model": "codestral:latest"},
+    "review": {"provider": "claude", "model": "claude-sonnet"},
+    "test": {"provider": "gemini", "model": "gemini-flash"},
+    "plan": {"provider": "ollama", "model": "llama3.2"},
+    "docs": {"provider": "hf", "model": "mistral-7b"}
+  }
+}
+```
+
+### `.ollama/mcp.json`
+
+MCP (Model Context Protocol) server configuration:
+
+```json
+{
+  "mcpServers": {
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {"GITHUB_PERSONAL_ACCESS_TOKEN": ""},
+      "enabled": false
+    },
+    "docker": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "mcp/docker"],
+      "enabled": false
+    }
   }
 }
 ```
@@ -132,16 +168,23 @@ export AUTO_COMPACT=false
 
 ## Hook Configuration
 
-The hook system allows customization at 7 lifecycle events:
+The hook system allows customization at 13 lifecycle events:
 
 | Hook | When It Fires |
 |------|---------------|
+| `Setup` | On init or maintenance |
 | `SessionStart` | When a session begins |
 | `SessionEnd` | When a session ends |
+| `UserPromptSubmit` | Before processing user input |
 | `PreToolUse` | Before tool execution |
 | `PostToolUse` | After tool completes |
+| `PostToolUseFailure` | When a tool fails |
+| `PermissionRequest` | On permission dialog |
+| `SkillTrigger` | When a skill triggers a hook |
 | `PreCompact` | Before context compaction |
-| `Stop` | When the assistant stops |
+| `Stop` | When model finishes responding |
+| `SubagentStart` | When a subagent spawns |
+| `SubagentStop` | When a subagent finishes |
 | `Notification` | On notable events |
 
 See [Hooks System](hooks.md) for detailed configuration.
