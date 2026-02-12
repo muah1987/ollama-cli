@@ -168,7 +168,7 @@ class TestStatusBarJobTracking:
                 "-c",
                 (
                     "from model.session import Session; "
-                    "from cmd.interactive import InteractiveMode; "
+                    "from ollama_cmd.interactive import InteractiveMode; "
                     "s = Session(model='llama3.2', provider='ollama'); "
                     "r = InteractiveMode(s); "
                     "print(hasattr(r, '_current_job')); "
@@ -192,7 +192,7 @@ class TestStatusBarJobTracking:
                 "-c",
                 (
                     "from model.session import Session; "
-                    "from cmd.interactive import InteractiveMode; "
+                    "from ollama_cmd.interactive import InteractiveMode; "
                     "s = Session(model='llama3.2', provider='ollama'); "
                     "r = InteractiveMode(s); "
                     "r._current_job = 'thinking'; "
@@ -214,7 +214,7 @@ class TestStatusBarJobTracking:
                 "-c",
                 (
                     "from model.session import Session; "
-                    "from cmd.interactive import InteractiveMode; "
+                    "from ollama_cmd.interactive import InteractiveMode; "
                     "s = Session(model='llama3.2', provider='ollama'); "
                     "r = InteractiveMode(s); "
                     "r._current_job = 'idle'; "

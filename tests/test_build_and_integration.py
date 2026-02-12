@@ -205,7 +205,7 @@ class TestBuild:
 
         with zipfile.ZipFile(whl_path) as zf:
             names = zf.namelist()
-        for pkg in ("cmd/root.py", "api/ollama_client.py", "model/session.py", "runner/context_manager.py"):
+        for pkg in ("ollama_cmd/root.py", "api/ollama_client.py", "model/session.py", "runner/context_manager.py"):
             assert pkg in names, f"{pkg} missing from wheel"
 
 
@@ -495,7 +495,7 @@ class TestInteractiveCommands:
             f.write("import sys, asyncio\n")
             f.write(f"sys.path.insert(0, {_PROJECT_DIR!r})\n")
             f.write("from model.session import Session\n")
-            f.write("from cmd.interactive import InteractiveMode\n\n")
+            f.write("from ollama_cmd.interactive import InteractiveMode\n\n")
             f.write(script)
             tmp = f.name
 
@@ -867,7 +867,7 @@ class TestHooksIntegration:
                 "-c",
                 (
                     "import asyncio; import sys; sys.path.insert(0, '.');"
-                    "from model.session import Session; from cmd.interactive import InteractiveMode;"
+                    "from model.session import Session; from ollama_cmd.interactive import InteractiveMode;"
                     "s = Session(model='test', provider='ollama');"
                     "asyncio.get_event_loop().run_until_complete(s.start());"
                     "r = InteractiveMode(s);"
@@ -890,7 +890,7 @@ class TestHooksIntegration:
                 "-c",
                 (
                     "import asyncio; import sys; sys.path.insert(0, '.');"
-                    "from model.session import Session; from cmd.interactive import InteractiveMode;"
+                    "from model.session import Session; from ollama_cmd.interactive import InteractiveMode;"
                     "s = Session(model='test', provider='ollama');"
                     "asyncio.get_event_loop().run_until_complete(s.start());"
                     "r = InteractiveMode(s);"
@@ -912,7 +912,7 @@ class TestHooksIntegration:
                 "-c",
                 (
                     "import asyncio; import sys; sys.path.insert(0, '.');"
-                    "from model.session import Session; from cmd.interactive import InteractiveMode;"
+                    "from model.session import Session; from ollama_cmd.interactive import InteractiveMode;"
                     "s = Session(model='test', provider='ollama');"
                     "asyncio.get_event_loop().run_until_complete(s.start());"
                     "r = InteractiveMode(s);"
@@ -945,7 +945,7 @@ class TestCLIEntrypoint:
 
     def test_cli_version(self) -> None:
         result = subprocess.run(
-            [sys.executable, "-c", "from cmd.root import build_parser; build_parser().parse_args(['--version'])"],
+            [sys.executable, "-c", "from ollama_cmd.root import build_parser; build_parser().parse_args(['--version'])"],
             capture_output=True,
             text=True,
             cwd=_PROJECT_DIR,
@@ -956,7 +956,7 @@ class TestCLIEntrypoint:
 
     def test_cli_help(self) -> None:
         result = subprocess.run(
-            [sys.executable, "-c", "from cmd.root import build_parser; build_parser().parse_args(['--help'])"],
+            [sys.executable, "-c", "from ollama_cmd.root import build_parser; build_parser().parse_args(['--help'])"],
             capture_output=True,
             text=True,
             cwd=_PROJECT_DIR,
@@ -968,7 +968,7 @@ class TestCLIEntrypoint:
             [
                 sys.executable,
                 "-c",
-                "from cmd.root import build_parser; p = build_parser(); print(list(p._subparsers._group_actions[0].choices.keys()))",
+                "from ollama_cmd.root import build_parser; p = build_parser(); print(list(p._subparsers._group_actions[0].choices.keys()))",
             ],
             capture_output=True,
             text=True,
@@ -979,7 +979,7 @@ class TestCLIEntrypoint:
 
     def test_cli_command_map_complete(self) -> None:
         result = subprocess.run(
-            [sys.executable, "-c", "from cmd.root import COMMAND_MAP; print(list(COMMAND_MAP.keys()))"],
+            [sys.executable, "-c", "from ollama_cmd.root import COMMAND_MAP; print(list(COMMAND_MAP.keys()))"],
             capture_output=True,
             text=True,
             cwd=_PROJECT_DIR,

@@ -6,7 +6,7 @@ Ollama CLI follows the directory structure of the [official Ollama project](http
 
 ```
 ollama-cli/
-├── cmd/              # CLI entry points per command
+├── ollama_cmd/       # CLI entry points per command
 │   ├── root.py       # Main entry point and argument parser
 │   ├── run.py        # Run model interactively
 │   ├── create.py     # Create from Modelfile
@@ -42,7 +42,7 @@ ollama-cli/
 
 ### Command Pattern
 
-Each command in `cmd/` follows this pattern:
+Each command in `ollama_cmd/` follows this pattern:
 
 1. Import necessary modules
 2. Define a function with signature `(args: argparse.Namespace) -> None`
@@ -50,7 +50,7 @@ Each command in `cmd/` follows this pattern:
 
 ### Example
 
-Create `cmd/mycommand.py`:
+Create `ollama_cmd/mycommand.py`:
 
 ```python
 #!/usr/bin/env python
@@ -68,7 +68,7 @@ def cmd_mycommand(args: argparse.Namespace) -> None:
     console.print("Running my command!")
 ```
 
-Add to `cmd/root.py`:
+Add to `ollama_cmd/root.py`:
 
 ```python
 def build_parser() -> argparse.ArgumentParser:

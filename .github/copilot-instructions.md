@@ -8,7 +8,7 @@ Ollama CLI is a full-featured AI coding assistant powered by Ollama with multi-p
 
 ```
 ollama-cli/
-├── cmd/           # CLI commands (root.py is the entry point)
+├── ollama_cmd/    # CLI commands (root.py is the entry point)
 ├── api/           # API client, provider router, RDMA client, MCP client, config
 ├── model/         # Model management and sessions
 ├── server/        # Server utilities (hook runner)
@@ -116,16 +116,16 @@ A change is "green" when all three pass: `pytest` exits 0, `ruff check .` exits 
 - **Line length**: 120 characters max (enforced by ruff).
 - **Type hints**: All functions must include type hints.
 - **Linter/formatter**: ruff (`ruff check .` and `ruff format .`).
-- **Test mode**: pytest with `--import-mode=importlib` (configured in pyproject.toml) to avoid `cmd` module collision with the stdlib.
+- **Test mode**: pytest with `--import-mode=importlib` (configured in pyproject.toml).
 - **Commit messages**: Follow [Conventional Commits](https://www.conventionalcommits.org/) — `feat:`, `fix:`, `docs:`, `style:`, `refactor:`, `test:`, `chore:`.
-- **New CLI commands**: Add a file in `cmd/`, implement `cmd_<name>(args)`, register in `cmd/root.py` via `build_parser()` and `COMMAND_MAP`.
+- **New CLI commands**: Add a file in `ollama_cmd/`, implement `cmd_<name>(args)`, register in `ollama_cmd/root.py` via `build_parser()` and `COMMAND_MAP`.
 
 ## Dependency Policy
 
 - Use `uv` as the package manager. Add dependencies with `uv add <package>` (or `uv add --dev <package>` for dev-only).
 - The `uv.lock` file must be committed for reproducibility.
 - Only add new dependencies when strictly necessary. Prefer the standard library or existing deps (`httpx`, `rich`, `python-dotenv`).
-- Build backend is `hatchling`; wheel packages are `cmd`, `api`, `model`, `server`, `runner`.
+- Build backend is `hatchling`; wheel packages are `ollama_cmd`, `api`, `model`, `server`, `runner`.
 
 ## Security Guardrails
 

@@ -167,7 +167,7 @@ class TestMCPCommandRegistered:
                 sys.executable,
                 "-c",
                 (
-                    "from cmd.interactive import InteractiveMode; "
+                    "from ollama_cmd.interactive import InteractiveMode; "
                     "print('/mcp' in InteractiveMode._COMMAND_TABLE)"
                 ),
             ],

@@ -18,7 +18,7 @@ from pathlib import Path
 def test_help_flag_shows_usage() -> None:
     """Test that --help exits cleanly and shows the expected usage line."""
     result = subprocess.run(
-        [sys.executable, "-c", "from cmd.root import build_parser; build_parser().parse_args(['--help'])"],
+        [sys.executable, "-c", "from ollama_cmd.root import build_parser; build_parser().parse_args(['--help'])"],
         capture_output=True,
         text=True,
         cwd=str(Path(__file__).parent.parent),
@@ -30,7 +30,7 @@ def test_help_flag_shows_usage() -> None:
 def test_version_flag() -> None:
     """Test that -v / --version prints the version string."""
     result = subprocess.run(
-        [sys.executable, "-c", "from cmd.root import build_parser; build_parser().parse_args(['-v'])"],
+        [sys.executable, "-c", "from ollama_cmd.root import build_parser; build_parser().parse_args(['-v'])"],
         capture_output=True,
         text=True,
         cwd=str(Path(__file__).parent.parent),
@@ -45,7 +45,7 @@ def test_subcommand_list_parsed() -> None:
         [
             sys.executable,
             "-c",
-            "from cmd.root import build_parser; a = build_parser().parse_args(['list']); print(a.command)",
+            "from ollama_cmd.root import build_parser; a = build_parser().parse_args(['list']); print(a.command)",
         ],
         capture_output=True,
         text=True,
@@ -60,7 +60,7 @@ def test_print_mode_flag() -> None:
         [
             sys.executable,
             "-c",
-            "from cmd.root import build_parser; a = build_parser().parse_args(['-p', 'version']); print(a.print_mode)",
+            "from ollama_cmd.root import build_parser; a = build_parser().parse_args(['-p', 'version']); print(a.print_mode)",
         ],
         capture_output=True,
         text=True,
@@ -76,7 +76,7 @@ def test_system_prompt_flag() -> None:
             sys.executable,
             "-c",
             (
-                "from cmd.root import build_parser; "
+                "from ollama_cmd.root import build_parser; "
                 "a = build_parser().parse_args(['--system-prompt', 'be concise', 'version']); "
                 "print(a.system_prompt)"
             ),
@@ -94,7 +94,7 @@ def test_extract_prompt_with_direct_text() -> None:
         [
             sys.executable,
             "-c",
-            "from cmd.root import _extract_prompt_args; print(_extract_prompt_args(['hello', 'world']))",
+            "from ollama_cmd.root import _extract_prompt_args; print(_extract_prompt_args(['hello', 'world']))",
         ],
         capture_output=True,
         text=True,
@@ -109,7 +109,7 @@ def test_extract_prompt_with_subcommand() -> None:
         [
             sys.executable,
             "-c",
-            "from cmd.root import _extract_prompt_args; print(_extract_prompt_args(['list']))",
+            "from ollama_cmd.root import _extract_prompt_args; print(_extract_prompt_args(['list']))",
         ],
         capture_output=True,
         text=True,
@@ -125,7 +125,7 @@ def test_extract_prompt_with_flags_and_prompt() -> None:
             sys.executable,
             "-c",
             (
-                "from cmd.root import _extract_prompt_args; "
+                "from ollama_cmd.root import _extract_prompt_args; "
                 "f, p = _extract_prompt_args(['--model', 'llama3', 'what is python']); "
                 "print(f'flags={f} prompt={p}')"
             ),
@@ -144,7 +144,7 @@ def test_extract_prompt_no_args() -> None:
         [
             sys.executable,
             "-c",
-            "from cmd.root import _extract_prompt_args; print(_extract_prompt_args([]))",
+            "from ollama_cmd.root import _extract_prompt_args; print(_extract_prompt_args([]))",
         ],
         capture_output=True,
         text=True,
@@ -156,7 +156,7 @@ def test_extract_prompt_no_args() -> None:
 def test_help_includes_print_flag() -> None:
     """Test that --help output includes the -p/--print flag description."""
     result = subprocess.run(
-        [sys.executable, "-c", "from cmd.root import build_parser; build_parser().parse_args(['--help'])"],
+        [sys.executable, "-c", "from ollama_cmd.root import build_parser; build_parser().parse_args(['--help'])"],
         capture_output=True,
         text=True,
         cwd=str(Path(__file__).parent.parent),
@@ -168,7 +168,7 @@ def test_help_includes_print_flag() -> None:
 def test_help_includes_system_prompt_flag() -> None:
     """Test that --help output includes the --system-prompt flag."""
     result = subprocess.run(
-        [sys.executable, "-c", "from cmd.root import build_parser; build_parser().parse_args(['--help'])"],
+        [sys.executable, "-c", "from ollama_cmd.root import build_parser; build_parser().parse_args(['--help'])"],
         capture_output=True,
         text=True,
         cwd=str(Path(__file__).parent.parent),
@@ -182,7 +182,7 @@ def test_resume_flag() -> None:
         [
             sys.executable,
             "-c",
-            "from cmd.root import build_parser; a = build_parser().parse_args(['-r']); print(a.resume)",
+            "from ollama_cmd.root import build_parser; a = build_parser().parse_args(['-r']); print(a.resume)",
         ],
         capture_output=True,
         text=True,
@@ -197,7 +197,7 @@ def test_resume_flag_long() -> None:
         [
             sys.executable,
             "-c",
-            "from cmd.root import build_parser; a = build_parser().parse_args(['--resume']); print(a.resume)",
+            "from ollama_cmd.root import build_parser; a = build_parser().parse_args(['--resume']); print(a.resume)",
         ],
         capture_output=True,
         text=True,
@@ -209,7 +209,7 @@ def test_resume_flag_long() -> None:
 def test_help_includes_resume_flag() -> None:
     """Test that --help output includes the --resume flag."""
     result = subprocess.run(
-        [sys.executable, "-c", "from cmd.root import build_parser; build_parser().parse_args(['--help'])"],
+        [sys.executable, "-c", "from ollama_cmd.root import build_parser; build_parser().parse_args(['--help'])"],
         capture_output=True,
         text=True,
         cwd=str(Path(__file__).parent.parent),
@@ -224,7 +224,7 @@ def test_find_latest_session_no_sessions() -> None:
         [
             sys.executable,
             "-c",
-            "from cmd.root import _find_latest_session; print(_find_latest_session())",
+            "from ollama_cmd.root import _find_latest_session; print(_find_latest_session())",
         ],
         capture_output=True,
         text=True,
@@ -239,7 +239,7 @@ def test_chat_subcommand_exists() -> None:
         [
             sys.executable,
             "-c",
-            "from cmd.root import build_parser; a = build_parser().parse_args(['chat']); print(a.command)",
+            "from ollama_cmd.root import build_parser; a = build_parser().parse_args(['chat']); print(a.command)",
         ],
         capture_output=True,
         text=True,
@@ -255,7 +255,7 @@ def test_chat_command_is_wired() -> None:
             sys.executable,
             "-c",
             (
-                "from cmd.root import cmd_chat; "
+                "from ollama_cmd.root import cmd_chat; "
                 "import inspect; "
                 "src = inspect.getsource(cmd_chat); "
                 "print('coming soon' not in src.lower())"

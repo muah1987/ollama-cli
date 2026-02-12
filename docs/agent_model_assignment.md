@@ -184,7 +184,7 @@ class Session:
 Add command line options for specifying agent model assignments:
 
 ```python
-# In cmd/root.py or relevant command files
+# In ollama_cmd/root.py or relevant command files
 parser.add_argument(
     "--agent-model",
     action="append",
