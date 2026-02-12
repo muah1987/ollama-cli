@@ -284,8 +284,9 @@ Create a `.env` file or set these environment variables:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `OLLAMA_HOST` | `http://localhost:11434` | Ollama server URL |
+| `OLLAMA_HOST` | `http://localhost:11434` | Ollama server URL (use `https://ollama.com` for cloud) |
 | `OLLAMA_MODEL` | `llama3.2` | Default model |
+| `OLLAMA_API_KEY` | — | API key for [Ollama Cloud](https://ollama.com) (Bearer auth) |
 | `PROVIDER` | `ollama` | Default provider |
 | `CONTEXT_LENGTH` | `4096` | Max context window (tokens) |
 | `AUTO_COMPACT` | `true` | Enable auto-compaction |

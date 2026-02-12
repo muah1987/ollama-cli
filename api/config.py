@@ -36,6 +36,7 @@ class OllamaCliConfig:
     compact_threshold: float = 0.85
     cloud_host: str = ""
     cloud_api_key: str = ""
+    ollama_api_key: str = ""
     anthropic_api_key: str = ""
     gemini_api_key: str = ""
     openai_api_key: str = ""
@@ -115,6 +116,7 @@ def load_config(env_path: str | Path | None = None, config_json_path: str | Path
         compact_threshold=_float_from_env(os.getenv("COMPACT_THRESHOLD"), OllamaCliConfig.compact_threshold),
         cloud_host=os.getenv("OLLAMA_CLOUD_HOST", OllamaCliConfig.cloud_host),
         cloud_api_key=os.getenv("OLLAMA_CLOUD_API_KEY", OllamaCliConfig.cloud_api_key),
+        ollama_api_key=os.getenv("OLLAMA_API_KEY", OllamaCliConfig.ollama_api_key),
         anthropic_api_key=os.getenv("ANTHROPIC_API_KEY", OllamaCliConfig.anthropic_api_key),
         gemini_api_key=os.getenv("GEMINI_API_KEY", OllamaCliConfig.gemini_api_key),
         openai_api_key=os.getenv("OPENAI_API_KEY", OllamaCliConfig.openai_api_key),
@@ -167,7 +169,14 @@ def save_config(config: OllamaCliConfig, path: str | Path | None = None) -> Path
 
     # Exclude sensitive and runtime-only keys from the persisted file
     data = asdict(config)
-    excluded_keys = {"cloud_api_key", "anthropic_api_key", "gemini_api_key", "openai_api_key", "allowed_tools"}
+    excluded_keys = {
+        "cloud_api_key",
+        "ollama_api_key",
+        "anthropic_api_key",
+        "gemini_api_key",
+        "openai_api_key",
+        "allowed_tools",
+    }
     for key in excluded_keys:
         data.pop(key, None)
 
