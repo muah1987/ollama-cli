@@ -2084,10 +2084,14 @@ class InteractiveMode:
                     ).isoformat(),
                 })
                 # Check if the prompt was denied by the hook
+                prompt_denied = False
                 for pr in prompt_results:
                     if pr.permission_decision == "deny":
                         self._print_error("Prompt blocked by UserPromptSubmit hook.")
-                        continue
+                        prompt_denied = True
+                        break
+                if prompt_denied:
+                    continue
 
                 # Regular message -> send to session with llama spinner
                 try:

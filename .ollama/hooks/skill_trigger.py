@@ -41,7 +41,6 @@ def log_skill_trigger(payload: dict) -> None:
         str(Path(__file__).resolve().parent.parent.parent),
     )
     log_path = Path(project_dir) / "logs" / "skill_trigger.json"
-    log_path.mkdir_p = True
     log_path.parent.mkdir(parents=True, exist_ok=True)
 
     entry = {
