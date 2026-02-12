@@ -177,7 +177,7 @@ Available tools:
   file_edit                      Edit file with find/replace           [medium]
   grep_search                    Search files for patterns             [low]
   shell_exec                     Execute a shell command               [high]
-  web_fetch                      Fetch URL content                     [medium]
+  web_fetch                      Fetch URL content                     [low]
 
 >>> /tool file_read README.md
 >>> /tool grep_search "def main" src/

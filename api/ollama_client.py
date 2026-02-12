@@ -82,8 +82,10 @@ class OllamaClient:
         Default request timeout in seconds.
     api_key:
         Optional API key for authenticated requests (``Authorization:
-        Bearer <key>``).  When ``None``, the ``OLLAMA_API_KEY`` environment
-        variable is checked.  Local servers typically need no key.
+        Bearer <key>``).  When *not provided* (``None``), the
+        ``OLLAMA_API_KEY`` environment variable is checked.  An explicit
+        empty string disables env-based auth.  Local servers typically
+        need no key.
     """
 
     def __init__(
@@ -94,7 +96,7 @@ class OllamaClient:
     ) -> None:
         self.host = host.rstrip("/")
         self.timeout = timeout
-        self._api_key: str = api_key or os.environ.get("OLLAMA_API_KEY", "")
+        self._api_key: str = api_key if api_key is not None else os.environ.get("OLLAMA_API_KEY", "")
         self._client: httpx.AsyncClient | None = None
 
     # -- lifecycle -----------------------------------------------------------

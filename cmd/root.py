@@ -211,35 +211,46 @@ def cmd_interactive(args: argparse.Namespace) -> None:
 
 
 def cmd_run_prompt(args: argparse.Namespace) -> None:
-    """Run a one-shot prompt and print the response."""
+    """Run a one-shot prompt and print the response.
+
+    Routes through :class:`Session` / :class:`ProviderRouter` so that the
+    ``--provider``, ``--model``, and ``--output-format`` flags are honoured.
+    """
     cfg = get_config()
-    prompt_text = args.prompt
+    prompt_text = getattr(args, "prompt", None)
     if not prompt_text:
         console.print("[red]Error:[/red] No prompt provided.")
         sys.exit(1)
 
-    url = f"{cfg.ollama_host}/api/generate"
-    payload: dict[str, object] = {"model": cfg.ollama_model, "prompt": prompt_text, "stream": False}
-    if args.system_prompt:
-        payload["system"] = args.system_prompt
+    from model.session import Session
+
+    session = Session(model=cfg.ollama_model, provider=cfg.provider)
+
+    import asyncio
+
+    async def _run() -> dict:
+        await session.start()
+        if getattr(args, "system_prompt", None):
+            session.context_manager.add_message("system", args.system_prompt)
+        result = await session.send(prompt_text)
+        await session.end()
+        return result
 
     try:
-        resp = httpx.post(url, json=payload, timeout=120.0)
-        resp.raise_for_status()
-        data = resp.json()
-    except httpx.ConnectError:
-        console.print(f"[red]Error:[/red] Cannot connect to Ollama at {cfg.ollama_host}")
-        console.print("Make sure Ollama is running: [bold]ollama serve[/bold]")
-        sys.exit(1)
-    except httpx.HTTPStatusError as exc:
-        console.print(f"[red]Error:[/red] HTTP {exc.response.status_code} from Ollama API")
+        result = asyncio.run(_run())
+    except Exception as exc:
+        console.print(f"[red]Error:[/red] {exc}")
         sys.exit(1)
 
-    response_text = data.get("response", "")
-    if args.json:
-        print(json.dumps(data, indent=2))
+    content = result.get("content", "")
+    output_fmt = cfg.output_format or "text"
+
+    if output_fmt == "json" or getattr(args, "json", False):
+        print(json.dumps(result, indent=2))
+    elif output_fmt == "markdown":
+        print(content)
     else:
-        print(response_text)
+        print(content)
 
 
 # ---------------------------------------------------------------------------
@@ -400,6 +411,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 COMMAND_MAP = {
     "chat": cmd_chat,
+    "run": cmd_run_prompt,
     "list": cmd_list,
     "pull": cmd_pull,
     "show": cmd_show,
@@ -481,8 +493,13 @@ def main() -> None:
     raw_args = sys.argv[1:]
 
     # Support piped stdin: `echo "fix this" | ollama-cli`
+    # Only treat piped stdin as a prompt when no explicit subcommand is present.
     piped_input = None
-    if not sys.stdin.isatty() and not any(a in raw_args for a in _INTERACTIVE_COMMANDS):
+    if (
+        not sys.stdin.isatty()
+        and not any(a in raw_args for a in _INTERACTIVE_COMMANDS)
+        and not any(arg in COMMAND_MAP for arg in raw_args)
+    ):
         piped_input = sys.stdin.read().strip()
 
     filtered_args, direct_prompt = _extract_prompt_args(raw_args)

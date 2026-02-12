@@ -37,17 +37,40 @@ def _load_ignore_patterns() -> list[str]:
                 stripped = line.strip()
                 if stripped and not stripped.startswith("#"):
                     patterns.append(stripped)
-        except OSError:
-            pass
+        except OSError as exc:
+            logger.debug("Failed to read .ollamaignore: %s", exc)
     _IGNORE_PATTERNS = patterns
     return patterns
 
 
 def is_path_ignored(path: str | Path) -> bool:
-    """Check whether *path* matches any pattern in ``.ollamaignore``."""
+    """Check whether *path* matches any pattern in ``.ollamaignore``.
+
+    Supports file glob patterns (``*.env``) and trailing-slash directory
+    patterns (``secrets/``) which match any path under that directory.
+    """
     patterns = _load_ignore_patterns()
-    path_str = str(path)
-    return any(fnmatch.fnmatch(path_str, p) or fnmatch.fnmatch(Path(path_str).name, p) for p in patterns)
+    path_obj = Path(path)
+    try:
+        rel_path = os.path.relpath(path_obj, start=os.getcwd())
+    except ValueError:
+        rel_path = str(path_obj)
+    rel_path = os.path.normpath(rel_path)
+    basename = path_obj.name
+
+    for pattern in patterns:
+        if not pattern:
+            continue
+        # Directory-style pattern (e.g. "secrets/") – match any path under that directory
+        if pattern.endswith(("/", "\\")):
+            dir_pat = os.path.normpath(pattern.rstrip("/\\"))
+            if rel_path == dir_pat or rel_path.startswith(dir_pat + os.sep):
+                return True
+            continue
+        # Fallback to fnmatch semantics for file/glob patterns
+        if fnmatch.fnmatch(rel_path, pattern) or fnmatch.fnmatch(basename, pattern):
+            return True
+    return False
 
 
 def clear_ignore_cache() -> None:
@@ -201,9 +224,18 @@ def tool_grep_search(
             text=True,
             timeout=15,
         )
-        lines = proc.stdout.strip().splitlines()
-        matches = lines[:max_results]
-        return {"matches": matches, "count": len(lines), "truncated": len(lines) > max_results}
+        if proc.returncode == 0:
+            lines = proc.stdout.strip().splitlines()
+            matches = lines[:max_results]
+            return {"matches": matches, "count": len(lines), "truncated": len(lines) > max_results}
+        if proc.returncode == 1:
+            # grep exit code 1 means "no matches found"
+            return {"matches": [], "count": 0, "truncated": False}
+        stderr = proc.stderr.strip() if proc.stderr else ""
+        error_msg = f"Search failed with exit code {proc.returncode}"
+        if stderr:
+            error_msg = f"{error_msg}: {stderr}"
+        return {"error": error_msg}
     except FileNotFoundError:
         return {"error": "grep not available on this system"}
     except subprocess.TimeoutExpired:

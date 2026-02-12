@@ -407,7 +407,8 @@ class TestResumeCommand:
             text=True,
             cwd=_PROJECT_DIR,
         )
-        assert "No previous tasks" in result.stdout or result.returncode == 0
+        assert result.returncode == 0
+        assert "No previous tasks" in result.stdout
 
     def test_resume_lists_tasks(self, tmp_path: Path, monkeypatch) -> None:
         """When tasks exist, /resume should list them."""
@@ -456,6 +457,8 @@ class TestUpdateStatusLine:
         session_dir = tmp_path / ".ollama" / "sessions"
         session_dir.mkdir(parents=True)
 
+        # The /update_status_line command requires an existing session file.
+        # The script saves the session first (creating the file), then updates.
         script = (
             "import sys, asyncio\n"
             "sys.path.insert(0, PROJ)\n"
@@ -464,6 +467,7 @@ class TestUpdateStatusLine:
             "async def t():\n"
             "    s = Session(model='m', provider='ollama')\n"
             "    await s.start()\n"
+            "    s.save()\n"
             "    r = InteractiveMode(s)\n"
             "    r._cmd_update_status_line('project myapp')\n"
             "asyncio.run(t())\n"
@@ -475,7 +479,8 @@ class TestUpdateStatusLine:
             text=True,
             cwd=str(tmp_path),
         )
-        assert "project" in result.stdout.lower() or result.returncode == 0
+        assert result.returncode == 0
+        assert "project" in result.stdout.lower()
 
     def test_update_missing_value(self) -> None:
         """Should error when only key is provided."""
@@ -497,7 +502,8 @@ class TestUpdateStatusLine:
             text=True,
             cwd=_PROJECT_DIR,
         )
-        assert "required" in result.stdout.lower() or result.returncode == 0
+        assert result.returncode == 0
+        assert "required" in result.stdout.lower()
 
 
 class TestBuildCommand:
@@ -524,7 +530,8 @@ class TestBuildCommand:
             text=True,
             cwd=_PROJECT_DIR,
         )
-        assert "Usage" in result.stdout or result.returncode == 0
+        assert result.returncode == 0
+        assert "Usage" in result.stdout
 
     def test_build_nonexistent_plan(self) -> None:
         """Should error when plan file does not exist."""
@@ -547,7 +554,8 @@ class TestBuildCommand:
             text=True,
             cwd=_PROJECT_DIR,
         )
-        assert "not found" in result.stdout.lower() or result.returncode == 0
+        assert result.returncode == 0
+        assert "not found" in result.stdout.lower()
 
 
 class TestTeamPlanningCommand:
@@ -574,4 +582,5 @@ class TestTeamPlanningCommand:
             text=True,
             cwd=_PROJECT_DIR,
         )
-        assert "Usage" in result.stdout or result.returncode == 0
+        assert result.returncode == 0
+        assert "Usage" in result.stdout

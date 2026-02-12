@@ -181,32 +181,46 @@ class InteractiveMode:
         print(f"{prefix}{text}")
 
     def _print_banner(self) -> None:
-        """Print the welcome banner on REPL startup."""
+        """Print the welcome banner on REPL startup.
+
+        Uses Ollama llama branding with a clean, professional layout.
+        """
         from cmd.root import VERSION
 
         status = self.session.get_status()
         msg_count = status["messages"]
         ctx = status["context_usage"]
+        compact_pct = int(self.session.context_manager.compact_threshold * 100)
         compact_status = "on" if self.session.context_manager.auto_compact else "off"
+        state = "resumed" if msg_count > 0 else "new session"
+
+        # Ollama llama ASCII art (inspired by ollama.com branding)
+        llama = [
+            r"  \\",
+            r"   \\ ",
+            r"    \\   ^__^",
+            r"     \\  (oo)\\_______",
+            r"        (__)\\       )\\/\\",
+            r"            ||----w |",
+            r"            ||     ||",
+        ]
 
         print()
-        print(_bold(f"╭─ ollama-cli v{VERSION} ({'resumed' if msg_count > 0 else 'new session'})"))
-        self._print_info(f"│  model:    {self.session.model}")
-        self._print_info(f"│  provider: {self.session.provider}")
-        self._print_info(f"│  session:  {self.session.session_id}")
-        self._print_info(f"│  context:  {ctx['used']:,}/{ctx['max']:,} tokens ({ctx['percentage']}%)")
-        self._print_info(
-            f"│  compact:  auto-compact {compact_status} (threshold {int(self.session.context_manager.compact_threshold * 100)}%)"
-        )
+        for line in llama:
+            print(_dim(line))
+        print()
+        print(_bold(f"  ollama-cli v{VERSION}") + _dim(f"  ({state})"))
+        print()
+        self._print_info(f"  Model:    {self.session.model}")
+        self._print_info(f"  Provider: {self.session.provider}")
+        self._print_info(f"  Session:  {self.session.session_id}")
+        self._print_info(f"  Context:  {ctx['used']:,}/{ctx['max']:,} tokens ({ctx['percentage']}%)")
+        self._print_info(f"  Compact:  auto-compact {compact_status} (threshold {compact_pct}%)")
         if msg_count > 0:
-            self._print_info(f"│  history:  {msg_count} messages")
-        print(_dim("│"))
-        self._print_system("│  Tips:")
-        self._print_system("│    • Type a message to chat with the model")
-        self._print_system("│    • Use /help for all commands")
-        self._print_system("│    • Use /tools to see built-in tools")
-        self._print_system("│    • Use /compact to free context space")
-        self._print_system("╰─ Press Ctrl+C to cancel, Ctrl+D or /quit to exit")
+            self._print_info(f"  History:  {msg_count} messages")
+        print()
+        print(_dim("  /help for commands • /tools for built-in tools • /compact to free memory"))
+        print(_dim("  Ctrl+C to cancel • Ctrl+D or /quit to exit"))
         print()
 
     # -- input reading -------------------------------------------------------
@@ -1083,8 +1097,8 @@ class InteractiveMode:
                 task_data = _json.loads(task_file.read_text(encoding="utf-8"))
                 task_data["status"] = "in_progress"
                 task_file.write_text(_json.dumps(task_data, indent=2), encoding="utf-8")
-            except Exception:
-                pass
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("Failed to update task status for %s: %s", task_file, exc)
 
         build_prompt = (
             "You are implementing a plan. Read the plan below carefully and "
@@ -1114,8 +1128,8 @@ class InteractiveMode:
                 task_data = _json.loads(task_file.read_text(encoding="utf-8"))
                 task_data["status"] = "completed"
                 task_file.write_text(_json.dumps(task_data, indent=2), encoding="utf-8")
-            except Exception:
-                pass
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("Failed to update task status for %s: %s", task_file, exc)
 
         return False
 
@@ -1191,6 +1205,7 @@ class InteractiveMode:
         try:
             task_file.write_text(_json.dumps(data, indent=2), encoding="utf-8")
         except OSError:
+            # Best-effort status update; failures should not prevent resuming the task.
             pass
 
         return False
@@ -1222,24 +1237,33 @@ class InteractiveMode:
 
         key, value = parts[0], parts[1]
 
-        # Update the session file's extras object
+        # Update the session file's extras object.
+        # Only update an existing, valid session file to avoid creating
+        # incomplete JSON that --resume or Session.save() would clobber.
         session_dir = Path(".ollama/sessions")
         session_file = session_dir / f"{self.session.session_id}.json"
 
-        if session_file.is_file():
-            try:
-                data = _json.loads(session_file.read_text(encoding="utf-8"))
-            except Exception:
-                data = {}
-        else:
-            data = {}
+        if not session_file.is_file():
+            self._print_error("Session file not found; cannot update status line. Start a session first.")
+            return False
 
-        extras = data.get("extras", {})
+        try:
+            data: Any = _json.loads(session_file.read_text(encoding="utf-8"))
+        except Exception as exc:  # noqa: BLE001
+            self._print_error(f"Failed to read session file; not updating status line: {exc}")
+            return False
+
+        if not isinstance(data, dict):
+            self._print_error("Session file is malformed (expected JSON object); cannot update status line.")
+            return False
+
+        extras = data.get("extras") or {}
+        if not isinstance(extras, dict):
+            extras = {}
         old_value = extras.get(key)
         extras[key] = value
         data["extras"] = extras
 
-        session_dir.mkdir(parents=True, exist_ok=True)
         try:
             session_file.write_text(_json.dumps(data, indent=2), encoding="utf-8")
         except OSError as exc:
