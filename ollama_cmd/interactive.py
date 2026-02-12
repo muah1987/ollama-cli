@@ -2185,7 +2185,7 @@ class InteractiveMode:
             "model": self.session.model,
             "provider": self.session.provider,
             "source": "interactive",
-            "context_length": self.session.context_manager.max_length,
+            "context_length": self.session.context_manager.max_context_length,
         })
 
         # Show initial bottom status bar

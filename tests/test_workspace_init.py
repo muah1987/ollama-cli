@@ -204,6 +204,19 @@ class TestWorkspaceTrustPrompt:
         assert _PROJECT_MEMORY_FILE == Path("OLLAMA.md")
 
 
+class TestSessionStartHookPayload:
+    """Verify SessionStart hook payload references valid attributes."""
+
+    def test_context_length_attribute_exists(self) -> None:
+        """context_manager.max_context_length must exist (not max_length)."""
+        from runner.context_manager import ContextManager
+
+        cm = ContextManager()
+        # The attribute used by the SessionStart hook payload must exist
+        assert hasattr(cm, "max_context_length")
+        assert cm.max_context_length == 4096
+
+
 class TestInitInCommandTable:
     """Verify /init is registered in the command table."""
 
