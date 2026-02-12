@@ -21,7 +21,7 @@ console = Console()
 
 # Providers and their required environment-variable / config key
 _PROVIDERS: dict[str, str | None] = {
-    "ollama": None,  # local, no key needed
+    "ollama": "ollama_api_key",  # optional key for cloud/authenticated Ollama
     "claude": "anthropic_api_key",
     "gemini": "gemini_api_key",
     "codex": "openai_api_key",
@@ -29,6 +29,7 @@ _PROVIDERS: dict[str, str | None] = {
 }
 
 _PROVIDER_ENV_MAP: dict[str, str] = {
+    "ollama_api_key": "OLLAMA_API_KEY",
     "anthropic_api_key": "ANTHROPIC_API_KEY",
     "gemini_api_key": "GEMINI_API_KEY",
     "openai_api_key": "OPENAI_API_KEY",
@@ -91,7 +92,7 @@ def run_onboarding() -> OllamaCliConfig:
     provider_list = list(_PROVIDERS.keys())
     console.print("[bold]Available providers:[/bold]")
     for i, prov in enumerate(provider_list, 1):
-        label = "[green](local, no API key)[/green]" if prov == "ollama" else ""
+        label = "[green](local or cloud)[/green]" if prov == "ollama" else ""
         console.print(f"  {i}. {prov}  {label}")
     console.print()
 
@@ -111,7 +112,16 @@ def run_onboarding() -> OllamaCliConfig:
         console.print(f"[prompt.invalid]Please enter a provider name or number (1-{len(provider_list)})")
     cfg.provider = provider_choice
 
-    # --- 2. API key (if cloud provider) -------------------------------------
+    # --- 2. Ollama host (for ollama provider, asked first so model fetch
+    #        can reach the correct server) -----------------------------------
+    if provider_choice == "ollama":
+        host = Prompt.ask(
+            "Ollama host URL",
+            default=cfg.ollama_host or "http://localhost:11434",
+        )
+        cfg.ollama_host = host
+
+    # --- 3. API key (if cloud provider) -------------------------------------
     key_field = _PROVIDERS.get(provider_choice)
     if key_field is not None:
         current_key = getattr(cfg, key_field, "")
@@ -119,8 +129,13 @@ def run_onboarding() -> OllamaCliConfig:
             console.print(f"[green]API key for {provider_choice} already set from environment.[/green]")
         else:
             env_name = _PROVIDER_ENV_MAP.get(key_field, key_field.upper())
+            key_label = (
+                f"Enter your {provider_choice} API key, or press Enter to skip (env: {env_name})"
+                if provider_choice == "ollama"
+                else f"Enter your {provider_choice} API key (env: {env_name})"
+            )
             api_key = Prompt.ask(
-                f"Enter your {provider_choice} API key (env: {env_name})",
+                key_label,
                 password=True,
                 default="",
             )
@@ -128,7 +143,7 @@ def run_onboarding() -> OllamaCliConfig:
                 setattr(cfg, key_field, api_key)
                 os.environ[env_name] = api_key
 
-    # --- 3. Choose model ----------------------------------------------------
+    # --- 4. Choose model ----------------------------------------------------
     default_model = _DEFAULT_MODELS.get(provider_choice, "llama3.2")
 
     # For cloud providers, try to fetch available models automatically.
@@ -165,14 +180,6 @@ def run_onboarding() -> OllamaCliConfig:
             default=default_model,
         )
     cfg.ollama_model = model
-
-    # --- 4. Ollama host (for ollama provider) -------------------------------
-    if provider_choice == "ollama":
-        host = Prompt.ask(
-            "Ollama host URL",
-            default=cfg.ollama_host or "http://localhost:11434",
-        )
-        cfg.ollama_host = host
 
     # --- 5. Mark complete & save --------------------------------------------
     cfg.onboarding_complete = True
