@@ -491,16 +491,10 @@ source = { editable = "." }
 dependencies = [
     { name = "httpx" },
     { name = "python-dotenv" },
+    { name = "rich" },
 ]
 
 [package.optional-dependencies]
-dependencies = [
-    { name = "cryptography" },
-    { name = "httpx" },
-    { name = "psutil" },
-    { name = "python-dotenv" },
-    { name = "rich" },
-]
 dev = [
     { name = "pytest" },
     { name = "python-semantic-release" },
@@ -517,24 +511,28 @@ rdma = [
     { name = "psutil" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+]
+
 [package.metadata]
 requires-dist = [
-    { name = "cryptography", marker = "extra == 'dependencies'", specifier = ">=42.0.0" },
     { name = "cryptography", marker = "extra == 'rdma'", specifier = ">=42.0.0" },
     { name = "httpx", specifier = ">=0.28.1" },
-    { name = "httpx", marker = "extra == 'dependencies'", specifier = ">=0.28.1" },
-    { name = "psutil", marker = "extra == 'dependencies'", specifier = ">=5.9.0" },
     { name = "psutil", marker = "extra == 'exo'", specifier = ">=5.9.0" },
     { name = "psutil", marker = "extra == 'mlx'", specifier = ">=5.9.0" },
     { name = "psutil", marker = "extra == 'rdma'", specifier = ">=5.9.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
-    { name = "python-dotenv", marker = "extra == 'dependencies'", specifier = ">=1.2.1" },
     { name = "python-semantic-release", marker = "extra == 'dev'", specifier = ">=9.0.0" },
-    { name = "rich", marker = "extra == 'dependencies'", specifier = ">=14.3.2" },
+    { name = "rich", specifier = ">=14.0.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6.0" },
 ]
-provides-extras = ["dev", "rdma", "mlx", "exo", "dependencies"]
+provides-extras = ["dev", "rdma", "mlx", "exo"]
+
+[package.metadata.requires-dev]
+dev = [{ name = "pytest", specifier = ">=9.0.2" }]
 
 [[package]]
 name = "packaging"

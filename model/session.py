@@ -36,7 +36,9 @@ if str(_PACKAGE_DIR) not in sys.path:
     sys.path.insert(0, str(_PACKAGE_DIR))
 
 from api.provider_router import ProviderRouter  # noqa: E402
+from runner.agent_comm import AgentCommBus  # noqa: E402
 from runner.context_manager import ContextManager  # noqa: E402
+from runner.memory_layer import MemoryLayer  # noqa: E402
 from runner.token_counter import TokenCounter  # noqa: E402
 
 # ---------------------------------------------------------------------------
@@ -50,6 +52,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 _SESSIONS_DIR = ".ollama/sessions"
+_MEMORY_FILE = ".ollama/memory.json"
 _OLLAMA_MD = "OLLAMA.md"
 
 # ---------------------------------------------------------------------------
@@ -98,6 +101,8 @@ class Session:
         self.provider: str = provider
         self.context_manager: ContextManager = context_manager or ContextManager()
         self.token_counter: TokenCounter = token_counter or TokenCounter(provider=provider)
+        self.agent_comm: AgentCommBus = AgentCommBus()
+        self.memory_layer: MemoryLayer = MemoryLayer()
         self.hooks_enabled: bool = hooks_enabled
         self.provider_router: ProviderRouter = provider_router or ProviderRouter()
 
@@ -148,6 +153,11 @@ class Session:
         """
         self.start_time = datetime.now(tz=timezone.utc)
         logger.info("Session %s started (model=%s, provider=%s)", self.session_id, self.model, self.provider)
+
+        # Load persistent memory if it exists
+        memory_path = Path(_MEMORY_FILE)
+        if memory_path.is_file():
+            self.memory_layer.load(str(memory_path))
 
         # Load OLLAMA.md as project context if it exists
         ollama_md = self._find_ollama_md()
@@ -285,6 +295,9 @@ class Session:
         self._end_time = datetime.now(tz=timezone.utc)
         summary = self._build_summary()
 
+        # Save persistent memory
+        self.memory_layer.save(str(Path(_MEMORY_FILE)))
+
         # Append summary to OLLAMA.md if the file exists
         ollama_md = self._find_ollama_md()
         if ollama_md is not None:
@@ -333,6 +346,8 @@ class Session:
             "token_metrics": self.token_counter.format_json(),
             "context_usage": self.context_manager.get_context_usage(),
             "hooks_enabled": self.hooks_enabled,
+            "agent_comm": self.agent_comm.get_token_savings(),
+            "memory": self.memory_layer.get_token_savings(),
         }
 
     # -- persistence ---------------------------------------------------------
@@ -389,6 +404,8 @@ class Session:
                 },
             },
             "saved_at": datetime.now(tz=timezone.utc).isoformat(),
+            "agent_comm": self.agent_comm.get_token_savings(),
+            "memory_layer": self.memory_layer.get_token_savings(),
         }
 
         try:

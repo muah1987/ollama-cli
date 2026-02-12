@@ -120,6 +120,9 @@ class InteractiveMode:
         "/exit": "_cmd_quit",
         "/set-agent-model": "_cmd_set_agent_model",
         "/list-agent-models": "_cmd_list_agent_models",
+        "/agents": "_cmd_agents",
+        "/remember": "_cmd_remember",
+        "/recall": "_cmd_recall",
     }
 
     def __init__(self, session: Session) -> None:
@@ -218,6 +221,9 @@ class InteractiveMode:
         self._print_info(f"  Compact:  auto-compact {compact_status} (threshold {compact_pct}%)")
         if msg_count > 0:
             self._print_info(f"  History:  {msg_count} messages")
+        mem_stats = self.session.memory_layer.get_token_savings()
+        if mem_stats["total_entries"] > 0:
+            self._print_info(f"  Memory:   {mem_stats['total_entries']} entries ({mem_stats['context_tokens_used']:,} tokens)")
         print()
         print(_dim("  /help for commands • /tools for built-in tools • /compact to free memory"))
         print(_dim("  Ctrl+C to cancel • Ctrl+D or /quit to exit"))
@@ -433,6 +439,20 @@ class InteractiveMode:
         )
         if cm.should_compact():
             self._print_info("  ⚠ Context above threshold — run /compact to free space")
+
+        # Agent Communication
+        comm_stats = self.session.agent_comm.get_token_savings()
+        self._print_info("Agent Communication")
+        self._print_info(f"  Messages:     {comm_stats['total_messages']}")
+        self._print_info(f"  Token savings: ~{comm_stats['context_tokens_saved']:,}")
+
+        # Memory Layer
+        mem_stats = self.session.memory_layer.get_token_savings()
+        self._print_info("Memory")
+        self._print_info(f"  Entries:      {mem_stats['total_entries']}")
+        self._print_info(f"  Raw tokens:   {mem_stats['total_raw_tokens']:,}")
+        self._print_info(f"  Context used: {mem_stats['context_tokens_used']:,}")
+        self._print_info(f"  Saved:        ~{mem_stats['tokens_saved']:,}")
         print()
 
         return False
@@ -570,6 +590,9 @@ class InteractiveMode:
         print(f"  {_cyan('/update_status_line <k> <v>')}  Update session status metadata")
         print(f"  {_cyan('/set-agent-model <type:provider:model>}')}  Assign model to agent type")
         print(f"  {_cyan('/list-agent-models')} List agent model assignments")
+        print(f"  {_cyan('/agents')}           List active agents and communication stats")
+        print(f"  {_cyan('/remember <k> <v>')} Store a memory entry for token-efficient recall")
+        print(f"  {_cyan('/recall [query]')}   Recall stored memories (all or by keyword)")
         print(f"  {_cyan('/help')}             Show this help message")
         print(f"  {_cyan('/quit')}             Exit the session")
         print()
@@ -624,6 +647,87 @@ class InteractiveMode:
         return False
 
     # -- new commands (Gemini CLI / Claude Code / Codex parity) ----------------
+
+    def _cmd_agents(self, _arg: str) -> bool:
+        """List all active sub-agents and communication stats.
+
+        Returns
+        -------
+        Always ``False`` (continue REPL).
+        """
+        sub_contexts = self.session.context_manager._sub_contexts
+        if sub_contexts:
+            self._print_info("Active Sub-Agents:")
+            for cid, sub in sub_contexts.items():
+                usage = sub.get_context_usage()
+                self._print_info(f"  {cid}: {usage['used']:,}/{usage['max']:,} tokens ({usage['percentage']}%)")
+        else:
+            self._print_system("No active sub-agents.")
+
+        comm_stats = self.session.agent_comm.get_token_savings()
+        self._print_info("Agent Communication:")
+        self._print_info(f"  Total messages: {comm_stats['total_messages']}")
+        self._print_info(f"  Direct tokens:  {comm_stats['direct_tokens']:,}")
+        self._print_info(f"  Tokens saved:   ~{comm_stats['context_tokens_saved']:,}")
+        return False
+
+    def _cmd_remember(self, arg: str) -> bool:
+        """Store a memory entry for token-efficient recall.
+
+        Usage: ``/remember <key> <content>``
+
+        Parameters
+        ----------
+        arg:
+            Key and content separated by a space.
+
+        Returns
+        -------
+        Always ``False`` (continue REPL).
+        """
+        if not arg or " " not in arg:
+            self._print_error("Usage: /remember <key> <content>")
+            return False
+
+        key, content = arg.split(" ", 1)
+        self.session.memory_layer.store(key, content)
+        self._print_info(f"Remembered '{key}': {content}")
+        return False
+
+    def _cmd_recall(self, arg: str) -> bool:
+        """Recall stored memories (all or by keyword).
+
+        Usage: ``/recall`` to show all, ``/recall <query>`` to search.
+
+        Parameters
+        ----------
+        arg:
+            Optional search query.
+
+        Returns
+        -------
+        Always ``False`` (continue REPL).
+        """
+        if not arg:
+            # Show all memories
+            stats = self.session.memory_layer.get_token_savings()
+            if stats["total_entries"] == 0:
+                self._print_system("No memories stored. Use /remember <key> <content> to add.")
+                return False
+            self._print_info(f"Stored Memories ({stats['total_entries']} entries):")
+            for entry in self.session.memory_layer._entries.values():
+                self._print_info(f"  [{entry.category}] {entry.key}: {entry.content}")
+            return False
+
+        # Search by keyword
+        results = self.session.memory_layer.recall_relevant(arg)
+        if not results:
+            self._print_system(f"No memories matching '{arg}'.")
+        else:
+            self._print_info(f"Memories matching '{arg}':")
+            for entry in results:
+                self._print_info(f"  [{entry.category}] {entry.key}: {entry.content}")
+        return False
 
     def _cmd_memory(self, arg: str) -> bool:
         """Read or append to OLLAMA.md project memory file.

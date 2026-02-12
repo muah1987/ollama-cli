@@ -9,6 +9,7 @@ authors = [{name = "Mohammed Uthmaan Al Hāshimī"}]
 dependencies = [
     "httpx>=0.28.1",
     "python-dotenv>=1.2.1",
+    "rich>=14.0.0",
 ]
 
 [project.optional-dependencies]
@@ -26,15 +27,6 @@ mlx = [
 ]
 exo = [
     "psutil>=5.9.0",
-]
-
-dependencies = [
-    "httpx>=0.28.1",
-    "python-dotenv>=1.2.1",
-    "rich>=14.3.2",
-    # RDMA acceleration support
-    "psutil>=5.9.0",
-    "cryptography>=42.0.0",
 ]
 
 [project.scripts]
@@ -75,3 +67,8 @@ upload_to_pypi = false
 upload_to_release = true
 remove_dist = false
 assets = []
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]
