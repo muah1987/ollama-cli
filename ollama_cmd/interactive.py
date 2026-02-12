@@ -45,6 +45,7 @@ logger = logging.getLogger(__name__)
 
 _HISTORY_DIR = Path(".ollama")
 _HISTORY_FILE = _HISTORY_DIR / "history"
+_WORKSPACE_TRUST_FILE = _HISTORY_DIR / "workspace_trust_acknowledged"
 _VALID_PROVIDERS = ("ollama", "claude", "gemini", "codex")
 _BUG_CONTEXT_MESSAGES = 5  # number of recent messages to include in bug reports
 _PROJECT_MEMORY_FILE = Path("OLLAMA.md")
@@ -432,7 +433,38 @@ class InteractiveMode:
             self._print_info("Folder trusted. Run /init to create project files.")
         else:
             self._print_system("Folder not trusted. You can still chat, but tools are restricted.")
+        _HISTORY_DIR.mkdir(parents=True, exist_ok=True)
+        _WORKSPACE_TRUST_FILE.write_text("seen\n", encoding="utf-8")
+        self._prompt_workspace_model_selection()
         print()
+
+    def _prompt_workspace_model_selection(self) -> None:
+        """Prompt for provider/model choices once per new workspace."""
+        provider = input(_dim(f"Provider [{self.session.provider}]: ")).strip().lower() or self.session.provider
+        if provider not in _VALID_PROVIDERS:
+            provider = self.session.provider
+        primary_model = input(_dim(f"Primary model [{self.session.model}]: ")).strip() or self.session.model
+        fallback_model = input(_dim(f"Fallback model [{primary_model}]: ")).strip() or primary_model
+        background_model = input(_dim("Background model [glm-ocr]: ")).strip() or "glm-ocr"
+        thinking_model = input(_dim(f"Thinking model [{primary_model}]: ")).strip() or primary_model
+
+        self.session.provider = provider
+        self.session.token_counter.provider = provider
+        self.session.model = primary_model
+        os.environ["OLLAMA_CLI_AGENT_PROVIDER"] = provider
+        os.environ["OLLAMA_CLI_AGENT_MODEL"] = primary_model
+        os.environ["OLLAMA_CLI_CODING_PROVIDER"] = provider
+        os.environ["OLLAMA_CLI_CODING_MODEL"] = thinking_model
+        os.environ["OLLAMA_CLI_SUBAGENT_PROVIDER"] = provider
+        os.environ["OLLAMA_CLI_SUBAGENT_MODEL"] = background_model
+        os.environ["OLLAMA_CLI_FALLBACK_MODEL"] = fallback_model
+        self.session.provider_router._task_config["agent"] = (provider, primary_model)
+        self.session.provider_router._task_config["coding"] = (provider, thinking_model)
+        self.session.provider_router._task_config["subagent"] = (provider, background_model)
+        self._print_info(
+            f"Workspace models set: provider={provider}, primary={primary_model}, "
+            f"fallback={fallback_model}, background={background_model}, thinking={thinking_model}"
+        )
 
     def _print_response(self, text: str, agent_type: str | None = None) -> None:
         """Print an assistant response with a colored model-name prefix.
@@ -668,6 +700,18 @@ class InteractiveMode:
             pass
 
         return "\n".join(lines)
+
+    def _position_prompt_line(self) -> None:
+        """Move cursor to the line above the bottom status bar."""
+        rows = self._get_terminal_height()
+        sys.stdout.write(f"\033[{max(1, rows - 2)};1H")
+        sys.stdout.write("\033[K")
+        sys.stdout.flush()
+
+    @staticmethod
+    def _should_prompt_workspace_trust() -> bool:
+        """Return True when this workspace has not been acknowledged yet."""
+        return (not _PROJECT_MEMORY_FILE.exists()) and (not _WORKSPACE_TRUST_FILE.exists())
 
     # -- slash command dispatch -----------------------------------------------
 
@@ -2194,7 +2238,7 @@ class InteractiveMode:
         self._print_banner()
 
         # Workspace trust check — prompt when OLLAMA.md is missing
-        if not _PROJECT_MEMORY_FILE.exists():
+        if self._should_prompt_workspace_trust():
             self._prompt_workspace_trust()
 
         # Fire Setup hook (init trigger)
@@ -2221,6 +2265,7 @@ class InteractiveMode:
         try:
             while self._running:
                 try:
+                    self._position_prompt_line()
                     user_input = self._read_input()
                 except KeyboardInterrupt:
                     # Ctrl+C: cancel current input, print a blank line, continue

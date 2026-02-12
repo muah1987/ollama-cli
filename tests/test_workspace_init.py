@@ -8,6 +8,7 @@ import pytest
 from ollama_cmd.interactive import (
     _KNOWN_INSTRUCTION_FILES,
     _PROJECT_MEMORY_FILE,
+    _WORKSPACE_TRUST_FILE,
     InteractiveMode,
     _import_instruction_files,
 )
@@ -202,6 +203,34 @@ class TestWorkspaceTrustPrompt:
         (tmp_path / "OLLAMA.md").write_text("# test", encoding="utf-8")
 
         assert _PROJECT_MEMORY_FILE == Path("OLLAMA.md")
+
+    def test_prompt_marks_workspace_as_acknowledged(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """First trust prompt writes an acknowledgement marker for this folder."""
+        monkeypatch.chdir(tmp_path)
+
+        mode = MagicMock(spec=InteractiveMode)
+        mode.session = MagicMock()
+        mode.session.provider = "ollama"
+        mode.session.model = "llama3.2"
+        mode.session.token_counter = MagicMock()
+        mode.session.provider_router = MagicMock()
+        mode.session.provider_router._task_config = {}
+        mode._print_info = InteractiveMode._print_info
+        mode._print_system = InteractiveMode._print_system
+        mode._prompt_workspace_model_selection = MagicMock()
+
+        with patch("builtins.input", return_value="y"):
+            InteractiveMode._prompt_workspace_trust(mode)
+
+        assert _WORKSPACE_TRUST_FILE.exists()
+
+    def test_should_prompt_workspace_trust_respects_marker(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Trust prompt is skipped once the marker exists in .ollama."""
+        monkeypatch.chdir(tmp_path)
+        assert InteractiveMode._should_prompt_workspace_trust() is True
+        (tmp_path / ".ollama").mkdir()
+        (tmp_path / ".ollama" / "workspace_trust_acknowledged").write_text("seen\n", encoding="utf-8")
+        assert InteractiveMode._should_prompt_workspace_trust() is False
 
 
 class TestSessionStartHookPayload:

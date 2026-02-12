@@ -219,7 +219,7 @@ class Session:
         try:
             # Route through the provider router
             response = await self.provider_router.route(
-                task_type="agent", messages=messages, agent_type=agent_type, model=self.model,
+                task_type="agent", messages=messages, agent_type=agent_type, model=self.model, provider=self.provider,
             )
 
             # Extract response content and metrics
