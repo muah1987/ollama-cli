@@ -199,9 +199,12 @@ class _LlamaSpinner:
             spinner.stop()
     """
 
-    def __init__(self, frames: list[str], interval: float = 0.0) -> None:
+    _JOIN_TIMEOUT: float = 2.0  # seconds to wait for spinner thread to stop
+    _DEFAULT_INTERVAL: float = 0.8  # seconds between frame changes
+
+    def __init__(self, frames: list[str], interval: float = 0.8) -> None:
         self._frames = frames
-        self._interval = interval if interval > 0 else 0.8
+        self._interval = interval
         self._stop_event = threading.Event()
         self._thread: threading.Thread | None = None
 
@@ -215,7 +218,7 @@ class _LlamaSpinner:
         """Stop the spinner and clear the line."""
         self._stop_event.set()
         if self._thread is not None:
-            self._thread.join(timeout=2.0)
+            self._thread.join(timeout=self._JOIN_TIMEOUT)
         # Clear the spinner line
         sys.stdout.write("\r\033[K")
         sys.stdout.flush()
@@ -359,7 +362,7 @@ class InteractiveMode:
     # -- llama spinner -------------------------------------------------------
 
     @staticmethod
-    def _spinner(frames: list[str], duration: float = 0.0) -> "_LlamaSpinner":
+    def _spinner(frames: list[str], interval: float = 0.8) -> "_LlamaSpinner":
         """Return a llama-themed spinner context manager.
 
         Usage::
@@ -367,7 +370,7 @@ class InteractiveMode:
             with self._spinner(_LLAMA_SPINNER_FRAMES):
                 await some_long_operation()
         """
-        return _LlamaSpinner(frames, duration)
+        return _LlamaSpinner(frames, interval)
 
     def _print_banner(self) -> None:
         """Print the welcome banner on REPL startup.
@@ -399,7 +402,9 @@ class InteractiveMode:
         print(f"  │{'':>{w}}│")
         self._banner_line(w, "Model", self.session.model)
         self._banner_line(w, "Provider", self.session.provider)
-        self._banner_line(w, "Session", self.session.session_id[:24] + "…")
+        sid = self.session.session_id
+        sid_display = (sid[:24] + "…") if len(sid) > 25 else sid
+        self._banner_line(w, "Session", sid_display)
         self._banner_line(w, "Context", f"{ctx['used']:,}/{ctx['max']:,} tokens ({ctx['percentage']}%)")
         self._banner_line(w, "Compact", f"auto-compact {compact_status} (threshold {compact_pct}%)")
         if msg_count > 0:
