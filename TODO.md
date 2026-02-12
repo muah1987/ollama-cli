@@ -48,10 +48,10 @@ Current task priorities and pending work for the Ollama CLI project.
 - [x] `ps` — list running models (implemented)
 - [x] `stop` — stop a running model (implemented)
 
-### Commands — Stub (coming soon)
-- [ ] `pull` — pull a model from registry (stub, prints "coming soon")
-- [ ] `config` — show/set configuration from CLI (stub; works in REPL via `/config`)
-- [ ] `status` — show session status from CLI (stub; works in REPL via `/status`)
+### Commands — Implemented
+- [x] `pull` — pull a model from registry (fully implemented with streaming progress)
+- [x] `config` — show/set configuration from CLI (fully implemented, mirrors REPL `/config`)
+- [x] `status` — show session/server status from CLI (fully implemented, mirrors REPL `/status`)
 
 ### RDMA Acceleration — Implemented (framework)
 - [x] `api/rdma_client.py` — RDMA communication protocol
@@ -64,7 +64,7 @@ Current task priorities and pending work for the Ollama CLI project.
 - [ ] Thunderbolt<>RDMA driver — transport layer (framework only)
 - [ ] Network<>RDMA driver — transport layer (framework only)
 
-### Tests — 286 passing, 4 skipped (17 test files)
+### Tests — 314 passing, 4 skipped (18 test files)
 - [x] `test_token_counter.py` — token counting for all providers
 - [x] `test_subagent_scenarios.py` — nested sub-agents and context compression
 - [x] `test_cli_integration.py` — CLI integration tests
@@ -81,6 +81,7 @@ Current task priorities and pending work for the Ollama CLI project.
 - [x] `test_install.py` — installation tests
 - [x] `test_multi_model_hooks.py` — multi-model config, status bar, hook pipeline
 - [x] `test_mcp_client.py` — MCP client and server management
+- [x] `test_commands_implemented.py` — pull, config, status command tests
 - [x] `test_chain_controller.py` — chain controller and wave orchestration
 
 ### Documentation — Complete (15 docs + 6 root files)
@@ -114,9 +115,10 @@ Current task priorities and pending work for the Ollama CLI project.
 ## Remaining Work
 
 ### Short Term
-- [ ] Implement `pull` command (download models from registry)
-- [ ] Implement `config` CLI command (currently REPL-only via `/config`)
-- [ ] Implement `status` CLI command (currently REPL-only via `/status`)
+- [x] Implement `pull` command (download models from registry)
+- [x] Implement `config` CLI command (currently REPL-only via `/config`)
+- [x] Implement `status` CLI command (currently REPL-only via `/status`)
+- [x] Wire all command modules to root.py (show, create, rm, cp, ps, stop)
 - [ ] Add code coverage reporting to CI
 
 ### Medium Term
@@ -138,10 +140,9 @@ Current task priorities and pending work for the Ollama CLI project.
 ### None Critical
 
 ### Low
-- `pull`, `config`, `status` CLI commands are stubs (work fine in REPL)
 - RDMA transport drivers are framework-only (no real hardware integration yet)
 
 ---
 
 *Last updated: 2026-02-12*
-*286 tests passing | 15 hook scripts | 25+ REPL commands | 5 providers | 4 MCP servers*
+*314 tests passing | 15 hook scripts | 25+ REPL commands | 5 providers | 4 MCP servers*

@@ -11,6 +11,9 @@ on:
       - 'runner/**'
       - 'pyproject.toml'
 
+permissions:
+  contents: write
+
 jobs:
   autorelease:
     runs-on: ubuntu-latest
@@ -25,16 +28,12 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install uv
-        run: |
-          pip install uv
+      - uses: astral-sh/setup-uv@v7
 
-      - name: Install python-semantic-release
-        run: |
-          uv pip install python-semantic-release[toml]
+      - name: Install dependencies
+        run: uv sync --dev --extra dev
 
       - name: Run semantic release
-        run: |
-          uv run semantic-release publish
+        run: uv run semantic-release publish
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
