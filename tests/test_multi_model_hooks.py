@@ -11,7 +11,6 @@ import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
 
 _PROJECT_ROOT = str(Path(__file__).parent.parent)
 

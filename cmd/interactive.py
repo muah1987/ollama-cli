@@ -271,6 +271,7 @@ class InteractiveMode:
         "/agents": "_cmd_agents",
         "/remember": "_cmd_remember",
         "/recall": "_cmd_recall",
+        "/mcp": "_cmd_mcp",
     }
 
     def __init__(self, session: Session) -> None:
@@ -874,6 +875,7 @@ class InteractiveMode:
         print(f"  {_cyan('/agents')}           List active agents and communication stats")
         print(f"  {_cyan('/remember <k> <v>')} Store a memory entry for token-efficient recall")
         print(f"  {_cyan('/recall [query]')}   Recall stored memories (all or by keyword)")
+        print(f"  {_cyan('/mcp [action]')}     Manage MCP servers (enable|disable|tools|invoke)")
         print(f"  {_cyan('/help')}             Show this help message")
         print(f"  {_cyan('/quit')}             Exit the session")
         print()
@@ -1182,6 +1184,13 @@ class InteractiveMode:
         # Display result
         if "error" in result:
             self._print_error(f"Error: {result['error']}")
+            # Fire PostToolUseFailure hook
+            self._fire_hook("PostToolUseFailure", {
+                "tool_name": tool_name,
+                "tool_input": tool_arg,
+                "error": result["error"],
+                "session_id": self.session.session_id,
+            })
         else:
             self._print_info(f"[{tool_name}] result:")
             print(_json.dumps(result, indent=2, default=str)[:3000])
@@ -1797,6 +1806,107 @@ class InteractiveMode:
             self._print_system(f"  Previous value: {old_value}")
         return False
 
+    def _cmd_mcp(self, arg: str) -> bool:
+        """Manage MCP (Model Context Protocol) server connections.
+
+        Usage:
+          ``/mcp``              — List configured MCP servers
+          ``/mcp enable <name>``  — Enable an MCP server
+          ``/mcp disable <name>`` — Disable an MCP server
+          ``/mcp tools [name]``   — List tools from an MCP server
+          ``/mcp invoke <server> <tool> [args_json]`` — Invoke an MCP tool
+
+        Returns
+        -------
+        Always ``False`` (continue REPL).
+        """
+        from api.mcp_client import get_mcp_client
+
+        client = get_mcp_client()
+
+        if not arg:
+            # List all MCP servers
+            servers = client.list_servers()
+            print()
+            self._print_info("MCP Servers:")
+            for s in servers:
+                if s["enabled"]:
+                    status = _green("● enabled")
+                else:
+                    status = _dim("○ disabled")
+                cred = _green("✓") if s["has_credentials"] else _dim("✗")
+                print(f"  {status} {_cyan(s['name']):20s} {s['description']}  [cred: {cred}]")
+            print()
+            self._print_system("Commands: /mcp enable|disable|tools|invoke <name>")
+            return False
+
+        parts = arg.split(maxsplit=2)
+        action = parts[0].lower()
+
+        if action == "enable" and len(parts) >= 2:
+            name = parts[1]
+            if client.enable_server(name):
+                self._print_info(f"MCP server '{name}' enabled.")
+            else:
+                self._print_error(f"Unknown MCP server: {name}")
+        elif action == "disable" and len(parts) >= 2:
+            name = parts[1]
+            if client.disable_server(name):
+                self._print_info(f"MCP server '{name}' disabled.")
+            else:
+                self._print_error(f"Unknown MCP server: {name}")
+        elif action == "tools":
+            name = parts[1] if len(parts) >= 2 else None
+            if name:
+                tools = client.discover_tools(name)
+                if tools:
+                    self._print_info(f"Tools from {name}:")
+                    for t in tools:
+                        print(f"  {_cyan(t.name):30s} {t.description}")
+                else:
+                    self._print_system(f"No tools discovered from {name} (is it enabled and accessible?).")
+            else:
+                all_tools = client.list_discovered_tools()
+                if all_tools:
+                    self._print_info("Discovered MCP tools:")
+                    for t in all_tools:
+                        print(f"  {_cyan(t['name']):40s} {t['description']}")
+                else:
+                    self._print_system("No MCP tools discovered yet. Use /mcp tools <server> to discover.")
+        elif action == "invoke" and len(parts) >= 2:
+            invoke_parts = parts[1].split(maxsplit=1)
+            if len(invoke_parts) < 1:
+                self._print_error("Usage: /mcp invoke <server> <tool> [args_json]")
+                return False
+            server_name = invoke_parts[0]
+            if len(invoke_parts) >= 2:
+                rest = invoke_parts[1]
+            elif len(parts) >= 3:
+                rest = parts[2]
+            else:
+                self._print_error("Usage: /mcp invoke <server> <tool> [args_json]")
+                return False
+            tool_parts = rest.split(maxsplit=1)
+            tool_name = tool_parts[0]
+            args_json = tool_parts[1] if len(tool_parts) > 1 else "{}"
+            import json as _json
+
+            try:
+                arguments = _json.loads(args_json)
+            except _json.JSONDecodeError:
+                self._print_error(f"Invalid JSON arguments: {args_json}")
+                return False
+            result = client.invoke_tool(server_name, tool_name, arguments)
+            if "error" in result:
+                self._print_error(f"MCP error: {result['error']}")
+            else:
+                self._print_info(f"[mcp:{server_name}:{tool_name}] result:")
+                print(_json.dumps(result, indent=2, default=str)[:3000])
+        else:
+            self._print_error("Usage: /mcp [enable|disable|tools|invoke] <name>")
+
+        return False
+
     def _cmd_quit(self, _arg: str) -> bool:
         """Signal the REPL to exit gracefully.
 
@@ -1818,6 +1928,15 @@ class InteractiveMode:
         """
         self._running = True
         self._print_banner()
+
+        # Fire Setup hook (init trigger)
+        self._fire_hook("Setup", {
+            "trigger": "init",
+            "session_id": self.session.session_id,
+            "model": self.session.model,
+            "provider": self.session.provider,
+            "cwd": os.getcwd(),
+        })
 
         # Fire SessionStart hook
         self._fire_hook("SessionStart", {
@@ -1869,6 +1988,29 @@ class InteractiveMode:
                     if len(parts) > 1:
                         agent_type = parts[0][1:]  # Remove the @ symbol
                         stripped = parts[1]
+                        # Fire SubagentStart hook for agent-specific commands
+                        self._fire_hook("SubagentStart", {
+                            "agent_id": f"{agent_type}-{self.session.session_id[:8]}",
+                            "agent_type": agent_type,
+                            "session_id": self.session.session_id,
+                            "model": self.session.model,
+                            "prompt_preview": stripped[:100],
+                        })
+
+                # Fire UserPromptSubmit hook before processing
+                prompt_results = self._fire_hook("UserPromptSubmit", {
+                    "prompt": stripped,
+                    "session_id": self.session.session_id,
+                    "model": self.session.model,
+                    "timestamp": __import__("datetime").datetime.now(
+                        tz=__import__("datetime").timezone.utc
+                    ).isoformat(),
+                })
+                # Check if the prompt was denied by the hook
+                for pr in prompt_results:
+                    if pr.permission_decision == "deny":
+                        self._print_error("Prompt blocked by UserPromptSubmit hook.")
+                        continue
 
                 # Regular message -> send to session with llama spinner
                 try:
@@ -1888,6 +2030,22 @@ class InteractiveMode:
                 # Display response with agent-colored output
                 content = result.get("content", "")
                 self._print_response(content, agent_type=agent_type)
+
+                # Fire Stop hook (model finished responding)
+                self._fire_hook("Stop", {
+                    "session_id": self.session.session_id,
+                    "model": self.session.model,
+                    "stop_hook_active": True,
+                })
+
+                # Fire SubagentStop for agent-specific commands
+                if agent_type:
+                    self._fire_hook("SubagentStop", {
+                        "agent_id": f"{agent_type}-{self.session.session_id[:8]}",
+                        "agent_type": agent_type,
+                        "session_id": self.session.session_id,
+                        "stop_hook_active": True,
+                    })
 
                 # Show token usage after each response (like Claude Code)
                 metrics = result.get("metrics", {})
