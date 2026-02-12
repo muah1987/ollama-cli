@@ -865,7 +865,7 @@ _TASK_ENV_MAP: dict[str, tuple[str, str, str, str]] = {
         "OLLAMA_CLI_SUBAGENT_PROVIDER",
         "OLLAMA_CLI_SUBAGENT_MODEL",
         "ollama",
-        "llama3.2:3b",
+        "glm-ocr",
     ),
     "embedding": (
         "",
@@ -951,6 +951,7 @@ class ProviderRouter:
         messages: list[dict[str, str]],
         agent_type: str | None = None,
         model: str | None = None,
+        provider: str | None = None,
         **kwargs: Any,
     ) -> dict[str, Any] | AsyncIterator[dict[str, Any]]:
         """Route a chat request based on *task_type*.
@@ -979,7 +980,12 @@ class ProviderRouter:
             If no provider in the fallback chain can serve the request.
         """
         # Check if we have a specific agent model assignment
-        if agent_type and agent_type in _AGENT_MODEL_MAP:
+        if provider:
+            primary_provider = provider.lower()
+            if task_type not in self._task_config:
+                raise ProviderError(f"Unknown task type: {task_type!r}. Expected one of: {', '.join(self._task_config)}")
+            _, resolved_model = self._task_config[task_type]
+        elif agent_type and agent_type in _AGENT_MODEL_MAP:
             primary_provider, resolved_model = _AGENT_MODEL_MAP[agent_type]
         elif task_type not in self._task_config:
             raise ProviderError(f"Unknown task type: {task_type!r}. Expected one of: {', '.join(self._task_config)}")

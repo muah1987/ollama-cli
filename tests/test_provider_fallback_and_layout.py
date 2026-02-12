@@ -29,6 +29,7 @@ class TestProviderFallbackModelOverride:
 
         sig = inspect.signature(ProviderRouter.route)
         assert "model" in sig.parameters
+        assert "provider" in sig.parameters
 
     def test_model_override_used_on_primary_provider(self) -> None:
         """When model= is passed, the primary provider should receive it."""
@@ -110,6 +111,39 @@ class TestProviderFallbackModelOverride:
 
         source = inspect.getsource(Session.send)
         assert "model=self.model" in source
+        assert "provider=self.provider" in source
+
+    def test_provider_override_used_on_primary_provider(self) -> None:
+        """When provider= is passed, that provider is used as the primary target."""
+        script = (
+            "import asyncio\n"
+            "from api.provider_router import ProviderRouter\n"
+            "router = ProviderRouter()\n"
+            "call_log = []\n"
+            "class FP:\n"
+            "    def __init__(self, n):\n"
+            "        self.pname = n\n"
+            "    async def chat(self, messages, model=None, **kw):\n"
+            "        call_log.append((self.pname, model or ''))\n"
+            "        return {'choices': [{'message': {'content': 'ok'}}]}\n"
+            "for p in ('ollama','claude','gemini','codex','hf'):\n"
+            "    router._providers[p] = FP(p)\n"
+            "asyncio.run(router.route('agent', [{'role':'user','content':'hi'}], provider='gemini', model='glm-5:cloud'))\n"
+            "assert call_log[0] == ('gemini', 'glm-5:cloud'), f'got {call_log[0]}'\n"
+            "print('OK')\n"
+        )
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(script)
+            f.flush()
+            result = subprocess.run(
+                [sys.executable, f.name],
+                capture_output=True,
+                text=True,
+                cwd=_PROJECT_ROOT,
+            )
+            os.unlink(f.name)
+        assert result.returncode == 0, f"stderr: {result.stderr}"
+        assert "OK" in result.stdout
 
 
 # ---------------------------------------------------------------------------
