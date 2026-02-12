@@ -191,8 +191,13 @@ def cmd_interactive(args: argparse.Namespace) -> None:
     from model.session import Session
 
     from .interactive import InteractiveMode
+    from .onboarding import needs_onboarding, run_onboarding
 
     cfg = get_config()
+
+    # First-time onboarding wizard (runs only once)
+    if needs_onboarding():
+        cfg = run_onboarding()
 
     # Resume the most recent session if --resume was passed
     session = None
