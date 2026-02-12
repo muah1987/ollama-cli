@@ -14,6 +14,11 @@ Configure Ollama CLI to suit your needs.
 | `OLLAMA_MODEL` | `llama3.2` | Default model to use |
 | `OLLAMA_CONTEXT_LENGTH` | `4096` | Context window size in tokens |
 
+> **Model auto-discovery:** At startup the CLI queries your local Ollama server
+> and verifies that `OLLAMA_MODEL` is available. If it is not found, the CLI
+> auto-selects the first available local model and prints a warning. Partial
+> names work too — `llama3.2` resolves to `llama3.2:latest` when present.
+
 ### Provider Configuration
 
 | Variable | Description |

@@ -950,6 +950,7 @@ class ProviderRouter:
         task_type: str,
         messages: list[dict[str, str]],
         agent_type: str | None = None,
+        model: str | None = None,
         **kwargs: Any,
     ) -> dict[str, Any] | AsyncIterator[dict[str, Any]]:
         """Route a chat request based on *task_type*.
@@ -962,6 +963,9 @@ class ProviderRouter:
             Conversation history.
         agent_type:
             Specific agent type for custom model assignment.
+        model:
+            Explicit model override.  When provided, this model is used
+            instead of the default resolved from the task configuration.
         **kwargs:
             Forwarded to the provider's ``chat`` method.
 
@@ -976,11 +980,15 @@ class ProviderRouter:
         """
         # Check if we have a specific agent model assignment
         if agent_type and agent_type in _AGENT_MODEL_MAP:
-            primary_provider, model = _AGENT_MODEL_MAP[agent_type]
+            primary_provider, resolved_model = _AGENT_MODEL_MAP[agent_type]
         elif task_type not in self._task_config:
             raise ProviderError(f"Unknown task type: {task_type!r}. Expected one of: {', '.join(self._task_config)}")
         else:
-            primary_provider, model = self._task_config[task_type]
+            primary_provider, resolved_model = self._task_config[task_type]
+
+        # Caller-supplied model takes precedence over task/agent defaults
+        if model:
+            resolved_model = model
 
         # Build an ordered attempt list: primary first, then the rest of the chain
         attempt_order = [primary_provider] + [p for p in _FALLBACK_CHAIN if p != primary_provider]
@@ -993,10 +1001,13 @@ class ProviderRouter:
                 # No credentials -- skip to next
                 continue
 
-            # Use the original model for the primary provider; for fallback
+            # Use the resolved model for the primary provider; for fallback
             # providers, switch to their own default model so we don't send
             # a model name that only exists on another provider.
-            effective_model = model if provider_name == primary_provider else _DEFAULT_MODELS.get(provider_name, model)
+            effective_model = (
+                resolved_model if provider_name == primary_provider
+                else _DEFAULT_MODELS.get(provider_name, resolved_model)
+            )
 
             try:
                 return await provider.chat(messages, model=effective_model, **kwargs)

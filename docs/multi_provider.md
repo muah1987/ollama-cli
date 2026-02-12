@@ -120,6 +120,29 @@ Set up automatic fallback if a provider is unavailable:
 FALLBACK_CHAIN = ["ollama", "claude", "gemini", "codex", "hf"]
 ```
 
+### How Fallback Works
+
+When a request is made, the router tries the primary provider first. If that
+provider fails (e.g. model not found, connection error, or authentication
+failure), it automatically tries the next provider in the fallback chain.
+
+**Important:** The router uses your **session's selected model** for the primary
+provider. Fallback providers use their own default models so that a model name
+that only exists on one provider is not sent to another.
+
+For example, if you select `glm-5:cloud` with the Ollama provider and it fails,
+the fallback to Claude will use `claude-sonnet-4-20250514` (Claude's default),
+not `glm-5:cloud`.
+
+### Model Auto-Discovery
+
+At startup, the CLI queries the local Ollama server for available models. If the
+configured model (`OLLAMA_MODEL`) is not found locally, the CLI:
+
+1. Checks for a partial match (e.g. `llama3.2` matches `llama3.2:latest`)
+2. If no match, auto-selects the first available model
+3. Warns you about the selection
+
 ---
 
 ## API Key Management

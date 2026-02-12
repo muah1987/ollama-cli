@@ -92,6 +92,12 @@ ollama-cli serve
 ollama pull llama3.2
 ```
 
+> **Auto-discovery:** When you start the CLI, it automatically queries your
+> local Ollama server for available models. If the configured model is not
+> found locally, the CLI will auto-select the first available model and warn
+> you. This means you can start using the CLI immediately after pulling any
+> model — no manual configuration needed.
+
 ---
 
 ## Basic Commands

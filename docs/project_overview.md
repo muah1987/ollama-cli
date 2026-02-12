@@ -9,7 +9,9 @@ Ollama CLI gives you a local-first AI coding assistant that runs on your machine
 ## Features
 
 - **Multi-Provider Routing** -- Seamlessly switch between Ollama (local/cloud), Claude, Gemini, Codex, and Hugging Face with a single flag
+- **Model Auto-Discovery** -- Automatically detects locally available Ollama models at startup and resolves the best available model
 - **Multi-Model Agent Assignment** -- Assign 5+ models from mixed providers to agent types (@code, @review, @test, @plan, @docs)
+- **Provider Fallback** -- Automatic fallback chain uses your session's selected model, not a hardcoded default
 - **Auto-Compact Context** -- Automatically compacts conversation history at 85% context usage to keep sessions running smoothly
 - **13 Lifecycle Hooks** -- Full hook system: Setup, SessionStart/End, UserPromptSubmit, PreToolUse, PostToolUse, PostToolUseFailure, PermissionRequest, SkillTrigger, PreCompact, Stop, SubagentStart/Stop, Notification
 - **Skill→Hook→.py Pipeline** -- Skills trigger hooks, hooks trigger Python scripts for extensible automation
