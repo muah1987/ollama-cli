@@ -380,8 +380,9 @@ class InteractiveMode:
         remains visible even after the TOP banner scrolls off screen.
         """
         ctx = self.session.context_manager.get_context_usage()
-        pct = ctx.get("percentage", 0)
-        tokens_left = max(0, ctx.get("remaining", ctx.get("max", 0) - ctx.get("used", 0)))
+        pct = int(ctx.get("percentage", 0))
+        default_remaining = ctx.get("max", 0) - ctx.get("used", 0)
+        tokens_left = max(0, ctx.get("remaining", default_remaining))
         cost = self.session.token_counter.format_json().get("cost_estimate", 0.0)
         sid = self.session.session_id
         sid_short = (sid[:8] + "…") if len(sid) > 8 else sid

@@ -26,6 +26,17 @@ _PROJECT_DIR = str(Path(__file__).resolve().parent.parent)
 if _PROJECT_DIR not in sys.path:
     sys.path.insert(0, _PROJECT_DIR)
 
+# Hook event names expected in settings.json and as .py scripts
+_EXPECTED_HOOK_EVENTS = {
+    "PreToolUse": "pre_tool_use.py",
+    "PostToolUse": "post_tool_use.py",
+    "SessionStart": "session_start.py",
+    "SessionEnd": "session_end.py",
+    "PreCompact": "pre_compact.py",
+    "Stop": "stop.py",
+    "Notification": "notification.py",
+}
+
 from api.ollama_client import OllamaClient  # noqa: E402
 from model.session import Session  # noqa: E402
 from runner.context_manager import ContextManager  # noqa: E402
@@ -838,22 +849,14 @@ class TestHooksIntegration:
         assert settings_path.is_file()
         data = json.loads(settings_path.read_text())
         hooks = data.get("hooks", {})
-        expected = {"PreToolUse", "PostToolUse", "SessionStart", "SessionEnd", "PreCompact", "Stop", "Notification"}
-        assert expected.issubset(set(hooks.keys())), f"Missing hooks: {expected - set(hooks.keys())}"
+        assert set(_EXPECTED_HOOK_EVENTS.keys()).issubset(set(hooks.keys())), (
+            f"Missing hooks: {set(_EXPECTED_HOOK_EVENTS.keys()) - set(hooks.keys())}"
+        )
 
     def test_hook_scripts_exist(self) -> None:
         """Verify each hook event has a corresponding .py script."""
         hooks_dir = Path(_PROJECT_DIR) / ".ollama" / "hooks"
-        expected_scripts = [
-            "pre_tool_use.py",
-            "post_tool_use.py",
-            "session_start.py",
-            "session_end.py",
-            "pre_compact.py",
-            "stop.py",
-            "notification.py",
-        ]
-        for script in expected_scripts:
+        for _event, script in _EXPECTED_HOOK_EVENTS.items():
             assert (hooks_dir / script).is_file(), f"Missing hook script: {script}"
 
     def test_fire_hook_helper(self) -> None:
