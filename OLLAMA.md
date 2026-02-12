@@ -351,33 +351,9 @@ ollama-cli/
 - Tokens: 2,040 (prompt: 2,032, completion: 8)
 
 
-<!-- session:5571fc86bb68 -->
-### Session 5571fc86bb68
+<!-- session:4be51337afd8 -->
+### Session 4be51337afd8
 - Model: llama3.2 (ollama)
 - Duration: 3s
 - Messages: 1
 - Tokens: 2,080 (prompt: 2,072, completion: 8)
-
-
-<!-- session:d47e884b56ba -->
-### Session d47e884b56ba
-- Model: llama3.2 (ollama)
-- Duration: 3s
-- Messages: 1
-- Tokens: 2,120 (prompt: 2,112, completion: 8)
-
-
-<!-- session:3707fc767465 -->
-### Session 3707fc767465
-- Model: llama3.2 (ollama)
-- Duration: 3s
-- Messages: 1
-- Tokens: 2,160 (prompt: 2,152, completion: 8)
-
-
-<!-- session:61671f155ce9 -->
-### Session 61671f155ce9
-- Model: llama3.2 (ollama)
-- Duration: 3s
-- Messages: 1
-- Tokens: 2,200 (prompt: 2,192, completion: 8)
