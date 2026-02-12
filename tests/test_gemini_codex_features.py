@@ -289,7 +289,18 @@ def test_interactive_mode_has_new_commands() -> None:
         cwd=_PROJECT_DIR,
     )
     out = result.stdout.strip()
-    for cmd in ("/memory", "/tools", "/tool", "/diff", "/config", "/bug"):
+    for cmd in (
+        "/memory",
+        "/tools",
+        "/tool",
+        "/diff",
+        "/config",
+        "/bug",
+        "/team_planning",
+        "/build",
+        "/resume",
+        "/update_status_line",
+    ):
         assert cmd in out, f"{cmd} missing from InteractiveMode._COMMAND_TABLE"
 
 
@@ -313,7 +324,18 @@ def test_interactive_help_mentions_new_commands() -> None:
         text=True,
         cwd=_PROJECT_DIR,
     )
-    for keyword in ("/memory", "/tools", "/tool", "/diff", "/config", "/bug"):
+    for keyword in (
+        "/memory",
+        "/tools",
+        "/tool",
+        "/diff",
+        "/config",
+        "/bug",
+        "/team_planning",
+        "/build",
+        "/resume",
+        "/update_status_line",
+    ):
         assert keyword in result.stdout, f"{keyword} missing from /help output"
 
 
@@ -353,3 +375,203 @@ def test_skills_framework_still_works() -> None:
     assert result.returncode == 0
     for skill in ("token_counter", "auto_compact"):
         assert skill in result.stdout
+
+
+# ---------------------------------------------------------------------------
+# New orchestration command tests (/team_planning, /build, /resume,
+# /update_status_line)
+# ---------------------------------------------------------------------------
+
+
+class TestResumeCommand:
+    """Tests for the /resume slash command."""
+
+    def test_resume_no_tasks(self, tmp_path: Path, monkeypatch) -> None:
+        """When no tasks exist, /resume should print a message."""
+        monkeypatch.chdir(tmp_path)
+        script = (
+            "import sys, asyncio\n"
+            "sys.path.insert(0, '.')\n"
+            "from model.session import Session\n"
+            "from cmd.interactive import InteractiveMode\n"
+            "async def t():\n"
+            "    s = Session(model='m', provider='ollama')\n"
+            "    await s.start()\n"
+            "    r = InteractiveMode(s)\n"
+            "    r._cmd_resume('')\n"
+            "asyncio.run(t())\n"
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_DIR,
+        )
+        assert "No previous tasks" in result.stdout or result.returncode == 0
+
+    def test_resume_lists_tasks(self, tmp_path: Path, monkeypatch) -> None:
+        """When tasks exist, /resume should list them."""
+        monkeypatch.chdir(tmp_path)
+        tasks_dir = tmp_path / ".ollama" / "tasks"
+        tasks_dir.mkdir(parents=True)
+        import json
+
+        task = {
+            "id": "test-task",
+            "type": "team_planning",
+            "description": "Test task",
+            "status": "planned",
+        }
+        (tasks_dir / "test-task.json").write_text(json.dumps(task))
+
+        script = (
+            "import sys, asyncio\n"
+            "sys.path.insert(0, PROJ)\n"
+            "from model.session import Session\n"
+            "from cmd.interactive import InteractiveMode\n"
+            "async def t():\n"
+            "    s = Session(model='m', provider='ollama')\n"
+            "    await s.start()\n"
+            "    r = InteractiveMode(s)\n"
+            "    r._cmd_resume('')\n"
+            "asyncio.run(t())\n"
+        ).replace("PROJ", repr(_PROJECT_DIR))
+
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            capture_output=True,
+            text=True,
+            cwd=str(tmp_path),
+        )
+        assert "test-task" in result.stdout
+
+
+class TestUpdateStatusLine:
+    """Tests for the /update_status_line slash command."""
+
+    def test_update_creates_extras(self, tmp_path: Path, monkeypatch) -> None:
+        """Should write key-value pair to session file."""
+        monkeypatch.chdir(tmp_path)
+
+        session_dir = tmp_path / ".ollama" / "sessions"
+        session_dir.mkdir(parents=True)
+
+        script = (
+            "import sys, asyncio\n"
+            "sys.path.insert(0, PROJ)\n"
+            "from model.session import Session\n"
+            "from cmd.interactive import InteractiveMode\n"
+            "async def t():\n"
+            "    s = Session(model='m', provider='ollama')\n"
+            "    await s.start()\n"
+            "    r = InteractiveMode(s)\n"
+            "    r._cmd_update_status_line('project myapp')\n"
+            "asyncio.run(t())\n"
+        ).replace("PROJ", repr(_PROJECT_DIR))
+
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            capture_output=True,
+            text=True,
+            cwd=str(tmp_path),
+        )
+        assert "project" in result.stdout.lower() or result.returncode == 0
+
+    def test_update_missing_value(self) -> None:
+        """Should error when only key is provided."""
+        script = (
+            "import sys, asyncio\n"
+            "sys.path.insert(0, '.')\n"
+            "from model.session import Session\n"
+            "from cmd.interactive import InteractiveMode\n"
+            "async def t():\n"
+            "    s = Session(model='m', provider='ollama')\n"
+            "    await s.start()\n"
+            "    r = InteractiveMode(s)\n"
+            "    r._cmd_update_status_line('onlykey')\n"
+            "asyncio.run(t())\n"
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_DIR,
+        )
+        assert "required" in result.stdout.lower() or result.returncode == 0
+
+
+class TestBuildCommand:
+    """Tests for the /build slash command."""
+
+    def test_build_missing_plan(self) -> None:
+        """Should error when plan path is not given."""
+        script = (
+            "import sys, asyncio\n"
+            "sys.path.insert(0, '.')\n"
+            "from model.session import Session\n"
+            "from cmd.interactive import InteractiveMode\n"
+            "async def t():\n"
+            "    s = Session(model='m', provider='ollama')\n"
+            "    await s.start()\n"
+            "    r = InteractiveMode(s)\n"
+            "    result = await r._cmd_build('')\n"
+            "    print('exit:', result)\n"
+            "asyncio.run(t())\n"
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_DIR,
+        )
+        assert "Usage" in result.stdout or result.returncode == 0
+
+    def test_build_nonexistent_plan(self) -> None:
+        """Should error when plan file does not exist."""
+        script = (
+            "import sys, asyncio\n"
+            "sys.path.insert(0, '.')\n"
+            "from model.session import Session\n"
+            "from cmd.interactive import InteractiveMode\n"
+            "async def t():\n"
+            "    s = Session(model='m', provider='ollama')\n"
+            "    await s.start()\n"
+            "    r = InteractiveMode(s)\n"
+            "    result = await r._cmd_build('/nonexistent/plan.md')\n"
+            "    print('exit:', result)\n"
+            "asyncio.run(t())\n"
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_DIR,
+        )
+        assert "not found" in result.stdout.lower() or result.returncode == 0
+
+
+class TestTeamPlanningCommand:
+    """Tests for the /team_planning slash command."""
+
+    def test_team_planning_no_arg(self) -> None:
+        """Should show usage when no argument is given."""
+        script = (
+            "import sys, asyncio\n"
+            "sys.path.insert(0, '.')\n"
+            "from model.session import Session\n"
+            "from cmd.interactive import InteractiveMode\n"
+            "async def t():\n"
+            "    s = Session(model='m', provider='ollama')\n"
+            "    await s.start()\n"
+            "    r = InteractiveMode(s)\n"
+            "    result = await r._cmd_team_planning('')\n"
+            "    print('exit:', result)\n"
+            "asyncio.run(t())\n"
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_DIR,
+        )
+        assert "Usage" in result.stdout or result.returncode == 0
