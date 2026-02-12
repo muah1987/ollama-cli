@@ -22,6 +22,17 @@
         ]
       }
     ],
+    "SkillTrigger": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.local/bin/uv run $OLLAMA_PROJECT_DIR/.ollama/hooks/skill_trigger.py"
+          }
+        ]
+      }
+    ],
     "SessionStart": [
       {
         "matcher": "",
@@ -77,5 +88,12 @@
         ]
       }
     ]
+  },
+  "agent_models": {
+    "code": {"provider": "ollama", "model": "codestral:latest"},
+    "review": {"provider": "ollama", "model": "llama3.2"},
+    "test": {"provider": "ollama", "model": "llama3.2"},
+    "plan": {"provider": "ollama", "model": "llama3.2"},
+    "docs": {"provider": "ollama", "model": "llama3.2"}
   }
 }

@@ -93,7 +93,10 @@ def _load_agent_model_config() -> dict[str, tuple[str, str]]:
     config = {}
 
     # Load from environment variables
-    agent_types = ["code", "research", "writer", "analysis", "planning"]
+    agent_types = [
+        "code", "research", "writer", "analysis", "planning",
+        "review", "test", "debug", "docs", "orchestrator",
+    ]
     for agent_type in agent_types:
         provider_var = f"OLLAMA_CLI_AGENT_{agent_type.upper()}_PROVIDER"
         model_var = f"OLLAMA_CLI_AGENT_{agent_type.upper()}_MODEL"

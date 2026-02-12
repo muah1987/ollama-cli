@@ -276,6 +276,7 @@ class InteractiveMode:
     def __init__(self, session: Session) -> None:
         self.session = session
         self._running: bool = False
+        self._current_job: str = "idle"
         self._setup_readline()
 
     # -- readline setup ------------------------------------------------------
@@ -374,10 +375,12 @@ class InteractiveMode:
     def _print_status_bar(self) -> None:
         """Print the persistent bottom status bar.
 
-        Layout: ``cwd | session-uuid | model | context% | cost``
+        Layout: ``cwd | session-uuid | model/status | context% | cost | job``
 
         This bar is shown after every response and slash command so it
         remains visible even after the TOP banner scrolls off screen.
+        The bar includes current job info so the user always has context
+        about what the CLI is doing.
         """
         ctx = self.session.context_manager.get_context_usage()
         pct = int(ctx.get("percentage", 0))
@@ -398,6 +401,17 @@ class InteractiveMode:
         else:
             pct_str = _red(f"{pct}%")
 
+        # Job status indicator
+        job = self._current_job
+        if job == "idle":
+            job_str = _dim("● idle")
+        elif job == "thinking":
+            job_str = _yellow("◉ thinking")
+        elif job == "compacting":
+            job_str = _magenta("◉ compacting")
+        else:
+            job_str = _cyan(f"◉ {job}")
+
         bar = (
             f"{_dim('─' * 60)}\n"
             f"{_dim('📁')} {_white(cwd)} "
@@ -405,7 +419,8 @@ class InteractiveMode:
             f"{_dim('│')} {_dim('🦙')} {_green(self.session.model)} "
             f"{_dim('│')} {pct_str} "
             f"{_dim('│')} {_dim('~')}{tokens_left:,}{_dim(' left')} "
-            f"{_dim('│')} {_green(f'${cost:.4f}')}"
+            f"{_dim('│')} {_green(f'${cost:.4f}')} "
+            f"{_dim('│')} {job_str}"
         )
         print(bar)
 
@@ -645,10 +660,14 @@ class InteractiveMode:
         })
 
         try:
+            self._current_job = "compacting"
             result = await self.session.compact()
         except Exception as exc:
+            self._current_job = "idle"
             self._print_error(f"  Compaction failed: {exc}")
             return False
+
+        self._current_job = "idle"
 
         usage_after = cm.get_context_usage()
         removed = result.get("messages_removed", 0)
@@ -1402,6 +1421,7 @@ class InteractiveMode:
         )
 
         try:
+            self._current_job = "planning"
             spinner = self._spinner(_LLAMA_PLAN_SPINNER)
             spinner.start()
             try:
@@ -1413,6 +1433,7 @@ class InteractiveMode:
             finally:
                 spinner.stop()
         except Exception as exc:
+            self._current_job = "idle"
             self._print_error(f"Failed to generate plan: {exc}")
             return False
 
@@ -1483,6 +1504,7 @@ class InteractiveMode:
             logger.debug("Failed to save task record", exc_info=True)
 
         # Report
+        self._current_job = "idle"
         print()
         self._print_info("✅ Implementation Plan Created")
         self._print_info(f"  File: {plan_file}")
@@ -1576,6 +1598,7 @@ class InteractiveMode:
         build_prompt += "\nImplement this plan now. Report what was completed for each step."
 
         try:
+            self._current_job = "building"
             spinner = self._spinner(_LLAMA_BUILD_SPINNER)
             spinner.start()
             try:
@@ -1587,8 +1610,11 @@ class InteractiveMode:
             finally:
                 spinner.stop()
         except Exception as exc:
+            self._current_job = "idle"
             self._print_error(f"Build failed: {exc}")
             return False
+
+        self._current_job = "idle"
 
         content = result.get("content", "")
         self._print_response(content)
@@ -1846,6 +1872,7 @@ class InteractiveMode:
 
                 # Regular message -> send to session with llama spinner
                 try:
+                    self._current_job = "thinking"
                     spinner = self._spinner(_LLAMA_SPINNER_FRAMES)
                     spinner.start()
                     try:
@@ -1853,6 +1880,7 @@ class InteractiveMode:
                     finally:
                         spinner.stop()
                 except Exception as exc:
+                    self._current_job = "idle"
                     self._print_error(f"Error: {exc}")
                     logger.exception("Failed to send message")
                     continue
@@ -1871,8 +1899,11 @@ class InteractiveMode:
 
                 # Notify on auto-compaction
                 if result.get("compacted"):
+                    self._current_job = "compacting"
                     self._print_system("(Context was auto-compacted)")
                     self._fire_notification("info", "Context was auto-compacted")
+
+                self._current_job = "idle"
 
                 # BOTTOM: persistent status bar after every response
                 self._print_status_bar()

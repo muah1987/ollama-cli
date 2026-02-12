@@ -369,3 +369,40 @@ def get_tool(name: str) -> dict[str, Any] | None:
 def list_tools() -> list[dict[str, str]]:
     """Return a summary of all available tools."""
     return [{"name": name, "description": info["description"], "risk": info["risk"]} for name, info in TOOLS.items()]
+
+
+def fire_skill_trigger(skill_name: str, skill_params: dict[str, Any] | None = None) -> bool:
+    """Fire the SkillTrigger hook for the skill→hook→.py pipeline.
+
+    Parameters
+    ----------
+    skill_name:
+        Name of the skill being triggered.
+    skill_params:
+        Parameters passed to the skill.
+
+    Returns
+    -------
+    ``True`` if the skill is allowed to proceed, ``False`` if denied.
+    """
+    try:
+        from server.hook_runner import HookRunner
+
+        runner = HookRunner()
+        if not runner.is_enabled():
+            return True
+
+        payload = {
+            "skill_name": skill_name,
+            "skill_params": skill_params or {},
+            "trigger_source": "skill",
+        }
+        results = runner.run_hook("SkillTrigger", payload, timeout=10)
+        for r in results:
+            decision = r.permission_decision
+            if decision == "deny":
+                logger.info("Skill '%s' blocked by SkillTrigger hook", skill_name)
+                return False
+    except Exception:  # noqa: BLE001
+        logger.debug("SkillTrigger hook failed, allowing skill", exc_info=True)
+    return True

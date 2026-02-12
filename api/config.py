@@ -40,9 +40,12 @@ class OllamaCliConfig:
     anthropic_api_key: str = ""
     gemini_api_key: str = ""
     openai_api_key: str = ""
+    hf_token: str = ""
+    gh_token: str = ""
     hooks_enabled: bool = True
     output_format: str = "text"
     allowed_tools: list[str] | None = None
+    agent_models: dict[str, dict[str, str]] | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -120,6 +123,8 @@ def load_config(env_path: str | Path | None = None, config_json_path: str | Path
         anthropic_api_key=os.getenv("ANTHROPIC_API_KEY", OllamaCliConfig.anthropic_api_key),
         gemini_api_key=os.getenv("GEMINI_API_KEY", OllamaCliConfig.gemini_api_key),
         openai_api_key=os.getenv("OPENAI_API_KEY", OllamaCliConfig.openai_api_key),
+        hf_token=os.getenv("HF_TOKEN", OllamaCliConfig.hf_token),
+        gh_token=os.getenv("GH_TOKEN", OllamaCliConfig.gh_token),
         hooks_enabled=_bool_from_env(os.getenv("HOOKS_ENABLED"), OllamaCliConfig.hooks_enabled),
     )
 
@@ -135,13 +140,30 @@ def load_config(env_path: str | Path | None = None, config_json_path: str | Path
                 overrides = json.load(f)
             for key, value in overrides.items():
                 if hasattr(cfg, key):
-                    expected_type = type(getattr(cfg, key))
-                    try:
-                        setattr(cfg, key, expected_type(value))
-                    except (TypeError, ValueError):
-                        pass  # skip malformed overrides
+                    current = getattr(cfg, key)
+                    if current is None and key == "agent_models" and isinstance(value, dict):
+                        setattr(cfg, key, value)
+                    elif current is not None:
+                        expected_type = type(current)
+                        try:
+                            setattr(cfg, key, expected_type(value))
+                        except (TypeError, ValueError):
+                            pass  # skip malformed overrides
         except (json.JSONDecodeError, OSError):
             pass  # ignore broken config files
+
+    # Load agent_models from settings.json if not already set
+    if cfg.agent_models is None:
+        settings_path = Path(__file__).resolve().parent.parent / ".ollama" / "settings.json"
+        if settings_path.exists():
+            try:
+                with open(settings_path) as f:
+                    settings_data = json.load(f)
+                agent_models = settings_data.get("agent_models")
+                if isinstance(agent_models, dict):
+                    cfg.agent_models = agent_models
+            except (json.JSONDecodeError, OSError):
+                pass
 
     return cfg
 
@@ -175,6 +197,8 @@ def save_config(config: OllamaCliConfig, path: str | Path | None = None) -> Path
         "anthropic_api_key",
         "gemini_api_key",
         "openai_api_key",
+        "hf_token",
+        "gh_token",
         "allowed_tools",
     }
     for key in excluded_keys:
