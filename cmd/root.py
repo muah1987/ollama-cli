@@ -131,14 +131,18 @@ def cmd_list(args: argparse.Namespace) -> None:
     console.print(table)
 
 
-def cmd_pull(_args: argparse.Namespace) -> None:
+def cmd_pull(args: argparse.Namespace) -> None:
     """Pull a model from the registry."""
-    console.print("[yellow]Pull command coming soon...[/yellow]")
+    from .pull import handle_pull
+
+    handle_pull(args)
 
 
-def cmd_show(_args: argparse.Namespace) -> None:
+def cmd_show(args: argparse.Namespace) -> None:
     """Show model details."""
-    console.print("[yellow]Show command coming soon...[/yellow]")
+    from .show import handle_show
+
+    handle_show(args)
 
 
 def cmd_serve(_args: argparse.Namespace) -> None:
@@ -162,14 +166,18 @@ def cmd_serve(_args: argparse.Namespace) -> None:
         sys.exit(1)
 
 
-def cmd_config(_args: argparse.Namespace) -> None:
+def cmd_config(args: argparse.Namespace) -> None:
     """Show or set provider configuration."""
-    console.print("[yellow]Config command coming soon...[/yellow]")
+    from .config import handle_config
+
+    handle_config(args)
 
 
-def cmd_status(_args: argparse.Namespace) -> None:
+def cmd_status(args: argparse.Namespace) -> None:
     """Show current session status."""
-    console.print("[yellow]Status command coming soon...[/yellow]")
+    from .status import handle_status
+
+    handle_status(args)
 
 
 def cmd_version(_args: argparse.Namespace) -> None:
@@ -258,29 +266,39 @@ def cmd_run_prompt(args: argparse.Namespace) -> None:
 # ---------------------------------------------------------------------------
 
 
-def cmd_create(_args: argparse.Namespace) -> None:
+def cmd_create(args: argparse.Namespace) -> None:
     """Create a model from a Modelfile."""
-    console.print("[yellow]Create command coming soon...[/yellow]")
+    from .create import handle_create
+
+    handle_create(args)
 
 
-def cmd_rm(_args: argparse.Namespace) -> None:
+def cmd_rm(args: argparse.Namespace) -> None:
     """Delete a local model."""
-    console.print("[yellow]Remove command coming soon...[/yellow]")
+    from .rm import handle_rm
+
+    handle_rm(args)
 
 
-def cmd_cp(_args: argparse.Namespace) -> None:
+def cmd_cp(args: argparse.Namespace) -> None:
     """Copy a local model."""
-    console.print("[yellow]Copy command coming soon...[/yellow]")
+    from .cp import handle_cp
+
+    handle_cp(args)
 
 
-def cmd_ps(_args: argparse.Namespace) -> None:
+def cmd_ps(args: argparse.Namespace) -> None:
     """List running models."""
-    console.print("[yellow]PS command coming soon...[/yellow]")
+    from .ps import handle_ps
+
+    handle_ps(args)
 
 
-def cmd_stop(_args: argparse.Namespace) -> None:
+def cmd_stop(args: argparse.Namespace) -> None:
     """Stop a running model."""
-    console.print("[yellow]Stop command coming soon...[/yellow]")
+    from .stop import handle_stop
+
+    handle_stop(args)
 
 
 # ---------------------------------------------------------------------------
