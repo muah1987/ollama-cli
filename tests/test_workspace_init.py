@@ -6,9 +6,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from ollama_cmd.interactive import (
-    InteractiveMode,
     _KNOWN_INSTRUCTION_FILES,
     _PROJECT_MEMORY_FILE,
+    InteractiveMode,
     _import_instruction_files,
 )
 
