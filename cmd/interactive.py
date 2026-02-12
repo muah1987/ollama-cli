@@ -184,15 +184,29 @@ class InteractiveMode:
         """Print the welcome banner on REPL startup."""
         from cmd.root import VERSION
 
-        msg_count = self.session.get_status()["messages"]
+        status = self.session.get_status()
+        msg_count = status["messages"]
+        ctx = status["context_usage"]
+        compact_status = "on" if self.session.context_manager.auto_compact else "off"
+
         print()
         print(_bold(f"╭─ ollama-cli v{VERSION} ({'resumed' if msg_count > 0 else 'new session'})"))
         self._print_info(f"│  model:    {self.session.model}")
         self._print_info(f"│  provider: {self.session.provider}")
         self._print_info(f"│  session:  {self.session.session_id}")
+        self._print_info(f"│  context:  {ctx['used']:,}/{ctx['max']:,} tokens ({ctx['percentage']}%)")
+        self._print_info(
+            f"│  compact:  auto-compact {compact_status} (threshold {int(self.session.context_manager.compact_threshold * 100)}%)"
+        )
         if msg_count > 0:
             self._print_info(f"│  history:  {msg_count} messages")
-        self._print_system("╰─ Type /help for commands, /quit to exit")
+        print(_dim("│"))
+        self._print_system("│  Tips:")
+        self._print_system("│    • Type a message to chat with the model")
+        self._print_system("│    • Use /help for all commands")
+        self._print_system("│    • Use /tools to see built-in tools")
+        self._print_system("│    • Use /compact to free context space")
+        self._print_system("╰─ Press Ctrl+C to cancel, Ctrl+D or /quit to exit")
         print()
 
     # -- input reading -------------------------------------------------------
@@ -328,23 +342,42 @@ class InteractiveMode:
         -------
         Always ``False`` (continue REPL).
         """
-        usage_before = self.session.context_manager.get_context_usage()
+        cm = self.session.context_manager
+        usage_before = cm.get_context_usage()
+
+        print()
+        self._print_info("Context Compaction")
         self._print_system(
-            f"Before compaction: {usage_before['used']:,} / {usage_before['max']:,} tokens "
-            f"({usage_before['percentage']}%)"
+            f"  Before: {usage_before['used']:,} / {usage_before['max']:,} tokens "
+            f"({usage_before['percentage']}%) — {len(cm.messages)} messages"
         )
+        compact_label = "on" if cm.auto_compact else "off"
+        self._print_system(
+            f"  Auto-compact: {compact_label} | threshold: {int(cm.compact_threshold * 100)}% "
+            f"| keep last: {cm.keep_last_n} messages"
+        )
+
+        if len(cm.messages) <= cm.keep_last_n:
+            self._print_system("  Nothing to compact (message count ≤ keep_last_n).")
+            print()
+            return False
 
         try:
             result = await self.session.compact()
         except Exception as exc:
-            self._print_error(f"Compaction failed: {exc}")
+            self._print_error(f"  Compaction failed: {exc}")
             return False
 
-        usage_after = self.session.context_manager.get_context_usage()
+        usage_after = cm.get_context_usage()
+        removed = result.get("messages_removed", 0)
+        saved = result.get("before_tokens", 0) - result.get("after_tokens", 0)
+
         self._print_info(
-            f"After compaction:  {usage_after['used']:,} / {usage_after['max']:,} tokens ({usage_after['percentage']}%)"
+            f"  After:  {usage_after['used']:,} / {usage_after['max']:,} tokens "
+            f"({usage_after['percentage']}%) — {len(cm.messages)} messages"
         )
-        self._print_info(f"Messages removed:  {result.get('messages_removed', 0)}")
+        self._print_info(f"  Removed {removed} messages, freed ~{saved:,} tokens")
+        print()
         return False
 
     def _cmd_status(self, _arg: str) -> bool:
@@ -357,27 +390,35 @@ class InteractiveMode:
         status = self.session.get_status()
         token_info: dict[str, Any] = status["token_metrics"]
         context_info: dict[str, Any] = status["context_usage"]
+        cm = self.session.context_manager
 
         print()
-        self._print_info("--- Session Status ---")
-        self._print_info(f"  Session ID: {status['session_id']}")
+        self._print_info("Session")
+        self._print_info(f"  ID:         {status['session_id']}")
         self._print_info(f"  Model:      {status['model']}")
         self._print_info(f"  Provider:   {status['provider']}")
         self._print_info(f"  Uptime:     {status['uptime_str']}")
         self._print_info(f"  Messages:   {status['messages']}")
         self._print_info(f"  Hooks:      {'enabled' if status['hooks_enabled'] else 'disabled'}")
 
-        self._print_info("--- Tokens ---")
+        self._print_info("Tokens")
         self._print_info(f"  Prompt:     {token_info.get('prompt_tokens', 0):,}")
         self._print_info(f"  Completion: {token_info.get('completion_tokens', 0):,}")
         self._print_info(f"  Total:      {token_info.get('total_tokens', 0):,}")
         self._print_info(f"  Speed:      {token_info.get('tokens_per_second', 0):.1f} tok/s")
         self._print_info(f"  Cost:       ${token_info.get('cost_estimate', 0):.4f}")
 
-        self._print_info("--- Context ---")
+        self._print_info("Context")
         self._print_info(f"  Used:       {context_info.get('used', 0):,} / {context_info.get('max', 0):,} tokens")
         self._print_info(f"  Usage:      {context_info.get('percentage', 0)}%")
         self._print_info(f"  Remaining:  {context_info.get('remaining', 0):,}")
+
+        compact_label = _green("on") if cm.auto_compact else _red("off")
+        self._print_info(
+            f"  Auto-compact: {compact_label} (threshold {int(cm.compact_threshold * 100)}%, keep last {cm.keep_last_n})"
+        )
+        if cm.should_compact():
+            self._print_info("  ⚠ Context above threshold — run /compact to free space")
         print()
 
         return False

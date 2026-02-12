@@ -62,10 +62,14 @@ console = Console()
 def print_banner() -> None:
     """Print a startup banner showing current config."""
     cfg = get_config()
+    compact_status = "on" if cfg.auto_compact else "off"
     console.print(f"[bold cyan]ollama-cli[/bold cyan] v{VERSION}")
     console.print(f"  provider : [green]{cfg.provider}[/green]")
     console.print(f"  model    : [green]{cfg.ollama_model}[/green]")
     console.print(f"  context  : [green]{cfg.context_length}[/green] tokens")
+    console.print(
+        f"  compact  : auto-compact [green]{compact_status}[/green] (threshold {int(cfg.compact_threshold * 100)}%)"
+    )
     console.print()
 
 
