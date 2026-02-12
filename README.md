@@ -363,6 +363,20 @@ Create a `.env` file or set these environment variables:
 
 See [`.env.sample`](.env.sample) for the full template.
 
+### Tested Ollama Cloud Models
+
+The following [Ollama Cloud](https://ollama.com) models have been tested and verified to work with ollama-cli. Set `OLLAMA_HOST=https://ollama.com` and provide your `OLLAMA_API_KEY` to use them:
+
+| Model | Tag |
+|-------|-----|
+| GLM-4 | `glm-4.7:cloud` |
+| GLM-5 | `glm-5:cloud` |
+| Qwen3 Coder Next | `qwen3-coder-next:cloud` |
+| Qwen3 Next 80B | `qwen3-next:80b-cloud` |
+| Qwen3 Coder 480B | `qwen3-coder:480b-cloud` |
+| Qwen3 VL 235B | `qwen3-vl:235b-cloud` |
+| Qwen3 VL 235B Instruct | `qwen3-vl:235b-instruct-cloud` |
+
 ---
 
 ## Documentation
@@ -407,6 +421,14 @@ uv run ruff format .
 
 - **GitHub Issues:** [Report bugs or request features](https://github.com/muah1987/ollama-cli/issues)
 - **Ollama:** [Official Ollama website](https://ollama.ai)
+
+## Migration Notice
+
+The CLI frontend is planned to migrate from Python to
+[Go](https://go.dev/) using the
+[BubbleTea](https://github.com/charmbracelet/bubbletea) TUI framework.
+The current Python version remains fully supported until the migration is
+complete.  See the [ROADMAP](ROADMAP.md) for details.
 
 ## License
 

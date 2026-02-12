@@ -6,6 +6,11 @@ A comprehensive roadmap for the Ollama CLI project, tracking current priorities 
 
 ## Current Status: v0.1.0 (Production)
 
+> **⚠️ Migration Notice:** The CLI frontend is migrating from Python/readline
+> to [BubbleTea](https://github.com/charmbracelet/bubbletea) (Go).  The API
+> layer and provider integrations remain unchanged.  See
+> [Phase 6](#phase-6-bubbletea-migration) below for details.
+
 ### Recently Completed
 - [x] Multi-provider routing (Ollama, Claude, Gemini, Codex, Hugging Face)
 - [x] Auto-compact context management
@@ -177,6 +182,40 @@ A comprehensive roadmap for the Ollama CLI project, tracking current priorities 
 - [ ] Custom provider support
 - [ ] Extensibility framework
 - [ ] Plugin marketplace
+
+---
+
+## Phase 6: BubbleTea Migration
+
+### Feature: Go/BubbleTea TUI Rewrite
+**Timeline**: TBA
+**Priority**: High
+
+The CLI frontend will be rewritten in Go using the
+[BubbleTea](https://github.com/charmbracelet/bubbletea) TUI framework from
+Charm.  This brings a richer terminal UI, better cross-platform support, and
+a single static binary.
+
+**Reference projects:**
+
+- [ollama/ollama](https://github.com/ollama/ollama) — Ollama server (Go)
+- [google-gemini/gemini-cli](https://github.com/google-gemini/gemini-cli) — Gemini CLI
+- [openai/codex](https://github.com/openai/codex) — OpenAI Codex CLI
+- [charmbracelet/bubbletea](https://github.com/charmbracelet/bubbletea) — TUI framework
+- [opencode-ai/opencode](https://github.com/opencode-ai/opencode) — OpenCode CLI
+
+**Migration plan:**
+
+- [ ] Initialise Go module and BubbleTea project scaffold
+- [ ] Port provider routing (Ollama, Claude, Gemini, Codex, HF) to Go
+- [ ] Implement BubbleTea TUI with streaming chat view
+- [ ] Port slash commands (`/model`, `/provider`, `/status`, `/compact`, `/init`, etc.)
+- [ ] Port lifecycle hook system (13 hooks)
+- [ ] Port MCP integration
+- [ ] Port chain orchestration
+- [ ] Port context management and auto-compact
+- [ ] Single-binary distribution (no Python/uv dependency)
+- [ ] Archive current Python implementation to `ollama-cli.bak/`
 
 ---
 

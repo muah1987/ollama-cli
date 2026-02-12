@@ -47,6 +47,15 @@ _HISTORY_DIR = Path(".ollama")
 _HISTORY_FILE = _HISTORY_DIR / "history"
 _VALID_PROVIDERS = ("ollama", "claude", "gemini", "codex")
 _BUG_CONTEXT_MESSAGES = 5  # number of recent messages to include in bug reports
+_PROJECT_MEMORY_FILE = Path("OLLAMA.md")
+
+# Instruction files from other AI tools that /init can import context from
+_KNOWN_INSTRUCTION_FILES: tuple[Path, ...] = (
+    Path("CLAUDE.md"),
+    Path("GEMINI.md"),
+    Path("AGENT.md"),
+    Path(".github/copilot-instructions.md"),
+)
 
 # ---------------------------------------------------------------------------
 # ANSI escape helpers
@@ -225,6 +234,65 @@ class _LlamaSpinner:
 
 
 # ---------------------------------------------------------------------------
+# Instruction file importer
+# ---------------------------------------------------------------------------
+
+
+def _import_instruction_files() -> list[str]:
+    """Detect and import instruction files from other AI tools into OLLAMA.md.
+
+    Scans the current directory for known instruction files (``CLAUDE.md``,
+    ``GEMINI.md``, ``AGENT.md``, ``.github/copilot-instructions.md``).  If any
+    are found and their content has not already been imported, appends a
+    clearly-marked section to ``OLLAMA.md``.
+
+    Returns
+    -------
+    list[str]
+        Names of the files whose content was imported.
+    """
+    if not _PROJECT_MEMORY_FILE.exists():
+        return []
+
+    try:
+        existing = _PROJECT_MEMORY_FILE.read_text(encoding="utf-8")
+    except OSError:
+        return []
+
+    imported: list[str] = []
+    sections: list[str] = []
+
+    for filepath in _KNOWN_INSTRUCTION_FILES:
+        if not filepath.is_file():
+            continue
+        marker = f"<!-- imported: {filepath} -->"
+        if marker in existing:
+            continue  # already imported
+        try:
+            content = filepath.read_text(encoding="utf-8").strip()
+        except OSError:
+            continue
+        if not content:
+            continue
+        sections.append(
+            f"\n{marker}\n"
+            f"## Imported from {filepath}\n\n"
+            f"{content}\n"
+        )
+        imported.append(str(filepath))
+
+    if sections:
+        try:
+            with open(_PROJECT_MEMORY_FILE, "a", encoding="utf-8") as f:
+                for section in sections:
+                    f.write(section)
+        except OSError:
+            return []
+
+    return imported
+
+
+# ---------------------------------------------------------------------------
 # InteractiveMode
 # ---------------------------------------------------------------------------
 
@@ -273,6 +341,7 @@ class InteractiveMode:
         "/recall": "_cmd_recall",
         "/mcp": "_cmd_mcp",
         "/chain": "_cmd_chain",
+        "/init": "_cmd_init",
     }
 
     def __init__(self, session: Session) -> None:
@@ -292,6 +361,10 @@ class InteractiveMode:
             pass
         except OSError:
             logger.warning("Could not read history file %s", _HISTORY_FILE, exc_info=True)
+            try:
+                _HISTORY_FILE.unlink(missing_ok=True)
+            except OSError:
+                pass
 
         readline.set_history_length(1000)
 
@@ -328,6 +401,38 @@ class InteractiveMode:
     def _print_info(text: str) -> None:
         """Print informational text in cyan."""
         print(_cyan(text))
+
+    # -- workspace trust -----------------------------------------------------
+
+    def _prompt_workspace_trust(self) -> None:
+        """Prompt the user to trust the current folder when OLLAMA.md is missing.
+
+        Displays a one-time notice asking whether the folder is trusted and
+        suggests running ``/init`` to create project files.  Also reports any
+        instruction files from other AI tools detected in the folder.
+        """
+        cwd = os.getcwd()
+        print()
+        self._print_info(f"📁 New workspace detected: {cwd}")
+        self._print_system("No OLLAMA.md found in this folder.")
+
+        # Report detected instruction files
+        found = [str(p) for p in _KNOWN_INSTRUCTION_FILES if p.is_file()]
+        if found:
+            self._print_info(f"Detected instruction files: {', '.join(found)}")
+            self._print_system("Run /init to import them into OLLAMA.md.")
+
+        try:
+            answer = input(_dim("Do you trust this folder? [Y/n] ")).strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            answer = "y"
+
+        if answer in ("", "y", "yes"):
+            self._print_info("Folder trusted. Run /init to create project files.")
+        else:
+            self._print_system("Folder not trusted. You can still chat, but tools are restricted.")
+        print()
 
     def _print_response(self, text: str, agent_type: str | None = None) -> None:
         """Print an assistant response with a colored model-name prefix.
@@ -878,6 +983,7 @@ class InteractiveMode:
         print(f"  {_cyan('/recall [query]')}   Recall stored memories (all or by keyword)")
         print(f"  {_cyan('/mcp [action]')}     Manage MCP servers (enable|disable|tools|invoke)")
         print(f"  {_cyan('/chain <prompt>')}   Run multi-wave chain orchestration (analyze→plan→execute→finalize)")
+        print(f"  {_cyan('/init')}             Initialize project (creates OLLAMA.md and .ollama/)")
         print(f"  {_cyan('/help')}             Show this help message")
         print(f"  {_cyan('/quit')}             Exit the session")
         print()
@@ -1060,6 +1166,60 @@ class InteractiveMode:
             self._print_info(f"Added to OLLAMA.md: {arg}")
         except OSError as exc:
             self._print_error(f"Cannot write to OLLAMA.md: {exc}")
+        return False
+
+    def _cmd_init(self, _arg: str) -> bool:
+        """Initialize the current folder as an ollama-cli project.
+
+        Creates ``OLLAMA.md`` (project memory) and ``.ollama/`` (local config
+        directory) if they do not already exist.  Also detects instruction
+        files from other AI tools (``CLAUDE.md``, ``GEMINI.md``, ``AGENT.md``,
+        ``.github/copilot-instructions.md``) and imports their content into
+        ``OLLAMA.md``.  Safe to run multiple times.
+
+        Returns
+        -------
+        Always ``False`` (continue REPL).
+        """
+        created: list[str] = []
+
+        # 1. Create OLLAMA.md
+        if _PROJECT_MEMORY_FILE.exists():
+            self._print_system("OLLAMA.md already exists — skipping.")
+        else:
+            project_name = Path.cwd().name
+            template = (
+                f"# {project_name}\n\n"
+                "## Project Notes\n\n"
+                "<!-- Add project-specific context, conventions, and notes below. -->\n"
+                "<!-- ollama-cli reads this file to maintain project memory.       -->\n"
+            )
+            try:
+                _PROJECT_MEMORY_FILE.write_text(template, encoding="utf-8")
+                created.append("OLLAMA.md")
+            except OSError as exc:
+                self._print_error(f"Cannot create OLLAMA.md: {exc}")
+
+        # 2. Create .ollama/ directory
+        if _HISTORY_DIR.exists():
+            self._print_system(".ollama/ directory already exists — skipping.")
+        else:
+            try:
+                _HISTORY_DIR.mkdir(parents=True, exist_ok=True)
+                created.append(".ollama/")
+            except OSError as exc:
+                self._print_error(f"Cannot create .ollama/: {exc}")
+
+        # 3. Detect and import instruction files from other AI tools
+        imported = _import_instruction_files()
+        if imported:
+            self._print_info(f"Imported context from: {', '.join(imported)}")
+
+        if created:
+            self._print_info(f"Project initialized — created: {', '.join(created)}")
+        elif not imported:
+            self._print_system("Project already initialized. Nothing to do.")
+
         return False
 
     def _cmd_tools(self, _arg: str) -> bool:
@@ -2005,6 +2165,10 @@ class InteractiveMode:
         """
         self._running = True
         self._print_banner()
+
+        # Workspace trust check — prompt when OLLAMA.md is missing
+        if not _PROJECT_MEMORY_FILE.exists():
+            self._prompt_workspace_trust()
 
         # Fire Setup hook (init trigger)
         self._fire_hook("Setup", {

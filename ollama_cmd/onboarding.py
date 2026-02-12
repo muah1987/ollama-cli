@@ -1,0 +1,139 @@
+"""First-time interactive onboarding wizard for ollama-cli.
+
+Runs once after installation to help the user choose a provider, enter API
+keys (if needed), and pick a default model.  Saves the result to
+``.ollama/config.json`` with ``onboarding_complete: true`` so it never runs
+again unless the user deletes the config.
+"""
+
+from __future__ import annotations
+
+import os
+
+from rich.console import Console
+from rich.panel import Panel
+from rich.prompt import Prompt
+
+from api.config import OllamaCliConfig, get_config, save_config
+
+console = Console()
+
+# Providers and their required environment-variable / config key
+_PROVIDERS: dict[str, str | None] = {
+    "ollama": None,  # local, no key needed
+    "claude": "anthropic_api_key",
+    "gemini": "gemini_api_key",
+    "codex": "openai_api_key",
+    "hf": "hf_token",
+}
+
+_PROVIDER_ENV_MAP: dict[str, str] = {
+    "anthropic_api_key": "ANTHROPIC_API_KEY",
+    "gemini_api_key": "GEMINI_API_KEY",
+    "openai_api_key": "OPENAI_API_KEY",
+    "hf_token": "HF_TOKEN",
+}
+
+_DEFAULT_MODELS: dict[str, str] = {
+    "ollama": "llama3.2",
+    "claude": "claude-sonnet-4-20250514",
+    "gemini": "gemini-2.5-flash",
+    "codex": "gpt-4.1",
+    "hf": "mistralai/Mistral-7B-Instruct-v0.2",
+}
+
+
+def needs_onboarding() -> bool:
+    """Return True when first-time setup has not been completed."""
+    cfg = get_config()
+    return not cfg.onboarding_complete
+
+
+def run_onboarding() -> OllamaCliConfig:
+    """Run the interactive first-time setup wizard.
+
+    Returns the updated :class:`OllamaCliConfig` (already persisted).
+    """
+    cfg = get_config()
+
+    console.print()
+    console.print(
+        Panel(
+            "[bold cyan]Welcome to ollama-cli![/bold cyan]\n\n"
+            "Let's get you set up. This wizard runs only once.\n"
+            "You can change these settings later with [bold]/config[/bold] "
+            "or by editing [bold].ollama/config.json[/bold].",
+            title="First-Time Setup",
+            border_style="cyan",
+        )
+    )
+    console.print()
+
+    # --- 1. Choose provider -------------------------------------------------
+    provider_list = list(_PROVIDERS.keys())
+    console.print("[bold]Available providers:[/bold]")
+    for i, prov in enumerate(provider_list, 1):
+        label = "[green](local, no API key)[/green]" if prov == "ollama" else ""
+        console.print(f"  {i}. {prov}  {label}")
+    console.print()
+
+    provider_choice = Prompt.ask(
+        "Choose a provider",
+        choices=provider_list,
+        default="ollama",
+    )
+    cfg.provider = provider_choice
+
+    # --- 2. API key (if cloud provider) -------------------------------------
+    key_field = _PROVIDERS.get(provider_choice)
+    if key_field is not None:
+        current_key = getattr(cfg, key_field, "")
+        if current_key:
+            console.print(f"[green]API key for {provider_choice} already set from environment.[/green]")
+        else:
+            env_name = _PROVIDER_ENV_MAP.get(key_field, key_field.upper())
+            api_key = Prompt.ask(
+                f"Enter your {provider_choice} API key (env: {env_name})",
+                password=True,
+                default="",
+            )
+            if api_key:
+                setattr(cfg, key_field, api_key)
+                os.environ[env_name] = api_key
+
+    # --- 3. Choose model ----------------------------------------------------
+    default_model = _DEFAULT_MODELS.get(provider_choice, "llama3.2")
+    model = Prompt.ask(
+        "Default model",
+        default=default_model,
+    )
+    cfg.ollama_model = model
+
+    # --- 4. Ollama host (for ollama provider) -------------------------------
+    if provider_choice == "ollama":
+        host = Prompt.ask(
+            "Ollama host URL",
+            default=cfg.ollama_host or "http://localhost:11434",
+        )
+        cfg.ollama_host = host
+
+    # --- 5. Mark complete & save --------------------------------------------
+    cfg.onboarding_complete = True
+    saved_path = save_config(cfg)
+
+    console.print()
+    console.print(
+        Panel(
+            f"[bold green]Setup complete![/bold green]\n\n"
+            f"  Provider : [cyan]{cfg.provider}[/cyan]\n"
+            f"  Model    : [cyan]{cfg.ollama_model}[/cyan]\n"
+            f"  Config   : [dim]{saved_path}[/dim]\n\n"
+            "Type [bold]/help[/bold] inside the REPL for available commands.\n"
+            "Run [bold]ollama-cli config set <key> <value>[/bold] to change settings later.",
+            title="Ready",
+            border_style="green",
+        )
+    )
+    console.print()
+
+    return cfg

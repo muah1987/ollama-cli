@@ -46,6 +46,7 @@ class OllamaCliConfig:
     output_format: str = "text"
     allowed_tools: list[str] | None = None
     agent_models: dict[str, dict[str, str]] | None = None
+    onboarding_complete: bool = False
 
 
 # ---------------------------------------------------------------------------
