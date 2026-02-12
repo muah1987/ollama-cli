@@ -1,11 +1,25 @@
 [project]
 name = "ollama-cli"
 version = "0.1.0"
-description = "Full-featured AI coding assistant powered by Ollama with multi-provider support"
+description = "Full-featured AI coding assistant powered by Ollama with multi-provider support, 13 lifecycle hooks, MCP integration, and chain orchestration"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [{name = "Mohammed Uthmaan Al Hāshimī"}]
+keywords = ["ollama", "ai", "cli", "coding-assistant", "llm", "multi-provider", "mcp"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Typing :: Typed",
+]
 dependencies = [
     "httpx>=0.28.1",
     "python-dotenv>=1.2.1",
@@ -14,7 +28,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.0.0",
+    "pytest>=9.0.0",
     "ruff>=0.6.0",
     "python-semantic-release>=9.0.0",
 ]
@@ -29,6 +43,12 @@ exo = [
     "psutil>=5.9.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/muah1987/ollama-cli"
+Repository = "https://github.com/muah1987/ollama-cli"
+Issues = "https://github.com/muah1987/ollama-cli/issues"
+Documentation = "https://github.com/muah1987/ollama-cli/tree/main/docs"
+
 [project.scripts]
 ollama = "cmd.root:main"
 ollama-cli = "cmd.root:main"
@@ -38,7 +58,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["cmd", "api", "model", "server", "runner"]
+packages = ["cmd", "api", "model", "server", "runner", "skills"]
 
 [tool.ruff]
 line-length = 120

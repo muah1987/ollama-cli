@@ -19,7 +19,7 @@ Current task priorities and pending work for the Ollama CLI project.
 
 ### In Progress
 - [ ] Complete production folder structure
-- [ ] Update pyproject.toml with all dependencies
+- [x] Update pyproject.toml with all dependencies
 - [ ] Fix GitHub workflows for production folder
 
 ### High Priority
