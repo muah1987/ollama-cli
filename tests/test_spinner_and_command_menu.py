@@ -299,3 +299,207 @@ class TestResponseContentExtraction:
 
         result = asyncio.run(s.send("hi"))
         assert result["content"] == "Generated response"
+
+
+# ---------------------------------------------------------------------------
+# /skill command tests
+# ---------------------------------------------------------------------------
+
+
+class TestSkillCommand:
+    """Tests for the /skill slash command (model and provider switching)."""
+
+    def test_skill_command_registered(self) -> None:
+        """The /skill command should be in the command table."""
+        from ollama_cmd.interactive import InteractiveMode
+
+        assert "/skill" in InteractiveMode._COMMAND_TABLE
+
+    def test_bare_skill_shows_menu(self) -> None:
+        """Bare /skill should display the skills menu without error."""
+        script = (
+            "import asyncio\n"
+            "from model.session import Session\n"
+            "from ollama_cmd.interactive import InteractiveMode\n"
+            "s = Session(model='test', provider='ollama')\n"
+            "r = InteractiveMode(s)\n"
+            "result = asyncio.run(r._dispatch_command('/skill'))\n"
+            "assert result is False\n"
+            "print('OK')\n"
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_ROOT,
+        )
+        assert result.returncode == 0, f"stderr: {result.stderr}"
+        assert "OK" in result.stdout
+
+    def test_skill_model_switches(self) -> None:
+        """``/skill model <name>`` should switch the session model."""
+        script = (
+            "import asyncio\n"
+            "from model.session import Session\n"
+            "from ollama_cmd.interactive import InteractiveMode\n"
+            "s = Session(model='old-model', provider='ollama')\n"
+            "r = InteractiveMode(s)\n"
+            "result = asyncio.run(r._dispatch_command('/skill model new-model'))\n"
+            "assert result is False\n"
+            "assert s.model == 'new-model', f'model={s.model}'\n"
+            "print('OK')\n"
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_ROOT,
+        )
+        assert result.returncode == 0, f"stderr: {result.stderr}"
+        assert "OK" in result.stdout
+
+    def test_skill_provider_switches(self) -> None:
+        """``/skill provider <name>`` should switch the session provider."""
+        script = (
+            "import asyncio\n"
+            "from model.session import Session\n"
+            "from ollama_cmd.interactive import InteractiveMode\n"
+            "s = Session(model='test', provider='ollama')\n"
+            "r = InteractiveMode(s)\n"
+            "result = asyncio.run(r._dispatch_command('/skill provider gemini'))\n"
+            "assert result is False\n"
+            "assert s.provider == 'gemini', f'provider={s.provider}'\n"
+            "print('OK')\n"
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_ROOT,
+        )
+        assert result.returncode == 0, f"stderr: {result.stderr}"
+        assert "OK" in result.stdout
+
+    def test_skill_provider_rejects_invalid(self) -> None:
+        """``/skill provider invalid`` should not change the provider."""
+        script = (
+            "import asyncio\n"
+            "from model.session import Session\n"
+            "from ollama_cmd.interactive import InteractiveMode\n"
+            "s = Session(model='test', provider='ollama')\n"
+            "r = InteractiveMode(s)\n"
+            "result = asyncio.run(r._dispatch_command('/skill provider nonexistent'))\n"
+            "assert result is False\n"
+            "assert s.provider == 'ollama', f'provider={s.provider}'\n"
+            "print('OK')\n"
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_ROOT,
+        )
+        assert result.returncode == 0, f"stderr: {result.stderr}"
+        assert "OK" in result.stdout
+
+    def test_skill_model_no_arg_lists(self) -> None:
+        """``/skill model`` with no arg should list models without error."""
+        script = (
+            "import asyncio\n"
+            "from model.session import Session\n"
+            "from ollama_cmd.interactive import InteractiveMode\n"
+            "s = Session(model='test', provider='ollama')\n"
+            "r = InteractiveMode(s)\n"
+            "result = asyncio.run(r._dispatch_command('/skill model'))\n"
+            "assert result is False\n"
+            "print('OK')\n"
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_ROOT,
+        )
+        assert result.returncode == 0, f"stderr: {result.stderr}"
+        assert "OK" in result.stdout
+
+    def test_skill_provider_no_arg_lists(self) -> None:
+        """``/skill provider`` with no arg should list providers without error."""
+        script = (
+            "import asyncio\n"
+            "from model.session import Session\n"
+            "from ollama_cmd.interactive import InteractiveMode\n"
+            "s = Session(model='test', provider='ollama')\n"
+            "r = InteractiveMode(s)\n"
+            "result = asyncio.run(r._dispatch_command('/skill provider'))\n"
+            "assert result is False\n"
+            "print('OK')\n"
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_ROOT,
+        )
+        assert result.returncode == 0, f"stderr: {result.stderr}"
+        assert "OK" in result.stdout
+
+
+# ---------------------------------------------------------------------------
+# /pull command and model_pull tool tests
+# ---------------------------------------------------------------------------
+
+
+class TestPullCommandAndTool:
+    """Tests for the /pull slash command and model_pull skill tool."""
+
+    def test_pull_command_registered(self) -> None:
+        """The /pull command should be in the command table."""
+        from ollama_cmd.interactive import InteractiveMode
+
+        assert "/pull" in InteractiveMode._COMMAND_TABLE
+
+    def test_model_pull_tool_registered(self) -> None:
+        """model_pull should be in the tools registry."""
+        from skills.tools import get_tool
+
+        entry = get_tool("model_pull")
+        assert entry is not None
+        assert entry["risk"] == "medium"
+
+    def test_model_pull_tool_listed(self) -> None:
+        """model_pull should appear in list_tools()."""
+        from skills.tools import list_tools
+
+        names = [t["name"] for t in list_tools()]
+        assert "model_pull" in names
+
+    def test_model_pull_empty_name(self) -> None:
+        """model_pull with empty name should return error."""
+        from skills.tools import tool_model_pull
+
+        result = tool_model_pull("")
+        assert "error" in result
+
+    def test_model_pull_unreachable_server(self) -> None:
+        """model_pull against an unreachable server should return error."""
+        import os
+
+        old = os.environ.get("OLLAMA_HOST")
+        try:
+            os.environ["OLLAMA_HOST"] = "http://localhost:99999"
+            from skills.tools import tool_model_pull
+
+            result = tool_model_pull("nonexistent-model")
+            assert "error" in result
+        finally:
+            if old is not None:
+                os.environ["OLLAMA_HOST"] = old
+            else:
+                os.environ.pop("OLLAMA_HOST", None)
+
+    def test_hf_in_valid_providers(self) -> None:
+        """The 'hf' provider should be listed as a valid provider."""
+        from ollama_cmd.interactive import _VALID_PROVIDERS
+
+        assert "hf" in _VALID_PROVIDERS

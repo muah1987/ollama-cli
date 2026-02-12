@@ -317,6 +317,87 @@ def tool_web_fetch(url: str, *, max_length: int = 5000) -> dict[str, Any]:
         return {"error": f"Fetch failed: {exc}"}
 
 
+def tool_model_pull(model_name: str, *, force: bool = False) -> dict[str, Any]:
+    """Pull (download) a model from the Ollama registry.
+
+    When *force* is ``True``, the model is deleted first and then re-pulled
+    so that a fresh copy is downloaded even if it already exists locally.
+
+    Parameters
+    ----------
+    model_name:
+        Name of the model to pull (e.g. ``llama3.2``, ``codestral:latest``).
+    force:
+        If ``True``, delete the existing local copy before pulling.
+
+    Returns
+    -------
+    Dict with ``model``, ``status``, and ``messages`` on success, or ``error``.
+    """
+    if not model_name or not model_name.strip():
+        return {"error": "No model name provided"}
+
+    model_name = model_name.strip()
+
+    try:
+        import httpx
+    except ImportError:
+        return {"error": "httpx not installed"}
+
+    host = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
+
+    # Force mode: delete existing model first
+    if force:
+        try:
+            resp = httpx.request("DELETE", f"{host}/api/delete", json={"name": model_name}, timeout=30.0)
+            if resp.status_code == 200:
+                logger.info("Deleted existing model %s for force-pull", model_name)
+            elif resp.status_code == 404:
+                pass  # Model didn't exist locally, that's fine
+            else:
+                logger.debug("Delete returned status %d for %s", resp.status_code, model_name)
+        except (httpx.ConnectError, httpx.TimeoutException) as exc:
+            return {"error": f"Cannot connect to Ollama at {host}: {exc}"}
+
+    # Pull the model (non-streaming to collect final status)
+    try:
+        resp = httpx.post(
+            f"{host}/api/pull",
+            json={"name": model_name, "stream": True},
+            timeout=None,
+        )
+        resp.raise_for_status()
+    except httpx.ConnectError:
+        return {"error": f"Cannot connect to Ollama at {host}. Is Ollama running?"}
+    except httpx.HTTPStatusError as exc:
+        return {"error": f"Pull failed with HTTP {exc.response.status_code}"}
+
+    # Parse streamed NDJSON lines for status messages
+    import json as _json
+
+    messages: list[str] = []
+    final_status = "unknown"
+    for line in resp.text.strip().splitlines():
+        if not line:
+            continue
+        try:
+            data = _json.loads(line)
+        except _json.JSONDecodeError:
+            continue
+        status = data.get("status", "")
+        if status and status not in messages:
+            messages.append(status)
+        if status == "success":
+            final_status = "success"
+
+    return {
+        "model": model_name,
+        "status": final_status,
+        "force": force,
+        "messages": messages,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Tool registry
 # ---------------------------------------------------------------------------
@@ -351,6 +432,11 @@ TOOLS: dict[str, dict[str, Any]] = {
         "function": tool_web_fetch,
         "description": "Fetch content from a URL",
         "risk": "low",
+    },
+    "model_pull": {
+        "function": tool_model_pull,
+        "description": "Pull (download) a model from the Ollama registry",
+        "risk": "medium",
     },
 }
 

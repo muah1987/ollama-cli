@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
 _HISTORY_DIR = Path(".ollama")
 _HISTORY_FILE = _HISTORY_DIR / "history"
 _WORKSPACE_TRUST_FILE = _HISTORY_DIR / "workspace_trust_acknowledged"
-_VALID_PROVIDERS = ("ollama", "claude", "gemini", "codex")
+_VALID_PROVIDERS = ("ollama", "claude", "gemini", "codex", "hf")
 _BUG_CONTEXT_MESSAGES = 5  # number of recent messages to include in bug reports
 _PROJECT_MEMORY_FILE = Path("OLLAMA.md")
 
@@ -348,6 +348,8 @@ class InteractiveMode:
         "/mcp": "_cmd_mcp",
         "/chain": "_cmd_chain",
         "/init": "_cmd_init",
+        "/pull": "_cmd_pull",
+        "/skill": "_cmd_skill",
     }
 
     def __init__(self, session: Session) -> None:
@@ -770,6 +772,7 @@ class InteractiveMode:
             "Session": [
                 ("/model <name>", "Switch active model"),
                 ("/provider <name>", "Switch provider"),
+                ("/skill [action]", "Skills: model/provider switching with discovery"),
                 ("/status", "Show session status"),
                 ("/save [name]", "Save session"),
                 ("/load <name>", "Load session"),
@@ -779,6 +782,7 @@ class InteractiveMode:
             "Tools & Skills": [
                 ("/tools", "List available tools"),
                 ("/tool <name> ...", "Invoke a tool (file_read, shell_exec, ...)"),
+                ("/pull <model>", "Pull/download a model (--force to re-download)"),
                 ("/diff", "Show git diff"),
                 ("/mcp [action]", "Manage MCP servers"),
             ],
@@ -1105,7 +1109,8 @@ class InteractiveMode:
         print()
         self._print_info("Available commands:")
         print(f"  {_cyan('/model <name>')}     Switch active model")
-        print(f"  {_cyan('/provider <name>')}  Switch provider (ollama|claude|gemini|codex)")
+        print(f"  {_cyan('/provider <name>')}  Switch provider (ollama|claude|gemini|codex|hf)")
+        print(f"  {_cyan('/skill [action]')}   Skills menu (model, provider — with discovery)")
         print(f"  {_cyan('/compact')}          Force context compaction")
         print(f"  {_cyan('/status')}           Show session status (tokens, context, uptime)")
         print(f"  {_cyan('/clear')}            Clear conversation history")
@@ -1115,6 +1120,7 @@ class InteractiveMode:
         print(f"  {_cyan('/memory [note]')}    View or add to project memory (OLLAMA.md)")
         print(f"  {_cyan('/tools')}            List available built-in tools")
         print(f"  {_cyan('/tool <name> ...')}  Invoke a tool (file_read, shell_exec, ...)")
+        print(f"  {_cyan('/pull <model>')}     Pull/download a model (--force to re-download)")
         print(f"  {_cyan('/diff')}             Show git diff of working directory")
         print(f"  {_cyan('/config [k] [v]')}   View or set configuration")
         print(f"  {_cyan('/bug [desc]')}       File a bug report about the session")
@@ -1476,6 +1482,10 @@ class InteractiveMode:
                 result = func(tool_arg)
             elif tool_name == "web_fetch":
                 result = func(tool_arg)
+            elif tool_name == "model_pull":
+                force = "--force" in tool_arg
+                name = tool_arg.replace("--force", "").strip()
+                result = func(name, force=force)
             else:
                 result = {"error": f"No invocation handler for tool: {tool_name}"}
         except Exception as exc:
@@ -1521,6 +1531,215 @@ class InteractiveMode:
                 sender_id="tool_runner",
                 content=f"Tool {tool_name} executed: {result_summary[:100]}",
             )
+        return False
+
+    def _cmd_pull(self, arg: str) -> bool:
+        """Pull (download) a model from the Ollama registry.
+
+        Usage: ``/pull <model>`` or ``/pull --force <model>``
+
+        When ``--force`` is specified, deletes the existing local copy and
+        re-downloads a fresh version.
+
+        Parameters
+        ----------
+        arg:
+            Model name, optionally preceded by ``--force``.
+
+        Returns
+        -------
+        Always ``False`` (continue REPL).
+        """
+        if not arg:
+            self._print_error("Usage: /pull <model_name> [--force]")
+            self._print_system("  Example: /pull llama3.2")
+            self._print_system("  Force:   /pull --force llama3.2")
+            return False
+
+        from skills.tools import tool_model_pull
+
+        force = "--force" in arg
+        model_name = arg.replace("--force", "").strip()
+
+        if not model_name:
+            self._print_error("No model name provided.")
+            return False
+
+        action = "Force-pulling" if force else "Pulling"
+        self._print_info(f"🦙 {action} model: {model_name}")
+
+        spinner = self._spinner(_LLAMA_BUILD_SPINNER)
+        spinner.start()
+        try:
+            result = tool_model_pull(model_name, force=force)
+        finally:
+            spinner.stop()
+
+        if "error" in result:
+            self._print_error(f"Pull failed: {result['error']}")
+        else:
+            status = result.get("status", "unknown")
+            messages = result.get("messages", [])
+            if status == "success":
+                self._print_info(f"✅ Successfully pulled {model_name}")
+            else:
+                self._print_system(f"Pull completed with status: {status}")
+            if messages:
+                for msg in messages[-5:]:  # Show last 5 status messages
+                    self._print_system(f"  {msg}")
+
+            # Offer to switch to the new model
+            self._print_system(f"  Use /model {model_name} to switch to this model.")
+
+        return False
+
+    def _cmd_skill(self, arg: str) -> bool:
+        """Run a skill action: switch model, switch provider, or list skills.
+
+        Usage:
+          ``/skill``                   — List available skills
+          ``/skill model <name>``      — Switch to a new model
+          ``/skill provider <name>``   — Switch to a new provider
+          ``/skill model``             — List available local models and pick one
+          ``/skill provider``          — List available providers and pick one
+
+        Parameters
+        ----------
+        arg:
+            Skill name and optional argument.
+
+        Returns
+        -------
+        Always ``False`` (continue REPL).
+        """
+        if not arg:
+            self._show_skills_menu()
+            return False
+
+        parts = arg.split(maxsplit=1)
+        skill_name = parts[0].lower()
+        skill_arg = parts[1].strip() if len(parts) > 1 else ""
+
+        if skill_name == "model":
+            return self._skill_change_model(skill_arg)
+        elif skill_name == "provider":
+            return self._skill_change_provider(skill_arg)
+        else:
+            self._print_error(f"Unknown skill: {skill_name}")
+            self._show_skills_menu()
+            return False
+
+    def _show_skills_menu(self) -> None:
+        """Display available skills."""
+        print()
+        self._print_info("🦙 Available Skills")
+        self._print_system("─" * 40)
+        print(f"  {_cyan('/skill model [name]')}     Switch the active AI model")
+        print(f"  {_cyan('/skill provider [name]')}  Switch the AI provider")
+        print()
+        self._print_system(f"  Current model:    {_green(self.session.model)}")
+        self._print_system(f"  Current provider: {_green(self.session.provider)}")
+        print()
+        self._print_system("  Run /skill model or /skill provider without")
+        self._print_system("  a name to see available options.")
+        print()
+
+    def _skill_change_model(self, model_name: str) -> bool:
+        """Skill to change the active AI model.
+
+        When called without a name, lists locally available models.
+        """
+        if model_name:
+            old = self.session.model
+            self.session.model = model_name
+            self._print_info(f"🦙 Model switched: {old} → {model_name}")
+            self._print_status_bar()
+            return False
+
+        # No name given — list available models for the user to pick
+        self._print_info("🦙 Available Models")
+        self._print_system("─" * 40)
+
+        # Try to fetch local Ollama models
+        from api.config import get_config
+        from ollama_cmd.root import _fetch_local_models
+
+        cfg = get_config()
+        local_models = _fetch_local_models(cfg.ollama_host)
+
+        if local_models:
+            self._print_system("  Local Ollama models:")
+            for i, m in enumerate(local_models, 1):
+                marker = " ◀ current" if m == self.session.model else ""
+                print(f"    {_cyan(str(i))}. {m}{_green(marker)}")
+        else:
+            self._print_system("  No local models found (is Ollama running?).")
+
+        # Show default models per provider
+        from api.provider_router import _DEFAULT_MODELS
+
+        print()
+        self._print_system("  Default models per provider:")
+        for prov, model in _DEFAULT_MODELS.items():
+            marker = " ◀ current" if model == self.session.model else ""
+            print(f"    {_dim(prov):12s} {model}{_green(marker)}")
+
+        print()
+        self._print_system(f"  Current: {_green(self.session.model)} ({self.session.provider})")
+        self._print_system("  Use /skill model <name> to switch.")
+        print()
+        return False
+
+    def _skill_change_provider(self, provider_name: str) -> bool:
+        """Skill to change the active AI provider.
+
+        When called without a name, lists available providers with status.
+        """
+        if provider_name:
+            name = provider_name.lower()
+            if name not in _VALID_PROVIDERS:
+                self._print_error(f"Unknown provider: {provider_name}")
+                self._print_system(f"  Available: {', '.join(_VALID_PROVIDERS)}")
+                return False
+
+            old = self.session.provider
+            self.session.provider = name
+            self.session.token_counter.provider = name
+            self._print_info(f"🦙 Provider switched: {old} → {name}")
+            self._print_status_bar()
+            return False
+
+        # No name given — list available providers
+        self._print_info("🦙 Available Providers")
+        self._print_system("─" * 40)
+
+        available = self.session.provider_router.list_available_providers()
+        provider_info = {
+            "ollama": ("Local Ollama server", "OLLAMA_HOST"),
+            "claude": ("Anthropic Claude API", "ANTHROPIC_API_KEY"),
+            "gemini": ("Google Gemini API", "GEMINI_API_KEY"),
+            "codex": ("OpenAI GPT API", "OPENAI_API_KEY"),
+            "hf": ("Hugging Face Router", "HF_TOKEN"),
+        }
+
+        for prov in _VALID_PROVIDERS:
+            desc, env_var = provider_info.get(prov, ("", ""))
+            is_available = prov in available
+            is_current = prov == self.session.provider
+
+            if is_current:
+                status = _green("● active")
+            elif is_available:
+                status = _cyan("○ ready")
+            else:
+                status = _dim("✗ no key")
+
+            print(f"  {status}  {_cyan(prov):10s} {desc}  ({env_var})")
+
+        print()
+        self._print_system(f"  Current: {_green(self.session.provider)}")
+        self._print_system("  Use /skill provider <name> to switch.")
+        print()
         return False
 
     def _cmd_diff(self, _arg: str) -> bool:
