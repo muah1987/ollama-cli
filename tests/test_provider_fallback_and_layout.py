@@ -309,3 +309,177 @@ class TestModelDiscovery:
         from ollama_cmd.root import _fetch_local_models
 
         assert callable(_fetch_local_models)
+
+
+# ---------------------------------------------------------------------------
+# Model-not-found auto-recovery tests
+# ---------------------------------------------------------------------------
+
+
+class TestModelNotFoundAutoRecovery:
+    """Tests for automatic model recovery when a model is not found on Ollama."""
+
+    def test_route_retries_with_available_model_on_404(self) -> None:
+        """When Ollama returns 404, the router should retry with an available model."""
+        script = (
+            "import asyncio\n"
+            "from api.provider_router import ProviderRouter\n"
+            "from api.ollama_client import OllamaModelNotFoundError\n"
+            "router = ProviderRouter()\n"
+            "call_log = []\n"
+            "class FakeOllamaProvider:\n"
+            "    name = 'ollama'\n"
+            "    async def chat(self, messages, model=None, **kw):\n"
+            "        call_log.append(model)\n"
+            "        if model == 'glm-5':\n"
+            "            raise OllamaModelNotFoundError('Model not found (HTTP 404)')\n"
+            "        return {'message': {'role': 'assistant', 'content': 'ok'}}\n"
+            "    async def list_models(self):\n"
+            "        return ['llama3.2:latest', 'codestral:latest']\n"
+            "fake = FakeOllamaProvider()\n"
+            "router._providers['ollama'] = fake\n"
+            "result = asyncio.run(router.route('agent', [{'role':'user','content':'hi'}], model='glm-5'))\n"
+            "assert call_log[0] == 'glm-5', f'first call was {call_log[0]}'\n"
+            "assert call_log[1] == 'llama3.2:latest', f'retry was {call_log[1]}'\n"
+            "assert result['message']['content'] == 'ok'\n"
+            "print('OK')\n"
+        )
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(script)
+            f.flush()
+            result = subprocess.run(
+                [sys.executable, f.name],
+                capture_output=True,
+                text=True,
+                cwd=_PROJECT_ROOT,
+                env={**os.environ, "PYTHONPATH": _PROJECT_ROOT},
+            )
+        assert result.returncode == 0, f"stderr: {result.stderr}"
+        assert "OK" in result.stdout
+
+    def test_model_switch_rejects_invalid_model(self) -> None:
+        """``/model <name>`` should reject a model not found locally."""
+        script = (
+            "import asyncio\n"
+            "from unittest.mock import patch\n"
+            "from model.session import Session\n"
+            "from ollama_cmd.interactive import InteractiveMode\n"
+            "s = Session(model='llama3.2:latest', provider='ollama')\n"
+            "r = InteractiveMode(s)\n"
+            "with patch('ollama_cmd.root._fetch_local_models', "
+            "return_value=['llama3.2:latest', 'codestral:latest']):\n"
+            "    result = asyncio.run(r._dispatch_command('/model glm-5'))\n"
+            "assert result is False\n"
+            "assert s.model == 'llama3.2:latest', f'model should not change, got {s.model}'\n"
+            "print('OK')\n"
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_ROOT,
+        )
+        assert result.returncode == 0, f"stderr: {result.stderr}"
+        assert "OK" in result.stdout
+
+    def test_model_switch_accepts_valid_model(self) -> None:
+        """``/model <name>`` should accept a model found locally."""
+        script = (
+            "import asyncio\n"
+            "from unittest.mock import patch\n"
+            "from model.session import Session\n"
+            "from ollama_cmd.interactive import InteractiveMode\n"
+            "s = Session(model='llama3.2:latest', provider='ollama')\n"
+            "r = InteractiveMode(s)\n"
+            "with patch('ollama_cmd.root._fetch_local_models', "
+            "return_value=['llama3.2:latest', 'codestral:latest']):\n"
+            "    result = asyncio.run(r._dispatch_command('/model codestral:latest'))\n"
+            "assert result is False\n"
+            "assert s.model == 'codestral:latest', f'model={s.model}'\n"
+            "print('OK')\n"
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_ROOT,
+        )
+        assert result.returncode == 0, f"stderr: {result.stderr}"
+        assert "OK" in result.stdout
+
+    def test_model_switch_partial_match(self) -> None:
+        """``/model llama3.2`` should match ``llama3.2:latest``."""
+        script = (
+            "import asyncio\n"
+            "from unittest.mock import patch\n"
+            "from model.session import Session\n"
+            "from ollama_cmd.interactive import InteractiveMode\n"
+            "s = Session(model='codestral:latest', provider='ollama')\n"
+            "r = InteractiveMode(s)\n"
+            "with patch('ollama_cmd.root._fetch_local_models', "
+            "return_value=['llama3.2:latest', 'codestral:latest']):\n"
+            "    result = asyncio.run(r._dispatch_command('/model llama3.2'))\n"
+            "assert result is False\n"
+            "assert s.model == 'llama3.2:latest', f'model={s.model}'\n"
+            "print('OK')\n"
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_ROOT,
+        )
+        assert result.returncode == 0, f"stderr: {result.stderr}"
+        assert "OK" in result.stdout
+
+    def test_model_switch_skips_validation_for_non_ollama_provider(self) -> None:
+        """``/model <name>`` should skip validation when provider is not ollama."""
+        script = (
+            "import asyncio\n"
+            "from model.session import Session\n"
+            "from ollama_cmd.interactive import InteractiveMode\n"
+            "s = Session(model='old', provider='claude')\n"
+            "r = InteractiveMode(s)\n"
+            "result = asyncio.run(r._dispatch_command('/model claude-sonnet'))\n"
+            "assert result is False\n"
+            "assert s.model == 'claude-sonnet', f'model={s.model}'\n"
+            "print('OK')\n"
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_ROOT,
+        )
+        assert result.returncode == 0, f"stderr: {result.stderr}"
+        assert "OK" in result.stdout
+
+    def test_model_switch_allows_when_server_unreachable(self) -> None:
+        """``/model <name>`` should allow switch when Ollama is unreachable."""
+        script = (
+            "import asyncio\n"
+            "from unittest.mock import patch\n"
+            "from model.session import Session\n"
+            "from ollama_cmd.interactive import InteractiveMode\n"
+            "s = Session(model='old', provider='ollama')\n"
+            "r = InteractiveMode(s)\n"
+            "with patch('ollama_cmd.root._fetch_local_models', return_value=[]):\n"
+            "    result = asyncio.run(r._dispatch_command('/model new-model'))\n"
+            "assert result is False\n"
+            "assert s.model == 'new-model', f'model={s.model}'\n"
+            "print('OK')\n"
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_ROOT,
+        )
+        assert result.returncode == 0, f"stderr: {result.stderr}"
+        assert "OK" in result.stdout
+
+    def test_ollama_model_not_found_import(self) -> None:
+        """OllamaModelNotFoundError should be importable from provider_router."""
+        from api.provider_router import OllamaModelNotFoundError
+
+        assert issubclass(OllamaModelNotFoundError, Exception)
