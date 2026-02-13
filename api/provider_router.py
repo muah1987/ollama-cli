@@ -1027,12 +1027,19 @@ class ProviderRouter:
                     try:
                         available = await provider.list_models()
                         if available:
-                            # Try partial match first (e.g. "glm-5" → "glm-5:cloud")
+                            # Try exact or forward partial match (e.g. "glm-5" → "glm-5:cloud")
                             fallback_model = None
                             for m in available:
                                 if m == effective_model or m.startswith(effective_model + ":"):
                                     fallback_model = m
                                     break
+                            # Reverse partial match: "glm-5:cloud" → "glm-5:latest"
+                            if fallback_model is None and ":" in effective_model:
+                                base = effective_model.split(":")[0]
+                                for m in available:
+                                    if m == base or m.startswith(base + ":"):
+                                        fallback_model = m
+                                        break
                             if fallback_model is None:
                                 fallback_model = available[0]
                             logger.warning(

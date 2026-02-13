@@ -133,12 +133,17 @@ def _resolve_model(cfg_model: str, host: str) -> str:
         if m.startswith(cfg_model + ":") or m == cfg_model:
             return m
 
-    # Reverse partial match: "glm-5:cloud" matches base name "glm-5" in local list
+    # Reverse partial match: "glm-5:cloud" → prefer exact tag, else keep configured
     if ":" in cfg_model:
         base_name = cfg_model.split(":")[0]
-        for m in local_models:
-            if m == base_name or m.startswith(base_name + ":"):
-                return m
+        candidates = [m for m in local_models if m == base_name or m.startswith(base_name + ":")]
+        # Prefer the configured model itself if present among candidates
+        if cfg_model in candidates:
+            return cfg_model
+        # If related models exist but the exact tag isn't available,
+        # return the configured model as-is so the runtime can handle retries.
+        if candidates:
+            return cfg_model
 
     # Configured model not found – appoint the first available model
     chosen = local_models[0]

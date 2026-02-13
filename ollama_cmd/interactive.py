@@ -1210,12 +1210,12 @@ class InteractiveMode:
             self._print_system("  Example: /set-agent-model code:hf:mistralai/Mistral-7B-Instruct-v0.3")
             return False
 
-        parts = arg.split(":")
-        if len(parts) != 3:
+        parts = arg.split(":", maxsplit=2)
+        if len(parts) < 3:
             self._print_error("Invalid format. Use: type:provider:model")
             return False
 
-        agent_type, provider, model = parts
+        agent_type, provider, model = parts[0], parts[1], parts[2]
         self.session.provider_router.set_agent_model(agent_type, provider, model)
         self._print_info(f"Agent '{agent_type}' assigned to {provider}:{model}")
         return False
