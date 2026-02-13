@@ -49,7 +49,7 @@ except ImportError:
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 _INTERACTIVE_COMMANDS = frozenset({"interactive", "i", "chat"})
 
 console = Console()
