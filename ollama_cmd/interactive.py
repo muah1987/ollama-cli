@@ -375,6 +375,11 @@ class InteractiveMode:
 
         readline.set_history_length(1000)
 
+        # Remove '/' from completer delimiters so that "/t<TAB>" passes
+        # the full "/t" text to the completer instead of just "t".
+        delims = readline.get_completer_delims()
+        readline.set_completer_delims(delims.replace("/", ""))
+
         # Basic completer for slash commands
         commands = list(self._COMMAND_TABLE.keys())
 
@@ -2117,7 +2122,7 @@ class InteractiveMode:
         if planner_messages:
             planner_context = "\n\n## Messages from other agents\n"
             for msg in planner_messages[-3:]:  # Last 3 messages
-                planner_context += f"- [{msg.sender_id}]: {msg.content}\n"
+                planner_context += f"- [{msg.sender}]: {msg.content}\n"
 
         build_prompt = (
             "You are implementing a plan. Read the plan below carefully and "
@@ -2490,7 +2495,9 @@ class InteractiveMode:
         self._print_system(f"  Waves: {wave_count} | Duration: {total_duration:.1f}s")
 
         for wr in result.get("wave_results", []):
-            self._print_system(f"  • {wr['wave']}: {wr['agents']} agents, {wr['duration']:.1f}s")
+            self._print_system(
+                f"  • {wr.get('wave', '?')}: {wr.get('agents', 0)} agents, {wr.get('duration', 0):.1f}s"
+            )
 
         # Display final output
         final_output = result.get("final_output", "")
