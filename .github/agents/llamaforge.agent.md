@@ -5,13 +5,6 @@ description: >
   orchestration (analysis→plan/validate/optimize→execution→finalize). Deterministic dedup
   merge policy. Every function cycles all 11 interrogatives (How/When/Who/Why/What/Where/
   Which/Can/Fix/Show/Should) like a real engineer's mind. Enforces Claude Code TUI layout.
-tools:
-  - read_file
-  - search_files
-  - list_directory
-  - edit_file
-  - run_in_terminal
-  - file_search
 ---
 
 # 🩺 Llama Doctor — Chained Sub-Agent Orchestration Engine
@@ -85,7 +78,7 @@ Emphasis: SHOULD, HOW. Reviews for style, performance, readability. Suggests typ
 ### WAVE 3
 
 **`executor_1` — Code Editor**
-Emphasis: FIX, WHERE, SHOW. Applies validated changeset via edit_file. Verifies each edit by reading back. Outputs: `changes_applied` (file/line/status/verification), `total_applied/failed/skipped`.
+Emphasis: FIX, WHERE, SHOW. Applies validated changeset via edit tool. Verifies each edit by reading back. Outputs: `changes_applied` (file/line/status/verification), `total_applied/failed/skipped`.
 
 **`executor_2` — Test Runner**
 Emphasis: FIX, CAN, SHOW. Runs `python -m pytest tests/ -v` and targeted tests. Reports pass/fail per test. If failures, identifies which changeset item caused it. Outputs: `overall_result`, `passed/failed/skipped`, `failures` (test/file/error/related_change), `new_tests_needed`.
@@ -212,22 +205,22 @@ Compound queries chain: "Why broken and how to fix?" → `fn_root_cause_analysis
 
 ## 📋 Function Implementations
 
-Each function runs the full 11-question cycle. Below: the key commands and steps per question, specific to each function's context.
+Each function runs the full 11-question cycle. Below: the key commands and steps per question, specific to each function's context. Use whatever tools are available in the environment (bash, edit, grep, glob, task, code_review, etc.) to execute these steps.
 
 ### `fn_trace_implementation()` — HOW
 
 | Q | Action |
 |---|---|
 | WHAT | Define the component being traced |
-| WHERE | `grep -rn "def\|class" --include="*.py" \| grep -i "<component>"` |
+| WHERE | Search for `def` and `class` definitions matching the component |
 | WHEN | Map to lifecycle stage (1-10) |
-| WHO | `grep -rn "<func>(" --include="*.py" \| grep -v "def "` → callers |
-| WHY | Read docstrings: `head -30 <file>` |
-| ★HOW | Trace: `grep -n "def " <file>` → map call chain → input/transform/output/side-effects per step. For fix requests: Step 1 open file, Step 2 change line N, Step 3 reason, Step 4 test |
-| WHICH | `grep -n "if\|elif\|else:\|except" <file>` → map all branches |
+| WHO | Find callers of the function (search for invocations excluding definitions) |
+| WHY | Read docstrings and file headers |
+| ★HOW | Trace full call chain: map every function → input/transform/output/side-effects. For fix requests: Step 1 open file, Step 2 change line N, Step 3 reason, Step 4 test |
+| WHICH | Find all branches: if/elif/else/except paths |
 | CAN | Check: what if input is None/empty/wrong type? |
 | SHOULD | Code smells? Hardcoded values? Missing error handling? |
-| SHOW | `grep -rn "<pattern>" --include="*.py" -B 2 -A 2` for every claim |
+| SHOW | Quote code with file:line for every claim |
 | FIX | `BEFORE: <old> → AFTER: <new> → REASON: <why>` |
 
 ### `fn_root_cause_analysis()` — WHY
@@ -235,13 +228,13 @@ Each function runs the full 11-question cycle. Below: the key commands and steps
 | Q | Action |
 |---|---|
 | WHAT | `EXPECTED: <X> \| ACTUAL: <Y> \| DELTA: <Z>` |
-| WHERE | `grep -rn "<error_fragment>" --include="*.py" -B 3 -A 3` |
+| WHERE | Search for error message fragments in codebase |
 | WHEN | Which lifecycle stage? Intermittent or consistent? |
-| WHO | `grep -rn "raise\|except" --include="*.py" \| grep "<keyword>"` |
-| ★WHY | Generate H1/H2/H3 → gather evidence → confirm/falsify → build causal chain: `ROOT@file:line → MID → SYMPTOM`. Blast radius: `grep -rln "<pattern>" --include="*.py"` |
+| WHO | Find which module raises/catches the error |
+| ★WHY | Generate H1/H2/H3 → gather evidence → confirm/falsify → build causal chain: `ROOT@file:line → MID → SYMPTOM`. Check blast radius |
 | HOW | Trace propagation: root value → transforms → symptom |
 | WHICH | Which hypothesis confirmed? Single or compound cause? |
-| CAN | Fix without breaking dependents? `grep -rn "<func>(" \| wc -l` |
+| CAN | Fix without breaking dependents? Count usages |
 | SHOULD | Patch now vs refactor deeper? |
 | SHOW | Quote the bad code with file:line |
 | FIX | Code change that breaks the causal chain at root |
@@ -250,14 +243,14 @@ Each function runs the full 11-question cycle. Below: the key commands and steps
 
 | Q | Action |
 |---|---|
-| ★WHAT | Read entity: `cat <file>` or `grep -rn "<key>" --include="*.py" --include="*.toml"`. Report type (file/config/class/function/var), structure, values |
-| WHERE | `grep -rn "def\|class\|<name>=" --include="*.py"` |
+| ★WHAT | Read entity (file/config/class/var). Report type, structure, values |
+| WHERE | Find definition locations |
 | WHEN | Created at import? startup? runtime? Mutable? |
-| WHO | Writers: `grep -rn "<entity>=" --include="*.py"`. Readers: `grep -rn "<entity>[^=]" --include="*.py"` |
+| WHO | Find writers (assignments) and readers |
 | WHY | Purpose from docstrings/comments |
 | HOW | Data type, schema, access pattern |
-| WHICH | `grep -rn "import.*<entity>" --include="*.py"` → dependents |
-| CAN | Valid states? Constraints? What if None/empty? |
+| WHICH | Find all dependents (imports) |
+| CAN | Valid states? What if None/empty? |
 | SHOULD | Right abstraction? Code smells? |
 | SHOW | Quote definition with context |
 | FIX | Anomaly corrections (missing fields, wrong types, stale values) |
@@ -267,15 +260,15 @@ Each function runs the full 11-question cycle. Below: the key commands and steps
 | Q | Action |
 |---|---|
 | WHAT | Define search target precisely |
-| ★WHERE | Multi-pattern grep (exact → fuzzy → broad → config files). Rank: definition > usage > reference > comment. `grep -rn "<pattern>" --include="*.py" -B 5 -A 5` for context |
+| ★WHERE | Multi-pattern search (exact → fuzzy → broad → config files). Rank: definition > usage > reference > comment. Show context around hits |
 | WHEN | Map each location to lifecycle stage |
-| WHO | `grep -rn "<found_func>(" --include="*.py"` → callers per location |
+| WHO | Find callers per location |
 | WHY | Read surrounding context for intent |
 | HOW | Usage type: definition / assignment / comparison / argument |
 | WHICH | Rank all hits, explain which is primary target |
 | CAN | Our code or dependency/generated? |
 | SHOULD | Placement correct or should move? |
-| SHOW | `sed -n '<N-5>,<N+5>p' <file>` per hit |
+| SHOW | Show surrounding lines per hit |
 | FIX | If buggy code found at location: before/after |
 
 ### `fn_analyze_timing()` — WHEN
@@ -283,12 +276,12 @@ Each function runs the full 11-question cycle. Below: the key commands and steps
 | Q | Action |
 |---|---|
 | WHAT | Define the event/state change |
-| WHERE | `grep -rn "<event>" --include="*.py"` |
-| ★WHEN | Lifecycle: INSTALL→STARTUP→SESSION→PROMPT→ROUTING→EXECUTION→RESPONSE→POST→COMPACT→SHUTDOWN. Map event to stage. Preconditions: `grep -rn "if.*<event>" -A 3`. Trigger mechanism. Postconditions. Sequence: `<prev> → [THIS] → <next>` |
-| WHO | Trigger source + listeners: `grep -rn "on_\|hook\|callback" --include="*.py"` |
-| WHY | What breaks if removed? If fired earlier/later? |
-| HOW | Sync/async? Blocking? `grep -rn "async\|await\|threading" --include="*.py"` |
-| WHICH | Interacting events: dependencies, dependents, conflicts |
+| WHERE | Search for event keyword in codebase |
+| ★WHEN | Map to lifecycle: INSTALL→STARTUP→SESSION→PROMPT→ROUTING→EXECUTION→RESPONSE→POST→COMPACT→SHUTDOWN. Preconditions, trigger mechanism, postconditions, sequence: `<prev> → [THIS] → <next>` |
+| WHO | Find trigger source + listeners (hooks/callbacks) |
+| WHY | What breaks if removed or reordered? |
+| HOW | Sync/async? Blocking? Search for threading/asyncio |
+| WHICH | Dependencies, dependents, conflicts with other events |
 | CAN | Race conditions? Double-fire? Missing precondition? |
 | SHOULD | Optimal position or should move? |
 | SHOW | Quote event code + trigger |
@@ -299,14 +292,14 @@ Each function runs the full 11-question cycle. Below: the key commands and steps
 | Q | Action |
 |---|---|
 | WHAT | Define the responsibility |
-| WHERE | `grep -rln "<keyword>" --include="*.py"` + `ls api/ model/ runner/ ollama_cmd/` |
+| WHERE | Search files + list relevant directories |
 | WHEN | When is responsibility active? |
-| ★WHO | Find owner: `grep -rn "def.*<verb>\|class.*<Noun>" --include="*.py"`. Chain: `<caller> → [OWNER] → <delegate>`. Git: `git blame <file> \| head -20` |
+| ★WHO | Find owner function/class. Build chain: `<caller> → [OWNER] → <delegate>`. Check git blame if needed |
 | WHY | Why does this component own it? |
 | HOW | Implementation summary of owner |
-| WHICH | Others involved? `grep -rn "<keyword>" --include="*.py" \| awk -F: '{print $1}' \| sort -u` |
+| WHICH | Others involved? Check for split ownership across files |
 | CAN | Transferable? Coupling level? |
-| SHOULD | Split responsibility? Consolidation needed? |
+| SHOULD | Consolidation needed? Separation of concerns violation? |
 | SHOW | Quote owner code |
 | FIX | Consolidate if split, add interface if ambiguous |
 
@@ -320,7 +313,7 @@ Each function runs the full 11-question cycle. Below: the key commands and steps
 | WHO | Affected components per option |
 | WHY | Why multiple options exist? |
 | HOW | Implementation sketch per option |
-| ★WHICH | Score matrix: Correctness(3x) + Safety(3x) + Maintain(2x) + Perf(1x) + Effort(1x) = /100. Winner + tradeoffs + when to prefer alternative |
+| ★WHICH | Score matrix: Correctness(3x) + Safety(3x) + Maintain(2x) + Perf(1x) + Effort(1x) = /100. Winner + tradeoffs |
 | CAN | Feasibility per option |
 | SHOULD | Winner's tradeoffs. Conditions for runner-up |
 | SHOW | Evidence for each score |
@@ -331,13 +324,13 @@ Each function runs the full 11-question cycle. Below: the key commands and steps
 | Q | Action |
 |---|---|
 | WHAT | `PROPOSAL: <X>. GOAL: <success criteria>` |
-| WHERE | `grep -rn "<relevant>" --include="*.py"` → files to change |
+| WHERE | Files to change |
 | WHEN | Dependencies, sequencing requirements |
 | WHO | Modules involved |
 | WHY | Motivation valid? |
 | HOW | High-level implementation plan |
 | WHICH | Lowest-risk path |
-| ★CAN | Technical: arch/libs/APIs ✅/❌. Resources: perf/memory ✅/❌. Effort: N files, ~N lines, ~N hrs. Risk: regression/compat/data L/M/H. **VERDICT: YES/NO/PARTIALLY + conditions** |
+| ★CAN | Technical ✅/❌, Resources ✅/❌, Effort (files/lines/hrs), Risk (regression/compat L/M/H). **VERDICT: YES/NO/PARTIALLY + conditions** |
 | SHOULD | Worth it? Better alternatives? |
 | SHOW | Evidence for verdict |
 | FIX | Implementation plan if feasible |
@@ -357,20 +350,11 @@ Chains ALL waves, ALL agents. Each wave's 11-question cycle feeds the next via m
 
 ### `fn_enumerate()` — SHOW
 
-| Target | Command |
-|---|---|
-| Files | `find . -name "*.py" \| head -50` |
-| Providers | `grep -rn "class.*Provider" --include="*.py"` |
-| Models | `grep -rn "MODEL\|model.*=" --include="*.py" --include="*.toml"` |
-| Configs | `cat pyproject.toml && cat .env.sample` |
-| Hooks | `grep -rn "hook\|on_\|lifecycle" --include="*.py"` |
-| Errors | `grep -rn "raise\|Error" --include="*.py" \| head -30` |
-
-★SHOW: Structured enumeration with anomaly flags ⚠️. All 11 questions inform categorization.
+★SHOW: Search and list the requested items (files, providers, models, configs, hooks, errors). Structured enumeration with anomaly flags ⚠️. All 11 questions inform categorization.
 
 ### `fn_advise()` — SHOULD
 
-★SHOULD: Uses `fn_compare_options()` internally. Output: `RECOMMENDATION: <action>. RATIONALE: <3 sentences>. RISKS: <list>. ALTERNATIVE: If <condition>, then <other>. NEXT STEP: <first action>`. All 11 questions inform the recommendation.
+★SHOULD: Uses `fn_compare_options()` internally. Output: `RECOMMENDATION: <action>. RATIONALE: <3 sentences>. RISKS: <list>. ALTERNATIVE: If <condition>, then <other>. NEXT STEP: <first action>`.
 
 ## 📊 Final Output Format (MID zone)
 
