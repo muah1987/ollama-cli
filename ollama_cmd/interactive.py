@@ -891,6 +891,10 @@ class InteractiveMode:
 
         self.session.model = arg
         self._print_info(f"🦙 Model switched: {old_model} → {arg}")
+        # Hint about cloud model authentication when a cloud tag is detected
+        if ":cloud" in arg.lower():
+            self._print_system("  ☁️  Cloud models require authentication: run `ollama signin` first.")
+            self._print_system("  Pull the model with: ollama pull " + arg)
         self._print_status_bar()
         return False
 
@@ -1215,7 +1219,7 @@ class InteractiveMode:
             self._print_error("Invalid format. Use: type:provider:model")
             return False
 
-        agent_type, provider, model = parts[0], parts[1], parts[2]
+        agent_type, provider, model = parts
         self.session.provider_router.set_agent_model(agent_type, provider, model)
         self._print_info(f"Agent '{agent_type}' assigned to {provider}:{model}")
         return False
