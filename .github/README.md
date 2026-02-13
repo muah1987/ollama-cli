@@ -1,88 +1,443 @@
 [![Auto Release](https://github.com/muah1987/ollama-cli/actions/workflows/autorelease.yml/badge.svg?branch=main)](https://github.com/muah1987/ollama-cli/actions/workflows/autorelease.yml) [![Release](https://github.com/muah1987/ollama-cli/actions/workflows/release.yml/badge.svg)](https://github.com/muah1987/ollama-cli/actions/workflows/release.yml) [![Deploy to PyPI](https://github.com/muah1987/ollama-cli/actions/workflows/pypi-publish.yml/badge.svg)](https://github.com/muah1987/ollama-cli/actions/workflows/pypi-publish.yml) [![Dependabot Updates](https://github.com/muah1987/ollama-cli/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/muah1987/ollama-cli/actions/workflows/dependabot/dependabot-updates) [![Build and Test](https://github.com/muah1987/ollama-cli/actions/workflows/build-test.yml/badge.svg)](https://github.com/muah1987/ollama-cli/actions/workflows/build-test.yml)
 
-# Ollama CLI Documentation
+# Ollama CLI
 
-Comprehensive documentation for Ollama CLI - a full-featured AI coding assistant powered by Ollama with multi-provider support.
+An open-source AI coding assistant with Textual TUI interface that runs in your terminal, powered by [Ollama](https://ollama.ai) with multi-provider support for Claude, Gemini, OpenAI Codex, and Hugging Face.
 
----
-
-## Getting Started
-
-### Quick Start Guide
-
-1. **Install Ollama CLI** (with automatic Ollama installation):
-   ```bash
-   curl -fsSL https://raw.githubusercontent.com/muah1987/ollama-cli/main/install.sh | bash
-   ```
-
-2. **Start Ollama server**:
-   ```bash
-   ollama serve
-   ```
-
-3. **Start chatting**:
-   ```bash
-   ollama-cli
-   ```
+<p align="center">
+  <strong>Local-first</strong> · <strong>Multi-provider</strong> · <strong>14 lifecycle hooks</strong> · <strong>MCP integration</strong> · <strong>Chain orchestration</strong> · <strong>Built-in tools</strong>
+</p>
 
 ---
 
-## Documentation Structure
+## Quick Start
 
-| Documentation | Description | Link |
-|-------------|-------------|------|
-| **Getting Started** | Installation and first steps | [`docs/getting_started.md`](../docs/getting_started.md) |
-| **Project Overview** | Features, architecture, hooks, status lines, and contributing | [`docs/project_overview.md`](../docs/project_overview.md) |
-| **CLI Reference** | All available commands | [`docs/cli_reference.md`](../docs/cli_reference.md) |
-| **API Reference** | Ollama and provider APIs | [`docs/api_reference.md`](../docs/api_reference.md) |
-| **Configuration** | Environment variables and settings | [`docs/configuration.md`](../docs/configuration.md) |
-| **Multi-Provider** | Using Claude, Gemini, Codex, HF | [`docs/multi_provider.md`](../docs/multi_provider.md) |
-| **Agent Models** | Agent-specific model assignments | [`docs/agent_model_assignment.md`](../docs/agent_model_assignment.md) |
-| **RDMA Support** | High-performance networking | [`docs/rdma.md`](../docs/rdma.md) |
-| **Hooks System** | 14 lifecycle hooks and customization | [`docs/hooks.md`](../docs/hooks.md) |
-| **MCP Integration** | GitHub, Docker, and other MCP servers | [`docs/mcp.md`](../docs/mcp.md) |
-| **Development** | Contributing and building | [`docs/development.md`](../docs/development.md) |
+### Install
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/muah1987/ollama-cli/main/install.sh | bash
+```
+
+This installs `ollama-cli` to `~/.local/bin/`, sets up dependencies, and installs Ollama if needed.
+
+### Start chatting
+
+```bash
+# Start interactive session (default)
+ollama-cli
+
+# Or with a direct prompt
+ollama-cli "Explain this codebase to me"
+
+# Non-interactive mode
+ollama-cli -p "Write a Python function that reverses a string"
+
+# Resume last session
+ollama-cli --resume
+```
+
+### Pipe input
+
+```bash
+echo "Fix the bug in this code" | ollama-cli
+cat error.log | ollama-cli -p "What went wrong?"
+git diff | ollama-cli -p "Review these changes"
+```
+
+---
+
+## Usage
+
+```
+Usage: ollama-cli [options] [command] [prompt]
+
+Options:
+  -v, --version                   Show version
+  -p, --print                     Print response and exit (non-interactive)
+  -r, --resume                    Resume the most recent conversation
+  --model MODEL                   Override model (e.g. llama3.2, codellama)
+  --provider {ollama,claude,gemini,codex,hf}
+                                  Override provider
+  --system-prompt PROMPT          Custom system prompt
+  --output-format {text,json,markdown}
+                                  Output format
+  --allowed-tools TOOLS           Comma-separated tool whitelist
+  --json                          JSON output mode
+  --no-hooks                      Disable lifecycle hooks
+  --verbose                       Verbose output
+
+Commands:
+  chat, interactive (i)           Start interactive REPL session
+  run PROMPT                      Run a one-shot prompt
+  list                            List available local models
+  pull MODEL                      Pull a model from registry
+  show MODEL                      Show model details
+  serve                           Check Ollama server status
+  config [get|set] [key] [value]  Show/set configuration
+  status                          Show current session status
+  version                         Show CLI version
+  create, rm, cp, ps, stop        Ollama model management commands
+```
+
+---
+
+## Interactive Commands
+
+Inside the REPL, use slash commands:
+
+| Command | Description |
+|---------|-------------|
+| `/model <name>` | Switch active model |
+| `/provider <name>` | Switch provider (ollama, claude, gemini, codex, hf) |
+| `/status` | Show session status, tokens, context, auto-compact state |
+| `/compact` | Force context compaction to free space |
+| `/clear` | Clear conversation history |
+| `/save [name]` | Save session to file |
+| `/load <name>` | Load session from file |
+| `/history` | Show conversation history |
+| `/memory [note]` | View or add to project memory (OLLAMA.md) |
+| `/tools` | List available built-in tools |
+| `/tool <name> ...` | Invoke a tool (file_read, shell_exec, grep_search, ...) |
+| `/diff` | Show git diff of working directory |
+| `/config [k] [v]` | View or set configuration |
+| `/bug [desc]` | File a bug report with session context |
+| `/team_planning <desc>` | Generate an implementation plan → `specs/` |
+| `/build <plan>` | Execute a saved plan file |
+| `/resume [id]` | List or resume previous tasks |
+| `/set-agent-model <type:prov:model>` | Assign a model to an agent type |
+| `/list-agent-models` | List agent model assignments |
+| `/agents` | List active agents and communication stats |
+| `/mcp [action]` | Manage MCP servers (enable, disable, tools, invoke) |
+| `/chain <prompt>` | Run multi-wave chain orchestration |
+| `/remember <k> <v>` | Store a memory entry |
+| `/recall [query]` | Recall stored memories |
+| `/update_status_line <k> <v>` | Update session status metadata |
+| `/help` | Show all commands |
+| `/quit` | Exit the session |
+
+**Multi-line input:** End a line with `\` to continue on the next line.
 
 ---
 
 ## Features
 
-- **Multi-Provider Routing** - Seamlessly switch between Ollama, Claude, Gemini, Codex, and Hugging Face
-- **Multi-Model Agent Assignment** - Assign 5+ models from mixed providers to agent types (code, review, test, plan, docs)
-- **Auto-Compact Context** - Automatic context management at 85% threshold
-- **14 Lifecycle Hooks** - Full hook system: Setup, SessionStart/End, UserPromptSubmit, PreToolUse, PostToolUse, PostToolUseFailure, PermissionRequest, SkillTrigger, PreCompact, Stop, SubagentStart/Stop, Notification
-- **Skill→Hook→.py Pipeline** - Skills trigger hooks, hooks trigger Python scripts for extensible automation
-- **MCP Integration** - Connect to GitHub MCP, Docker MCP, filesystem MCP, and memory MCP servers
-- **Status Lines** - Real-time token usage and provider health with job status (idle/thinking/compacting/planning/building)
-- **Interactive REPL** - Full chat mode with streaming responses and persistent bottom status bar
-- **Token Tracking** - Token usage and cost estimation across providers
-- **Session Persistence** - Save and resume conversations
-- **RDMA Acceleration** - High-performance networking support (MLX, EXO, RDMA)
+### Multi-Provider Routing
+
+Seamlessly switch between providers — your conversation context is preserved:
+
+```bash
+# Use Ollama (default, local)
+ollama-cli --provider ollama
+
+# Use Claude
+ollama-cli --provider claude
+
+# Use Gemini
+ollama-cli --provider gemini
+
+# Use OpenAI Codex
+ollama-cli --provider codex
+
+# Use Hugging Face
+ollama-cli --provider hf
+```
+
+Switch mid-session with `/provider claude` in the REPL.
+
+### Auto-Compact Context Management
+
+Ollama CLI automatically manages your context window. When token usage exceeds the configured threshold (default 85%), older messages are summarized and compacted to free space while preserving recent context.
+
+```bash
+# Check context status
+>>> /status
+Context
+  Used:       3,481 / 4,096 tokens
+  Usage:      85.0%
+  Auto-compact: on (threshold 85%, keep last 4)
+  ⚠ Context above threshold — run /compact to free space
+
+# Manually compact
+>>> /compact
+Context Compaction
+  Before: 3,481 / 4,096 tokens (85.0%) — 12 messages
+  Auto-compact: on | threshold: 85% | keep last: 4 messages
+  After:  1,200 / 4,096 tokens (29.3%) — 5 messages
+  Removed 7 messages, freed ~2,281 tokens
+```
+
+Configure via environment variables or `/config`:
+
+```bash
+export AUTO_COMPACT=true
+export COMPACT_THRESHOLD=0.85
+
+# Or in the REPL
+>>> /config compact_threshold 0.9
+>>> /config auto_compact true
+```
+
+### Built-in Tools
+
+Tools are available via `/tool` in the REPL and integrate with the hook system for approval:
+
+```bash
+>>> /tools
+Available tools:
+  file_read                      Read file contents                    [low]
+  file_write                     Write content to file                 [medium]
+  file_edit                      Edit file with find/replace           [medium]
+  grep_search                    Search files for patterns             [low]
+  shell_exec                     Execute a shell command               [high]
+  web_fetch                      Fetch URL content                     [low]
+
+>>> /tool file_read README.md
+>>> /tool grep_search "def main" src/
+>>> /tool shell_exec "python -m pytest tests/ -v"
+```
+
+**Tool permissions:** Use `--allowed-tools` to restrict which tools are available:
+
+```bash
+ollama-cli --allowed-tools file_read,grep_search
+```
+
+### Project Memory (OLLAMA.md)
+
+Like Claude's `CLAUDE.md` and Gemini's `GEMINI.md`, ollama-cli reads `OLLAMA.md` from your project root to load persistent context:
+
+```bash
+# View project memory
+>>> /memory
+
+# Add a note
+>>> /memory Always use type hints in Python functions
+```
+
+### Planning & Orchestration
+
+Generate structured implementation plans and execute them:
+
+```bash
+# Create a plan
+>>> /team_planning Add user authentication with JWT tokens
+✅ Implementation Plan Created
+  File: specs/add-user-authentication-with-jwt-tokens.md
+  To execute: /build specs/add-user-authentication-with-jwt-tokens.md
+
+# Execute the plan
+>>> /build specs/add-user-authentication-with-jwt-tokens.md
+
+# Resume a previous task
+>>> /resume
+  add-user-auth       [planned   ] team_planning: Add user auth...
+>>> /resume add-user-auth
+```
+
+### `.ollamaignore`
+
+Create a `.ollamaignore` file to prevent tools from accessing sensitive files:
+
+```
+# .ollamaignore
+.env
+*.key
+secrets/
+```
+
+### Hook System
+
+14 lifecycle hooks for full customization:
+
+| Hook | When it fires |
+|------|---------------|
+| `Setup` | On init/maintenance (git status, context injection) |
+| `SessionStart` | Session begins |
+| `SessionEnd` | Session ends |
+| `UserPromptSubmit` | Before processing user input (can deny) |
+| `PreToolUse` | Before a tool executes (can deny/ask/allow) |
+| `PostToolUse` | After a tool completes |
+| `PostToolUseFailure` | When a tool execution fails |
+| `PermissionRequest` | On permission dialog (auto-allows read-only ops) |
+| `SkillTrigger` | Skill→hook→.py pipeline trigger |
+| `PreCompact` | Before context compaction |
+| `Stop` | When model finishes responding |
+| `SubagentStart` | When a subagent spawns |
+| `SubagentStop` | When a subagent finishes |
+| `Notification` | On notable events |
+
+Hooks are configured in `.ollama/settings.json` and run as shell commands via the skill→hook→.py pipeline.
+
+### MCP Integration
+
+Connect to MCP (Model Context Protocol) servers for extended capabilities:
+
+```bash
+# List MCP servers
+>>> /mcp
+  ● enabled  github   GitHub MCP server for repos, issues, PRs, actions
+  ○ disabled docker   Docker MCP server for container management
+  ○ disabled filesystem  Filesystem MCP server for file operations
+  ○ disabled memory   Memory MCP server for persistent knowledge graph
+
+# Enable a server
+>>> /mcp enable docker
+
+# Discover tools from a server
+>>> /mcp tools github
+
+# Invoke a tool
+>>> /mcp invoke github list_repos '{"owner": "myorg"}'
+```
+
+GitHub MCP auto-enables when `GH_TOKEN` is set. Configure in `.ollama/mcp.json`.
+
+### Chain Orchestration
+
+Run multi-wave subagent pipelines for complex tasks:
+
+```bash
+>>> /chain Add JWT authentication with refresh tokens
+
+🔗 Chain Orchestration
+  Prompt: Add JWT authentication with refresh tokens
+
+📊 Chain Complete (run: a1b2c3d4)
+  Waves: 4 | Duration: 45.2s
+  • analysis: 2 agents, 8.1s
+  • plan_validate_optimize: 3 agents, 15.3s
+  • execution: 2 agents, 12.5s
+  • finalize: 3 agents, 9.3s
+
+📝 Final Output
+  ...
+```
+
+Configure wave pipeline in `.ollama/chain.json`.
+
+### Session Persistence
+
+Save and resume conversations across sessions:
+
+```bash
+# Save current session
+>>> /save my-project
+
+# Resume later
+>>> /load my-project
+
+# Or use the CLI flag
+ollama-cli --resume
+```
+
+### Agent Model Assignment
+
+Assign specific models to agent types:
+
+```bash
+>>> /set-agent-model coding:ollama:codellama
+>>> /set-agent-model review:claude:claude-3-sonnet
+>>> /list-agent-models
+```
 
 ---
 
-## Terminal Layout
+## Configuration
 
-The interactive REPL uses a three-zone terminal layout:
+### Environment Variables
 
-| Zone | Content |
-|------|---------|
-| **TOP** | ASCII banner + startup info + warnings (only on startup) |
-| **MID** | Prompt region (user input and model responses) |
-| **BOTTOM** | Persistent status bar: `cwd │ session-uuid │ model │ context% │ tokens-left │ cost │ job-status` |
+Create a `.env` file or set these environment variables:
 
-The bottom status bar remains visible after every response, so even when the banner scrolls off, you always have context about what the CLI is doing.
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `OLLAMA_HOST` | `http://localhost:11434` | Ollama server URL (use `https://ollama.com` for cloud) |
+| `OLLAMA_MODEL` | `llama3.2` | Default model |
+| `OLLAMA_API_KEY` | — | API key for [Ollama Cloud](https://ollama.com) (Bearer auth) |
+| `PROVIDER` | `ollama` | Default provider |
+| `CONTEXT_LENGTH` | `4096` | Max context window (tokens) |
+| `AUTO_COMPACT` | `true` | Enable auto-compaction |
+| `COMPACT_THRESHOLD` | `0.85` | Context usage trigger (0.0–1.0) |
+| `ANTHROPIC_API_KEY` | — | Claude API key |
+| `GEMINI_API_KEY` | — | Gemini API key |
+| `OPENAI_API_KEY` | — | OpenAI API key |
+| `HF_TOKEN` | — | Hugging Face API key |
+| `GH_TOKEN` | — | GitHub token (auto-enables GitHub MCP) |
+
+See [`.env.sample`](.env.sample) for the full template.
+
+### Tested Ollama Cloud Models
+
+The following [Ollama Cloud](https://ollama.com) models have been tested and verified to work with ollama-cli. Set `OLLAMA_HOST=https://ollama.com` and provide your `OLLAMA_API_KEY` to use them:
+
+| Model | Tag |
+|-------|-----|
+| GLM-4 | `glm-4.7:cloud` |
+| GLM-5 | `glm-5:cloud` |
+| Qwen3 Coder Next | `qwen3-coder-next:cloud` |
+| Qwen3 Next 80B | `qwen3-next:80b-cloud` |
+| Qwen3 Coder 480B | `qwen3-coder:480b-cloud` |
+| Qwen3 VL 235B | `qwen3-vl:235b-cloud` |
+| Qwen3 VL 235B Instruct | `qwen3-vl:235b-instruct-cloud` |
+
+---
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Getting Started](docs/getting_started.md) | Installation and first steps |
+| [CLI Reference](docs/cli_reference.md) | All commands and flags |
+| [API Reference](docs/api_reference.md) | Ollama and provider APIs |
+| [Configuration](docs/configuration.md) | Environment variables and settings |
+| [Multi-Provider](docs/multi_provider.md) | Using Claude, Gemini, Codex |
+| [Agent Models](docs/agent_model_assignment.md) | Agent-specific model assignments |
+| [Hooks System](docs/hooks.md) | Lifecycle hooks and customization |
+| [RDMA Support](docs/rdma.md) | High-performance networking |
+| [Development](docs/development.md) | Contributing and building |
+
+---
+
+## Development
+
+```bash
+# Clone
+git clone https://github.com/muah1987/ollama-cli.git
+cd ollama-cli
+
+# Install dependencies
+uv sync --dev
+
+# Run tests
+uv run pytest tests/ -v
+
+# Run tests with coverage
+uv run pytest tests/ --cov=./ --cov-report=term-missing
+
+# Lint
+uv run ruff check .
+
+# Format
+uv run ruff format .
+```
 
 ---
 
 ## Support
 
-- **GitHub Issues**: [Report bugs or request features](https://github.com/muah1987/ollama-cli/issues)
-- **Documentation**: [Full documentation](https://github.com/muah1987/ollama-cli/docs)
-- **Ollama**: [Official Ollama website](https://ollama.ai)
+- **GitHub Issues:** [Report bugs or request features](https://github.com/muah1987/ollama-cli/issues)
+- **Ollama:** [Official Ollama website](https://ollama.ai)
 
----
+## Migration Notice
+
+The CLI frontend is planned to migrate from Python to
+[Go](https://go.dev/) using the
+[BubbleTea](https://github.com/charmbracelet/bubbletea) TUI framework.
+The current Python version remains fully supported until the migration is
+complete.  See the [ROADMAP](ROADMAP.md) for details.
 
 ## License
+
+MIT License — see [LICENSE](LICENSE) for details.
+
 
 MIT License - see [LICENSE](../LICENSE) for details.
