@@ -88,17 +88,24 @@ ollama-cli --provider ollama run "quick local question"
 
 ## Hook System
 
-Ollama CLI provides 7 lifecycle hooks that let you extend and customize behavior at every stage of execution. Hooks are configured in `.ollama/settings.json` and execute shell commands with JSON payloads on stdin.
+Ollama CLI provides 14 lifecycle hooks that let you extend and customize behavior at every stage of execution. Hooks follow the **skill→hook→.py pipeline** and are configured in `.ollama/settings.json`.
 
-| Hook | When It Fires | Use Case |
-|------|---------------|----------|
-| `PreToolUse` | Before a tool is executed | Validate inputs, enforce policies, gate dangerous operations |
-| `PostToolUse` | After a tool completes | Log results, transform output, trigger follow-up actions |
-| `SessionStart` | When a new session begins | Initialize state, load context, set up environment |
-| `SessionEnd` | When a session ends | Save summaries, persist memory, clean up resources |
-| `PreCompact` | Before context compaction | Extract key information before context is trimmed |
-| `Stop` | When the assistant stops | Final output processing, cleanup |
-| `Notification` | On notable events | Alerts, logging, external integrations |
+| # | Hook | When It Fires | Use Case |
+|---|------|---------------|----------|
+| 1 | `Setup` | On init or periodic maintenance | Load git status, inject context, environment persistence |
+| 2 | `SessionStart` | When a new session begins | Initialize state, load context, set up environment |
+| 3 | `SessionEnd` | When a session ends | Save summaries, persist memory, clean up resources |
+| 4 | `UserPromptSubmit` | Before processing user input | Validate input, security filtering, prompt logging |
+| 5 | `PreToolUse` | Before a tool is executed | Validate inputs, enforce policies, gate dangerous operations |
+| 6 | `PostToolUse` | After a tool completes | Log results, transform output, trigger follow-up actions |
+| 7 | `PostToolUseFailure` | When a tool execution fails | Structured error logging with full context |
+| 8 | `PermissionRequest` | On permission dialog | Permission auditing, auto-allow read-only ops |
+| 9 | `SkillTrigger` | When a skill invokes a hook | Skill→hook routing, pre-processing, logging |
+| 10 | `PreCompact` | Before context compaction | Extract key information before context is trimmed |
+| 11 | `Stop` | When the model finishes responding | Final output processing, cleanup |
+| 12 | `SubagentStart` | When a subagent spawns | Subagent spawn logging, resource tracking |
+| 13 | `SubagentStop` | When a subagent finishes | Subagent completion logging, result aggregation |
+| 14 | `Notification` | On notable events | Alerts, logging, external integrations |
 
 ---
 
@@ -161,10 +168,16 @@ ollama-cli/
     cp.py                -- Copy model
     ps.py                -- List running models
     stop.py              -- Stop running model
+    install.py           -- Install Ollama automatically
+    onboarding.py        -- First-time onboarding flow
+    accelerate.py        -- Hardware acceleration management
+    rdma.py              -- RDMA device management
   api/
     ollama_client.py     -- Ollama API client (native + OpenAI-compatible)
     provider_router.py   -- Multi-provider routing (Ollama/Claude/Gemini/Codex/HuggingFace)
     config.py            -- Configuration management
+    mcp_client.py        -- MCP (Model Context Protocol) client
+    rdma_client.py       -- RDMA networking client
   model/
     session.py           -- Session state management
   server/
@@ -172,10 +185,29 @@ ollama-cli/
   runner/
     context_manager.py   -- Auto-compact context management
     token_counter.py     -- Token tracking with cost estimation
+    intent_classifier.py -- Intent classification for agent routing
+    chain_controller.py  -- Chain orchestration controller
+    agent_comm.py        -- Agent communication layer
+    memory_layer.py      -- Memory persistence layer
+    rdma_manager.py      -- RDMA connection manager
+  tui/
+    app.py               -- Textual TUI application
+    command_processor.py -- Slash-command dispatch and registry
+    screens/             -- TUI screens (chat, help, settings)
+    widgets/             -- TUI widgets (chat_message, input_area, status_panel, spinner, intent_badge, sidebar)
+    styles/              -- TUI stylesheets (app.tcss, dark.tcss, light.tcss)
+  skills/
+    tools.py             -- Built-in tool definitions
+    exo/                 -- EXO distributed execution skill
+    mlx/                 -- Apple Silicon MLX acceleration skill
+    rdma/                -- RDMA networking skill
   .ollama/
-    settings.json        -- Hook configuration
-    hooks/               -- 7 lifecycle hook scripts
+    settings.json        -- Hook config + agent_models + TUI settings
+    hooks/               -- 14 lifecycle hook scripts (skill→hook→.py pipeline)
     status_lines/        -- 3 status line scripts + utilities
+    mcp.json             -- MCP server configuration
+    chain.json           -- Chain orchestration configuration
+    memory.json          -- Persistent memory store
 ```
 
 ---

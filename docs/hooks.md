@@ -1,12 +1,12 @@
 # Hooks System
 
-Customize Ollama CLI behavior with 13 lifecycle hooks.
+Customize Ollama CLI behavior with 14 lifecycle hooks.
 
 ---
 
 ## Overview
 
-Ollama CLI provides 13 lifecycle hooks that execute at specific points during execution.
+Ollama CLI provides 14 lifecycle hooks that execute at specific points during execution.
 Hooks follow the **skill→hook→.py pipeline**: a skill triggers a hook event, the hook
 dispatches to one or more `.py` scripts, and the scripts can modify behavior.
 

@@ -173,7 +173,7 @@ export AUTO_COMPACT=false
 
 ## Hook Configuration
 
-The hook system allows customization at 13 lifecycle events:
+The hook system allows customization at 14 lifecycle events:
 
 | Hook | When It Fires |
 |------|---------------|

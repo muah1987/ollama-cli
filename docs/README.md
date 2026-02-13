@@ -83,23 +83,23 @@ For detailed documentation on all features, configuration, and advanced usage, s
 
 | Documentation | Description |
 |--------------|-------------|
-| [Getting Started](docs/getting_started.md) | Installation walkthrough and first steps |
-| [Project Overview](docs/project_overview.md) | Features, architecture, hooks, status lines, and contributing |
-| [CLI Reference](docs/cli_reference.md) | All available commands |
-| [API Reference](docs/api_reference.md) | Ollama and provider APIs |
-| [Configuration](docs/configuration.md) | Environment variables and settings |
-| [Multi-Provider](docs/multi_provider.md) | Using Claude, Gemini, Codex, Hugging Face |
-| [Agent Models](docs/agent_model_assignment.md) | Multi-model agent assignment |
-| [RDMA Support](docs/rdma.md) | High-performance networking |
-| [Hooks System](docs/hooks.md) | 13 lifecycle hooks and customization |
-| [MCP Integration](docs/mcp.md) | GitHub, Docker, and other MCP servers |
-| [Development](docs/development.md) | Contributing and building |
+| [Getting Started](getting_started.md) | Installation walkthrough and first steps |
+| [Project Overview](project_overview.md) | Features, architecture, hooks, status lines, and contributing |
+| [CLI Reference](cli_reference.md) | All available commands |
+| [API Reference](api_reference.md) | Ollama and provider APIs |
+| [Configuration](configuration.md) | Environment variables and settings |
+| [Multi-Provider](multi_provider.md) | Using Claude, Gemini, Codex, Hugging Face |
+| [Agent Models](agent_model_assignment.md) | Multi-model agent assignment |
+| [RDMA Support](rdma.md) | High-performance networking |
+| [Hooks System](hooks.md) | 14 lifecycle hooks and customization |
+| [MCP Integration](mcp.md) | GitHub, Docker, and other MCP servers |
+| [Development](development.md) | Contributing and building |
 
 ---
 
 ## Getting Help
 
-- Check the [Documentation Index](docs/README.md)
+- Check the [Documentation Index](README.md)
 - File an issue on [GitHub](https://github.com/muah1987/ollama-cli/issues)
 - Visit the [Ollama documentation](https://ollama.ai/docs)
 

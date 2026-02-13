@@ -3,7 +3,7 @@
 An open-source AI coding assistant that runs in your terminal, powered by [Ollama](https://ollama.ai) with multi-provider support for Claude, Gemini, OpenAI Codex, and Hugging Face.
 
 <p align="center">
-  <strong>Local-first</strong> · <strong>Multi-provider</strong> · <strong>13 lifecycle hooks</strong> · <strong>MCP integration</strong> · <strong>Chain orchestration</strong> · <strong>Built-in tools</strong>
+  <strong>Local-first</strong> · <strong>Multi-provider</strong> · <strong>14 lifecycle hooks</strong> · <strong>MCP integration</strong> · <strong>Chain orchestration</strong> · <strong>Built-in tools</strong>
 </p>
 
 ---
@@ -245,7 +245,7 @@ secrets/
 
 ### Hook System
 
-13 lifecycle hooks for full customization:
+14 lifecycle hooks for full customization:
 
 | Hook | When it fires |
 |------|---------------|
