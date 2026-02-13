@@ -310,6 +310,30 @@ class TestModelDiscovery:
 
         assert callable(_fetch_local_models)
 
+    def test_resolve_model_cloud_tag_partial_match(self) -> None:
+        """'glm-5' should match 'glm-5:cloud' when no :latest variant exists."""
+        from ollama_cmd.root import _resolve_model
+
+        with patch("ollama_cmd.root._fetch_local_models", return_value=["glm-5:cloud", "codestral:latest"]):
+            result = _resolve_model("glm-5", "http://localhost:11434")
+            assert result == "glm-5:cloud"
+
+    def test_resolve_model_reverse_partial_match(self) -> None:
+        """'glm-5:cloud' should match base name 'glm-5:latest' if :cloud is not available."""
+        from ollama_cmd.root import _resolve_model
+
+        with patch("ollama_cmd.root._fetch_local_models", return_value=["glm-5:latest", "codestral:latest"]):
+            result = _resolve_model("glm-5:cloud", "http://localhost:11434")
+            assert result == "glm-5:latest"
+
+    def test_resolve_model_cloud_exact_match(self) -> None:
+        """'glm-5:cloud' should match exactly when present."""
+        from ollama_cmd.root import _resolve_model
+
+        with patch("ollama_cmd.root._fetch_local_models", return_value=["glm-5:cloud", "glm-5:latest"]):
+            result = _resolve_model("glm-5:cloud", "http://localhost:11434")
+            assert result == "glm-5:cloud"
+
 
 # ---------------------------------------------------------------------------
 # Model-not-found auto-recovery tests
@@ -483,3 +507,90 @@ class TestModelNotFoundAutoRecovery:
         from api.provider_router import OllamaModelNotFoundError
 
         assert issubclass(OllamaModelNotFoundError, Exception)
+
+    def test_model_switch_cloud_tag_partial_match(self) -> None:
+        """``/model glm-5`` should match ``glm-5:cloud`` when no :latest exists."""
+        script = (
+            "import asyncio\n"
+            "from unittest.mock import patch\n"
+            "from model.session import Session\n"
+            "from ollama_cmd.interactive import InteractiveMode\n"
+            "s = Session(model='codestral:latest', provider='ollama')\n"
+            "r = InteractiveMode(s)\n"
+            "with patch('ollama_cmd.root._fetch_local_models', "
+            "return_value=['glm-5:cloud', 'codestral:latest']):\n"
+            "    result = asyncio.run(r._dispatch_command('/model glm-5'))\n"
+            "assert result is False\n"
+            "assert s.model == 'glm-5:cloud', f'model={s.model}'\n"
+            "print('OK')\n"
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_ROOT,
+        )
+        assert result.returncode == 0, f"stderr: {result.stderr}"
+        assert "OK" in result.stdout
+
+    def test_model_switch_reverse_tag_match(self) -> None:
+        """``/model glm-5:cloud`` should match ``glm-5:latest`` if :cloud unavailable."""
+        script = (
+            "import asyncio\n"
+            "from unittest.mock import patch\n"
+            "from model.session import Session\n"
+            "from ollama_cmd.interactive import InteractiveMode\n"
+            "s = Session(model='codestral:latest', provider='ollama')\n"
+            "r = InteractiveMode(s)\n"
+            "with patch('ollama_cmd.root._fetch_local_models', "
+            "return_value=['glm-5:latest', 'codestral:latest']):\n"
+            "    result = asyncio.run(r._dispatch_command('/model glm-5:cloud'))\n"
+            "assert result is False\n"
+            "assert s.model == 'glm-5:latest', f'model={s.model}'\n"
+            "print('OK')\n"
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_ROOT,
+        )
+        assert result.returncode == 0, f"stderr: {result.stderr}"
+        assert "OK" in result.stdout
+
+    def test_route_prefers_partial_match_over_first_model(self) -> None:
+        """Auto-recovery should prefer a partial match (glm-5:cloud) over the first model."""
+        script = (
+            "import asyncio\n"
+            "from api.provider_router import ProviderRouter\n"
+            "from api.ollama_client import OllamaModelNotFoundError\n"
+            "router = ProviderRouter()\n"
+            "call_log = []\n"
+            "class FakeOllamaProvider:\n"
+            "    name = 'ollama'\n"
+            "    async def chat(self, messages, model=None, **kw):\n"
+            "        call_log.append(model)\n"
+            "        if model == 'glm-5':\n"
+            "            raise OllamaModelNotFoundError('Model not found (HTTP 404)')\n"
+            "        return {'message': {'role': 'assistant', 'content': 'ok'}}\n"
+            "    async def list_models(self):\n"
+            "        return ['codestral:latest', 'glm-5:cloud']\n"
+            "fake = FakeOllamaProvider()\n"
+            "router._providers['ollama'] = fake\n"
+            "result = asyncio.run(router.route('agent', [{'role':'user','content':'hi'}], model='glm-5'))\n"
+            "assert call_log[0] == 'glm-5', f'first call was {call_log[0]}'\n"
+            "assert call_log[1] == 'glm-5:cloud', f'retry should be glm-5:cloud, got {call_log[1]}'\n"
+            "print('OK')\n"
+        )
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(script)
+            f.flush()
+            result = subprocess.run(
+                [sys.executable, f.name],
+                capture_output=True,
+                text=True,
+                cwd=_PROJECT_ROOT,
+                env={**os.environ, "PYTHONPATH": _PROJECT_ROOT},
+            )
+        assert result.returncode == 0, f"stderr: {result.stderr}"
+        assert "OK" in result.stdout

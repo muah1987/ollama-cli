@@ -607,3 +607,109 @@ class TestOrchestratorAutoAllocation:
         source = inspect.getsource(ChainController.run_wave)
         assert "AGENT_ROLE_OPTIMIZATION" in source
         assert "optimized_type" in source
+
+
+# ---------------------------------------------------------------------------
+# Native tool calling tests
+# ---------------------------------------------------------------------------
+
+
+class TestNativeToolCalling:
+    """Tests for native function-calling (tool schema, execution, agentic loop)."""
+
+    def test_get_tools_schema_returns_list(self) -> None:
+        """get_tools_schema should return a non-empty list of tool defs."""
+        from skills.tools import get_tools_schema
+
+        schema = get_tools_schema()
+        assert isinstance(schema, list)
+        assert len(schema) > 0
+
+    def test_tools_schema_has_required_fields(self) -> None:
+        """Each tool in the schema should have type, function.name, function.parameters."""
+        from skills.tools import get_tools_schema
+
+        for tool in get_tools_schema():
+            assert tool["type"] == "function"
+            func = tool["function"]
+            assert "name" in func
+            assert "description" in func
+            assert "parameters" in func
+            assert func["parameters"]["type"] == "object"
+
+    def test_tools_schema_covers_core_tools(self) -> None:
+        """The schema should include the core tools (file_read, shell_exec, etc.)."""
+        from skills.tools import get_tools_schema
+
+        names = [t["function"]["name"] for t in get_tools_schema()]
+        assert "file_read" in names
+        assert "shell_exec" in names
+        assert "grep_search" in names
+        assert "web_fetch" in names
+
+    def test_execute_tool_call_file_read(self) -> None:
+        """execute_tool_call should dispatch to the correct tool function."""
+        import tempfile
+
+        from skills.tools import execute_tool_call
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
+            f.write("hello world")
+            f.flush()
+            result = execute_tool_call("file_read", {"path": f.name})
+        assert "content" in result
+        assert "hello world" in result["content"]
+
+    def test_execute_tool_call_unknown_tool(self) -> None:
+        """execute_tool_call should return error for unknown tools."""
+        from skills.tools import execute_tool_call
+
+        result = execute_tool_call("nonexistent_tool", {})
+        assert "error" in result
+
+    def test_session_extract_response_ollama_format(self) -> None:
+        """_extract_response should handle Ollama native format."""
+        from model.session import Session
+
+        response = {"message": {"role": "assistant", "content": "hello"}}
+        content, tool_calls = Session._extract_response(response)
+        assert content == "hello"
+        assert tool_calls == []
+
+    def test_session_extract_response_with_tool_calls(self) -> None:
+        """_extract_response should extract tool_calls from Ollama response."""
+        from model.session import Session
+
+        response = {
+            "message": {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [{"function": {"name": "file_read", "arguments": {"path": "README.md"}}}],
+            }
+        }
+        content, tool_calls = Session._extract_response(response)
+        assert len(tool_calls) == 1
+        assert tool_calls[0]["function"]["name"] == "file_read"
+
+    def test_session_extract_response_openai_format(self) -> None:
+        """_extract_response should handle OpenAI/Codex format."""
+        from model.session import Session
+
+        response = {"choices": [{"message": {"content": "answer", "tool_calls": []}}]}
+        content, tool_calls = Session._extract_response(response)
+        assert content == "answer"
+        assert tool_calls == []
+
+    def test_session_has_route_with_tools(self) -> None:
+        """Session should have _route_with_tools method."""
+        from model.session import Session
+
+        assert hasattr(Session, "_route_with_tools")
+
+    def test_session_has_get_tools_schema(self) -> None:
+        """Session should have _get_tools_schema method."""
+        from model.session import Session
+
+        schema = Session._get_tools_schema()
+        assert isinstance(schema, list)
+        assert len(schema) > 0
