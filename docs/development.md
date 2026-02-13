@@ -19,20 +19,49 @@ ollama-cli/
 │   ├── cp.py         # Copy model
 │   ├── serve.py      # Check server status
 │   ├── interactive.py# Interactive REPL mode
+│   ├── install.py    # Install Ollama automatically
+│   ├── onboarding.py # First-time onboarding flow
+│   ├── accelerate.py # Hardware acceleration management
+│   ├── rdma.py       # RDMA device management
 │   └── ...
 ├── api/              # API client and utilities
-│   ├── ollama_client.py  # Ollama API client
-│   ├── provider_router.py  # Multi-provider routing
-│   └── config.py      # Configuration management
+│   ├── ollama_client.py     # Ollama API client
+│   ├── provider_router.py   # Multi-provider routing
+│   ├── config.py            # Configuration management
+│   ├── mcp_client.py        # MCP (Model Context Protocol) client
+│   └── rdma_client.py       # RDMA networking client
 ├── model/            # Model management
 │   └── session.py     # Session state management
 ├── server/           # Server utilities
 │   └── hook_runner.py  # Hook execution engine
 ├── runner/           # Model execution
-│   ├── context_manager.py  # Auto-compact context
-│   └── token_counter.py   # Token tracking
+│   ├── context_manager.py   # Auto-compact context
+│   ├── token_counter.py     # Token tracking
+│   ├── intent_classifier.py # Intent classification for agent routing
+│   ├── chain_controller.py  # Chain orchestration controller
+│   ├── agent_comm.py        # Agent communication layer
+│   ├── memory_layer.py      # Memory persistence layer
+│   └── rdma_manager.py      # RDMA connection manager
+├── tui/              # Textual TUI application
+│   ├── app.py               # Main TUI app
+│   ├── command_processor.py # Slash-command dispatch and registry
+│   ├── screens/             # TUI screens (chat, help, settings)
+│   ├── widgets/             # TUI widgets (chat_message, input_area, status_panel, etc.)
+│   └── styles/              # TUI stylesheets (app.tcss, dark.tcss, light.tcss)
+├── skills/           # Skill modules (EXO, MLX, RDMA) with hook trigger pipeline
+│   ├── tools.py             # Built-in tool definitions
+│   ├── exo/                 # EXO distributed execution skill
+│   ├── mlx/                 # Apple Silicon MLX acceleration skill
+│   └── rdma/                # RDMA networking skill
 ├── docs/             # Documentation
 ├── tests/            # Test files
+├── .ollama/          # Hooks, settings, MCP config, chain config
+│   ├── hooks/        # 14 lifecycle hook scripts
+│   ├── status_lines/ # Status line scripts + utilities
+│   ├── settings.json # Hook config + agent_models + TUI settings
+│   ├── mcp.json      # MCP server configuration
+│   ├── chain.json    # Chain orchestration configuration
+│   └── memory.json   # Persistent memory store
 └── pyproject.toml    # Project configuration
 ```
 
@@ -86,19 +115,26 @@ COMMAND_MAP = {
 
 ## Hook System
 
-Ollama CLI provides hooks that execute at specific points in the lifecycle:
+Ollama CLI provides 14 lifecycle hooks that execute at specific points:
 
 ### Available Hooks
 
-| Hook | When It Fires |
-|------|---------------|
-| `PreToolUse` | Before tool execution |
-| `PostToolUse` | After tool execution |
-| `SessionStart` | When session begins |
-| `SessionEnd` | When session ends |
-| `PreCompact` | Before context compaction |
-| `Stop` | When assistant stops |
-| `Notification` | On notable events |
+| # | Hook | When It Fires |
+|---|------|---------------|
+| 1 | `Setup` | On init or periodic maintenance |
+| 2 | `SessionStart` | When session begins |
+| 3 | `SessionEnd` | When session ends |
+| 4 | `UserPromptSubmit` | Before processing user input |
+| 5 | `PreToolUse` | Before tool execution |
+| 6 | `PostToolUse` | After tool execution |
+| 7 | `PostToolUseFailure` | When a tool execution fails |
+| 8 | `PermissionRequest` | On permission dialog |
+| 9 | `SkillTrigger` | When a skill invokes a hook |
+| 10 | `PreCompact` | Before context compaction |
+| 11 | `Stop` | When assistant stops |
+| 12 | `SubagentStart` | When a subagent spawns |
+| 13 | `SubagentStop` | When a subagent finishes |
+| 14 | `Notification` | On notable events |
 
 ### Configuration
 

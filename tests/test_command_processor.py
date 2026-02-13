@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import pytest
 from unittest.mock import MagicMock
 
-from tui.command_processor import CommandProcessor, CommandResult, COMMAND_REGISTRY
+import pytest
 
+from tui.command_processor import COMMAND_REGISTRY, CommandProcessor, CommandResult
 
 # ---------------------------------------------------------------------------
 # Command Registry tests

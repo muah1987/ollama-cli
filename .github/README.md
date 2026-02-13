@@ -31,17 +31,17 @@ Comprehensive documentation for Ollama CLI - a full-featured AI coding assistant
 
 | Documentation | Description | Link |
 |-------------|-------------|------|
-| **Getting Started** | Installation and first steps | [`docs/getting_started.md`](getting_started.md) |
-| **Project Overview** | Features, architecture, hooks, status lines, and contributing | [`docs/project_overview.md`](project_overview.md) |
-| **CLI Reference** | All available commands | [`docs/cli_reference.md`](cli_reference.md) |
-| **API Reference** | Ollama and provider APIs | [`docs/api_reference.md`](api_reference.md) |
-| **Configuration** | Environment variables and settings | [`docs/configuration.md`](configuration.md) |
-| **Multi-Provider** | Using Claude, Gemini, Codex, HF | [`docs/multi_provider.md`](multi_provider.md) |
-| **Agent Models** | Agent-specific model assignments | [`docs/agent_model_assignment.md`](agent_model_assignment.md) |
-| **RDMA Support** | High-performance networking | [`docs/rdma.md`](rdma.md) |
-| **Hooks System** | 13 lifecycle hooks and customization | [`docs/hooks.md`](hooks.md) |
-| **MCP Integration** | GitHub, Docker, and other MCP servers | [`docs/mcp.md`](mcp.md) |
-| **Development** | Contributing and building | [`docs/development.md`](development.md) |
+| **Getting Started** | Installation and first steps | [`docs/getting_started.md`](../docs/getting_started.md) |
+| **Project Overview** | Features, architecture, hooks, status lines, and contributing | [`docs/project_overview.md`](../docs/project_overview.md) |
+| **CLI Reference** | All available commands | [`docs/cli_reference.md`](../docs/cli_reference.md) |
+| **API Reference** | Ollama and provider APIs | [`docs/api_reference.md`](../docs/api_reference.md) |
+| **Configuration** | Environment variables and settings | [`docs/configuration.md`](../docs/configuration.md) |
+| **Multi-Provider** | Using Claude, Gemini, Codex, HF | [`docs/multi_provider.md`](../docs/multi_provider.md) |
+| **Agent Models** | Agent-specific model assignments | [`docs/agent_model_assignment.md`](../docs/agent_model_assignment.md) |
+| **RDMA Support** | High-performance networking | [`docs/rdma.md`](../docs/rdma.md) |
+| **Hooks System** | 14 lifecycle hooks and customization | [`docs/hooks.md`](../docs/hooks.md) |
+| **MCP Integration** | GitHub, Docker, and other MCP servers | [`docs/mcp.md`](../docs/mcp.md) |
+| **Development** | Contributing and building | [`docs/development.md`](../docs/development.md) |
 
 ---
 
@@ -50,7 +50,7 @@ Comprehensive documentation for Ollama CLI - a full-featured AI coding assistant
 - **Multi-Provider Routing** - Seamlessly switch between Ollama, Claude, Gemini, Codex, and Hugging Face
 - **Multi-Model Agent Assignment** - Assign 5+ models from mixed providers to agent types (code, review, test, plan, docs)
 - **Auto-Compact Context** - Automatic context management at 85% threshold
-- **13 Lifecycle Hooks** - Full hook system: Setup, SessionStart/End, UserPromptSubmit, PreToolUse, PostToolUse, PostToolUseFailure, PermissionRequest, SkillTrigger, PreCompact, Stop, SubagentStart/Stop, Notification
+- **14 Lifecycle Hooks** - Full hook system: Setup, SessionStart/End, UserPromptSubmit, PreToolUse, PostToolUse, PostToolUseFailure, PermissionRequest, SkillTrigger, PreCompact, Stop, SubagentStart/Stop, Notification
 - **Skill→Hook→.py Pipeline** - Skills trigger hooks, hooks trigger Python scripts for extensible automation
 - **MCP Integration** - Connect to GitHub MCP, Docker MCP, filesystem MCP, and memory MCP servers
 - **Status Lines** - Real-time token usage and provider health with job status (idle/thinking/compacting/planning/building)

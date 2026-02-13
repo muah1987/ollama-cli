@@ -7,7 +7,6 @@ from textual.containers import ScrollableContainer
 from textual.screen import Screen
 from textual.widgets import Footer, Header, Markdown
 
-
 _HELP_TEXT = """\
 # ollama-cli Help
 

@@ -7,7 +7,6 @@ from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import Label
 
-
 _LLAMA_SPINNER_FRAMES = [
     "🦙 Thinking...",
     "🦙 Chewing on that...",
