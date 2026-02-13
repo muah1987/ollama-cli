@@ -710,15 +710,21 @@ class TestModelTagPreservation:
             "f'retry should be glm-5:latest, got {call_log[1]}'\n"
             "print('OK')\n"
         )
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-            f.write(script)
-            f.flush()
-            result = subprocess.run(
-                [sys.executable, f.name],
-                capture_output=True,
-                text=True,
-                cwd=_PROJECT_ROOT,
-                env={**os.environ, "PYTHONPATH": _PROJECT_ROOT},
-            )
-        assert result.returncode == 0, f"stderr: {result.stderr}"
-        assert "OK" in result.stdout
+        tmp_path: str | None = None
+        try:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+                tmp_path = f.name
+                f.write(script)
+                f.flush()
+                result = subprocess.run(
+                    [sys.executable, f.name],
+                    capture_output=True,
+                    text=True,
+                    cwd=_PROJECT_ROOT,
+                    env={**os.environ, "PYTHONPATH": _PROJECT_ROOT},
+                )
+            assert result.returncode == 0, f"stderr: {result.stderr}"
+            assert "OK" in result.stdout
+        finally:
+            if tmp_path is not None and os.path.exists(tmp_path):
+                os.unlink(tmp_path)

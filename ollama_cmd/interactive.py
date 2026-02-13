@@ -867,10 +867,7 @@ class InteractiveMode:
                 if not matched and ":" in arg:
                     base_name = arg.split(":")[0]
                     candidates = [m for m in local_models if m == base_name or m.startswith(base_name + ":")]
-                    # Prefer the user's exact tagged name if it exists in the candidates
-                    if arg in candidates:
-                        matched = [arg]
-                    elif candidates:
+                    if candidates:
                         # User's exact tag not available; keep user's choice as-is
                         # rather than silently substituting a different variant.
                         # The runtime fallback in provider_router will handle retries.
@@ -892,9 +889,10 @@ class InteractiveMode:
         self.session.model = arg
         self._print_info(f"🦙 Model switched: {old_model} → {arg}")
         # Hint about cloud model authentication when a cloud tag is detected
-        if ":cloud" in arg.lower():
-            has_key = bool(os.environ.get("OLLAMA_API_KEY", ""))
-            if not has_key:
+        if self.session.provider == "ollama" and ":cloud" in arg.lower():
+            from api.config import get_config as _get_config
+
+            if not _get_config().ollama_api_key:
                 self._print_system("  ☁️  Cloud models require an API key.")
                 self._print_system("  Run `ollama signin` or set OLLAMA_API_KEY in your .env file.")
             self._print_system("  Pull the model with: ollama pull " + arg)
