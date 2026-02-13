@@ -306,30 +306,17 @@ def cmd_interactive(args: argparse.Namespace) -> None:
     if session is None:
         session = Session(model=model, provider=cfg.provider)
 
-    # Decide between TUI and classic REPL.
-    # --classic forces the readline REPL; --tui (or default) tries the Textual TUI.
-    use_classic = getattr(args, "classic", False)
+    # Use Textual TUI exclusively (no readline fallback)
+    try:
+        from tui.app import ChatApp
 
-    if not use_classic:
-        try:
-            from tui.app import ChatApp
-
-            app = ChatApp(session=session)
-            app.run()
-            return
-        except ImportError:
-            # Textual not available -- fall back to classic REPL silently.
-            pass
-
-    # Classic readline REPL (async)
-    async def _run() -> None:
-        await session.start()
-        repl = InteractiveMode(session)
-        await repl.run()
-
-    import asyncio
-
-    asyncio.run(_run())
+        app = ChatApp(session=session)
+        app.run()
+        return
+    except ImportError as e:
+        console.print("[red]Error:[/red] Textual TUI not available. Please install with: uv sync --all-extras")
+        console.print(f"Import error: {e}")
+        sys.exit(1)
 
 
 def cmd_run_prompt(args: argparse.Namespace) -> None:
@@ -438,7 +425,7 @@ def build_parser() -> argparse.ArgumentParser:
         prog="ollama-cli",
         usage="ollama-cli [options] [command] [prompt]",
         description=(
-            "Ollama CLI - an AI coding assistant powered by Ollama. "
+            "Ollama CLI - an AI coding assistant powered by Ollama with Textual TUI interface. "
             "Starts an interactive session by default. "
             "Use -p/--print for non-interactive output."
         ),
@@ -493,19 +480,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--no-hooks", action="store_true", default=False, help="Disable hooks")
     parser.add_argument("--system-prompt", type=str, default=None, help="System prompt to use")
 
-    # TUI / classic REPL selection
-    ui_group = parser.add_mutually_exclusive_group()
-    ui_group.add_argument(
+    # TUI is the only interface
+    parser.add_argument(
         "--tui",
         action="store_true",
         default=False,
         help="Launch the Textual TUI (default for interactive mode)",
-    )
-    ui_group.add_argument(
-        "--classic",
-        action="store_true",
-        default=False,
-        help="Launch the classic readline REPL instead of the TUI",
     )
 
     subparsers = parser.add_subparsers(dest="command")

@@ -1,7 +1,7 @@
-"""Command processor -- shared slash command logic for TUI and classic REPL.
+"""Command processor -- shared slash command logic for Textual TUI.
 
-Provides a UI-agnostic interface for dispatching slash commands.  Both the
-Textual TUI and the legacy readline REPL delegate command handling here.
+Provides a UI-agnostic interface for dispatching slash commands.  The
+Textual TUI delegates command handling here.
 """
 
 from __future__ import annotations
@@ -35,7 +35,7 @@ class CommandResult:
 
 
 class OutputHandler(Protocol):
-    """Protocol for UI output -- implemented by both TUI and REPL."""
+    """Protocol for UI output -- implemented by TUI."""
 
     def system(self, text: str) -> None: ...
 
@@ -108,10 +108,10 @@ COMMAND_REGISTRY: dict[str, tuple[str, str, str]] = {
 
 
 class CommandProcessor:
-    """UI-agnostic slash command processor.
+    """Slash command processor for Textual TUI.
 
     Routes commands to handler methods and provides a clean interface
-    for both the Textual TUI and the legacy readline REPL.
+    for the Textual TUI.
 
     Parameters
     ----------

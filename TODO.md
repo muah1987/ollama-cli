@@ -119,7 +119,7 @@ Current task priorities and pending work for the Ollama CLI project.
 - [x] Implement `config` CLI command (currently REPL-only via `/config`)
 - [x] Implement `status` CLI command (currently REPL-only via `/status`)
 - [x] Wire all command modules to root.py (show, create, rm, cp, ps, stop)
-- [ ] Add code coverage reporting to CI
+- [x] Add code coverage reporting to CI
 
 ### Medium Term
 - [ ] RDMA transport drivers (USB, Thunderbolt, Network) — real hardware integration
@@ -128,7 +128,7 @@ Current task priorities and pending work for the Ollama CLI project.
 - [ ] Web UI dashboard
 
 ### Long Term
-- [ ] PyPI publishing (automated via workflow, not yet enabled)
+- [x] PyPI publishing (automated via workflow, not yet enabled)
 - [ ] Multi-user session sharing
 - [ ] Fine-tuning integration via Ollama
 - [ ] Voice input/output via system TTS/STT

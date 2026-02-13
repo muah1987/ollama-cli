@@ -1,6 +1,6 @@
 # Ollama CLI
 
-An open-source AI coding assistant that runs in your terminal, powered by [Ollama](https://ollama.ai) with multi-provider support for Claude, Gemini, OpenAI Codex, and Hugging Face.
+An open-source AI coding assistant with Textual TUI interface that runs in your terminal, powered by [Ollama](https://ollama.ai) with multi-provider support for Claude, Gemini, OpenAI Codex, and Hugging Face.
 
 <p align="center">
   <strong>Local-first</strong> · <strong>Multi-provider</strong> · <strong>14 lifecycle hooks</strong> · <strong>MCP integration</strong> · <strong>Chain orchestration</strong> · <strong>Built-in tools</strong>
@@ -407,6 +407,9 @@ uv sync --dev
 
 # Run tests
 uv run pytest tests/ -v
+
+# Run tests with coverage
+uv run pytest tests/ --cov=./ --cov-report=term-missing
 
 # Lint
 uv run ruff check .

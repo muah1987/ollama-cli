@@ -29,11 +29,14 @@ A comprehensive roadmap for the Ollama CLI project, tracking current priorities 
 ### Current Priority: Production Readiness (v0.2.0)
 - [x] Folder structure synchronization (production/ as GitHub root)
 - [x] `.gitignore` for local development folders
-- [ ] Automatic Ollama installation support
-- [ ] RDMA acceleration support (MLX, EXO, RMDA)
-- [ ] RDMA transport drivers (USB<>RDMA, Thunderbolt<>RDMA, Network<>RDMA)
-- [ ] Updated GitHub workflows for production folder
-- [ ] Documentation updates (ROADMAP, TODO, README)
+- [x] Automatic Ollama installation support
+- [x] RDMA acceleration support (MLX, EXO, RMDA)
+- [x] RDMA transport drivers (USB<>RDMA, Thunderbolt<>RDMA, Network<>RDMA)
+- [x] Updated GitHub workflows for production folder
+- [x] Documentation updates (ROADMAP, TODO, README)
+- [x] Code coverage reporting in CI workflows
+- [x] Textual TUI as primary interface (removed legacy readline)
+- [x] PyPI publishing workflow preparation
 
 ---
 

@@ -1,3 +1,20 @@
+## [0.2.0] - 2026-02-13
+
+### Added
+- Textual TUI as the primary and only interface (removed legacy readline REPL)
+- Code coverage reporting in CI workflows with 80% minimum requirement
+- Comprehensive testing documentation
+- Updated dependencies with pytest-cov support
+
+### Changed
+- Simplified CLI interface to focus exclusively on Textual TUI
+- Updated development workflow to emphasize TUI-first approach
+- Enhanced CI/CD pipeline with test coverage enforcement
+
+### Removed
+- Legacy readline-based REPL interface
+- Classic CLI mode (--classic flag removed)
+
 ## [0.1.0] - 2026-02-12
 
 ### Added

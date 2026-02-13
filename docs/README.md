@@ -94,6 +94,7 @@ For detailed documentation on all features, configuration, and advanced usage, s
 | [Hooks System](hooks.md) | 14 lifecycle hooks and customization |
 | [MCP Integration](mcp.md) | GitHub, Docker, and other MCP servers |
 | [Development](development.md) | Contributing and building |
+| [Testing](testing_coverage.md) | Testing procedures and code coverage |
 
 ---
 
