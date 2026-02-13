@@ -5,7 +5,7 @@ set -euo pipefail
 
 REPO_URL="https://github.com/muah1987/ollama-cli.git"
 INSTALL_DIR="${HOME}/.ollama-cli"
-OLLAMA_VERSION="0.3.5"
+OLLAMA_VERSION="0.5.7"
 
 echo "=== Ollama CLI Installer ==="
 echo ""

@@ -1,0 +1,25 @@
+/* ollama-cli TUI base layout */
+
+Screen {
+    layout: vertical;
+}
+
+#message-area {
+    height: 1fr;
+    padding: 1 2;
+}
+
+.system-message {
+    color: #565f89;
+    text-style: dim italic;
+    padding: 0 2;
+    margin: 0 0;
+}
+
+Header {
+    dock: top;
+}
+
+Footer {
+    dock: bottom;
+}

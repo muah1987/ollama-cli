@@ -1,0 +1,53 @@
+/* Dark theme -- Charmbracelet / Tokyo Night inspired */
+
+Screen {
+    background: #1a1b26;
+    color: #c0caf5;
+}
+
+Header {
+    background: #24283b;
+    color: #7aa2f7;
+}
+
+Footer {
+    background: #24283b;
+    color: #565f89;
+}
+
+#message-area {
+    background: #1a1b26;
+    scrollbar-color: #565f89;
+    scrollbar-color-hover: #7aa2f7;
+    scrollbar-color-active: #bb9af7;
+}
+
+.system-message {
+    color: #565f89;
+    text-style: dim italic;
+    padding: 0 2;
+}
+
+Sidebar {
+    background: #1e2030;
+    border-right: solid #24283b;
+}
+
+Input {
+    border: round #565f89;
+    background: #24283b;
+    color: #c0caf5;
+}
+
+Input:focus {
+    border: round #7aa2f7;
+}
+
+Button {
+    background: #7aa2f7;
+    color: #1a1b26;
+}
+
+Button:hover {
+    background: #bb9af7;
+}

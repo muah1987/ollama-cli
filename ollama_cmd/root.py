@@ -306,6 +306,22 @@ def cmd_interactive(args: argparse.Namespace) -> None:
     if session is None:
         session = Session(model=model, provider=cfg.provider)
 
+    # Decide between TUI and classic REPL.
+    # --classic forces the readline REPL; --tui (or default) tries the Textual TUI.
+    use_classic = getattr(args, "classic", False)
+
+    if not use_classic:
+        try:
+            from tui.app import ChatApp
+
+            app = ChatApp(session=session)
+            app.run()
+            return
+        except ImportError:
+            # Textual not available -- fall back to classic REPL silently.
+            pass
+
+    # Classic readline REPL (async)
     async def _run() -> None:
         await session.start()
         repl = InteractiveMode(session)
@@ -327,6 +343,7 @@ def cmd_run_prompt(args: argparse.Namespace) -> None:
     if not prompt_text:
         console.print("[red]Error:[/red] No prompt provided.")
         sys.exit(1)
+    assert isinstance(prompt_text, str)
 
     from model.session import Session
 
@@ -475,6 +492,21 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--verbose", action="store_true", default=False, help="Verbose output")
     parser.add_argument("--no-hooks", action="store_true", default=False, help="Disable hooks")
     parser.add_argument("--system-prompt", type=str, default=None, help="System prompt to use")
+
+    # TUI / classic REPL selection
+    ui_group = parser.add_mutually_exclusive_group()
+    ui_group.add_argument(
+        "--tui",
+        action="store_true",
+        default=False,
+        help="Launch the Textual TUI (default for interactive mode)",
+    )
+    ui_group.add_argument(
+        "--classic",
+        action="store_true",
+        default=False,
+        help="Launch the classic readline REPL instead of the TUI",
+    )
 
     subparsers = parser.add_subparsers(dest="command")
 

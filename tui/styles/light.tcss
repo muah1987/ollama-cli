@@ -1,0 +1,52 @@
+/* Light theme */
+
+Screen {
+    background: #f5f5f5;
+    color: #1a1b26;
+}
+
+Header {
+    background: #e1e2e7;
+    color: #3760bf;
+}
+
+Footer {
+    background: #e1e2e7;
+    color: #6172b0;
+}
+
+#message-area {
+    background: #ffffff;
+    scrollbar-color: #b4b8c6;
+    scrollbar-color-hover: #3760bf;
+}
+
+.system-message {
+    color: #6172b0;
+    text-style: dim italic;
+    padding: 0 2;
+}
+
+Sidebar {
+    background: #e9e9ec;
+    border-right: solid #d0d0d0;
+}
+
+Input {
+    border: round #b4b8c6;
+    background: #ffffff;
+    color: #1a1b26;
+}
+
+Input:focus {
+    border: round #3760bf;
+}
+
+Button {
+    background: #3760bf;
+    color: #ffffff;
+}
+
+Button:hover {
+    background: #5a7dd3;
+}

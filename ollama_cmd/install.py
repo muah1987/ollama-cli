@@ -99,7 +99,7 @@ def _install_ollama_macos(args: argparse.Namespace) -> None:
         pass
 
     # Fall back to direct download
-    version = getattr(args, "version", "0.3.5")
+    version = getattr(args, "version", "0.5.7")
     url = f"https://github.com/ollama/ollama/releases/download/v{version}/ollama-darwin-amd64.tar.gz"
     console.print(f"[yellow]Downloading Ollama from {url}...[/yellow]")
 
@@ -173,16 +173,14 @@ def cmd_install(_args: argparse.Namespace) -> None:
 
 
 # Command to add to root.py
-def register_commands(parser: argparse._SubParsersAction) -> None:
-    """Register install commands with the main parser."""
-    subparsers = parser.add_subparsers(help="Install-related commands")
-
+def register_commands(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
+    """Register install commands with the main parser's subparsers action."""
     # ollama-cli install
     install_parser = subparsers.add_parser("install", help="Install Ollama")
     install_parser.set_defaults(func=cmd_install)
 
     # ollama-cli install ollama
-    install_ollama_parser = subparsers.add_parser("ollama", help="Install Ollama (legacy alias)")
+    install_ollama_parser = subparsers.add_parser("install-ollama", help="Install Ollama (legacy alias)")
     install_ollama_parser.set_defaults(func=cmd_install_ollama)
 
     # ollama-cli check

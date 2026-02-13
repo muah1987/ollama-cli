@@ -80,7 +80,7 @@ def install_ollama_macos() -> bool:
             return True
 
         # Fall back to direct download
-        version = os.environ.get("OLLAMA_VERSION", "0.3.5")
+        version = os.environ.get("OLLAMA_VERSION", "0.5.7")
         download_url = f"https://github.com/ollama/ollama/releases/download/v{version}/ollama-darwin-amd64.tar.gz"
         print(f"Downloading Ollama from {download_url}...")
         result = subprocess.run(

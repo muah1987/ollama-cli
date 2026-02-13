@@ -141,6 +141,7 @@ cython_debug/
 .ollama/sessions/
 .ollama/memory/
 logs/
+specs/
 
 # IDEs
 .idea/

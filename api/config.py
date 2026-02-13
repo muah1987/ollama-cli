@@ -47,6 +47,15 @@ class OllamaCliConfig:
     allowed_tools: list[str] | None = None
     agent_models: dict[str, dict[str, str]] | None = None
     onboarding_complete: bool = False
+    intent_enabled: bool = True
+    intent_confidence_threshold: float = 0.7
+    intent_llm_fallback: bool = False
+    intent_show_detection: bool = True
+    intent_default_agent_type: str | None = None
+    tui_theme: str = "dark"
+    tui_sidebar_visible: bool = True
+    tui_show_timestamps: bool = True
+    tui_auto_scroll: bool = True
 
 
 # ---------------------------------------------------------------------------
@@ -127,6 +136,21 @@ def load_config(env_path: str | Path | None = None, config_json_path: str | Path
         hf_token=os.getenv("HF_TOKEN", OllamaCliConfig.hf_token),
         gh_token=os.getenv("GH_TOKEN", OllamaCliConfig.gh_token),
         hooks_enabled=_bool_from_env(os.getenv("HOOKS_ENABLED"), OllamaCliConfig.hooks_enabled),
+        intent_enabled=_bool_from_env(os.getenv("OLLAMA_CLI_INTENT_ENABLED"), OllamaCliConfig.intent_enabled),
+        intent_confidence_threshold=_float_from_env(
+            os.getenv("OLLAMA_CLI_INTENT_THRESHOLD"), OllamaCliConfig.intent_confidence_threshold
+        ),
+        intent_llm_fallback=_bool_from_env(
+            os.getenv("OLLAMA_CLI_INTENT_LLM_FALLBACK"), OllamaCliConfig.intent_llm_fallback
+        ),
+        intent_show_detection=_bool_from_env(os.getenv("OLLAMA_CLI_INTENT_SHOW"), OllamaCliConfig.intent_show_detection),
+        intent_default_agent_type=os.getenv("OLLAMA_CLI_INTENT_DEFAULT_AGENT"),
+        tui_theme=os.getenv("OLLAMA_CLI_TUI_THEME", OllamaCliConfig.tui_theme),
+        tui_sidebar_visible=_bool_from_env(os.getenv("OLLAMA_CLI_TUI_SIDEBAR"), OllamaCliConfig.tui_sidebar_visible),
+        tui_show_timestamps=_bool_from_env(
+            os.getenv("OLLAMA_CLI_TUI_TIMESTAMPS"), OllamaCliConfig.tui_show_timestamps
+        ),
+        tui_auto_scroll=_bool_from_env(os.getenv("OLLAMA_CLI_TUI_AUTOSCROLL"), OllamaCliConfig.tui_auto_scroll),
     )
 
     # Overlay from JSON config file if it exists
@@ -153,18 +177,53 @@ def load_config(env_path: str | Path | None = None, config_json_path: str | Path
         except (json.JSONDecodeError, OSError):
             pass  # ignore broken config files
 
-    # Load agent_models from settings.json if not already set
-    if cfg.agent_models is None:
-        settings_path = Path(__file__).resolve().parent.parent / ".ollama" / "settings.json"
-        if settings_path.exists():
-            try:
-                with open(settings_path) as f:
-                    settings_data = json.load(f)
+    # Load agent_models and intent_classifier from settings.json
+    settings_path = Path(__file__).resolve().parent.parent / ".ollama" / "settings.json"
+    if settings_path.exists():
+        try:
+            with open(settings_path) as f:
+                settings_data = json.load(f)
+
+            # agent_models: only if not already set
+            if cfg.agent_models is None:
                 agent_models = settings_data.get("agent_models")
                 if isinstance(agent_models, dict):
                     cfg.agent_models = agent_models
-            except (json.JSONDecodeError, OSError):
-                pass
+
+            # intent_classifier: settings.json values are used as defaults,
+            # but env vars (already loaded above) take precedence.
+            intent_cfg = settings_data.get("intent_classifier")
+            if isinstance(intent_cfg, dict):
+                # Only apply settings.json value when the env var was NOT set
+                if os.getenv("OLLAMA_CLI_INTENT_ENABLED") is None and "enabled" in intent_cfg:
+                    cfg.intent_enabled = bool(intent_cfg["enabled"])
+                if os.getenv("OLLAMA_CLI_INTENT_THRESHOLD") is None and "confidence_threshold" in intent_cfg:
+                    try:
+                        cfg.intent_confidence_threshold = float(intent_cfg["confidence_threshold"])
+                    except (TypeError, ValueError):
+                        pass
+                if os.getenv("OLLAMA_CLI_INTENT_LLM_FALLBACK") is None and "llm_fallback" in intent_cfg:
+                    cfg.intent_llm_fallback = bool(intent_cfg["llm_fallback"])
+                if os.getenv("OLLAMA_CLI_INTENT_SHOW") is None and "show_intent" in intent_cfg:
+                    cfg.intent_show_detection = bool(intent_cfg["show_intent"])
+                if os.getenv("OLLAMA_CLI_INTENT_DEFAULT_AGENT") is None and "default_agent_type" in intent_cfg:
+                    val = intent_cfg["default_agent_type"]
+                    cfg.intent_default_agent_type = str(val) if val is not None else None
+
+            # tui: settings.json values are used as defaults,
+            # but env vars (already loaded above) take precedence.
+            tui_cfg = settings_data.get("tui")
+            if isinstance(tui_cfg, dict):
+                if os.getenv("OLLAMA_CLI_TUI_THEME") is None and "theme" in tui_cfg:
+                    cfg.tui_theme = str(tui_cfg["theme"])
+                if os.getenv("OLLAMA_CLI_TUI_SIDEBAR") is None and "sidebar_visible" in tui_cfg:
+                    cfg.tui_sidebar_visible = bool(tui_cfg["sidebar_visible"])
+                if os.getenv("OLLAMA_CLI_TUI_TIMESTAMPS") is None and "show_timestamps" in tui_cfg:
+                    cfg.tui_show_timestamps = bool(tui_cfg["show_timestamps"])
+                if os.getenv("OLLAMA_CLI_TUI_AUTOSCROLL") is None and "auto_scroll" in tui_cfg:
+                    cfg.tui_auto_scroll = bool(tui_cfg["auto_scroll"])
+        except (json.JSONDecodeError, OSError):
+            pass
 
     return cfg
 

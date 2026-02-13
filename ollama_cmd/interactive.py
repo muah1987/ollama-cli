@@ -349,6 +349,7 @@ class InteractiveMode:
         "/chain": "_cmd_chain",
         "/init": "_cmd_init",
         "/pull": "_cmd_pull",
+        "/intent": "_cmd_intent",
     }
 
     def __init__(self, session: Session) -> None:
@@ -800,6 +801,7 @@ class InteractiveMode:
                 ("/set-agent-model", "Assign model to agent type"),
                 ("/list-agent-models", "List agent model assignments"),
                 ("/chain <prompt>", "Multi-wave chain orchestration"),
+                ("/intent [on|off|threshold|test]", "Inspect/configure intent classifier"),
                 ("/team_planning ...", "Generate implementation plan"),
                 ("/build <plan>", "Execute a saved plan"),
                 ("/resume [id]", "List/resume previous tasks"),
@@ -1193,6 +1195,7 @@ class InteractiveMode:
         print(f"  {_cyan('/recall [query]')}   Recall stored memories (all or by keyword)")
         print(f"  {_cyan('/mcp [action]')}     Manage MCP servers (enable|disable|tools|invoke)")
         print(f"  {_cyan('/chain <prompt>')}   Run multi-wave chain orchestration (analyze→plan→execute→finalize)")
+        print(f"  {_cyan('/intent [sub]')}    Inspect/configure intent classifier (on|off|show|threshold|test)")
         print(f"  {_cyan('/init')}             Initialize project (creates OLLAMA.md and .ollama/)")
         print(f"  {_cyan('/help')}             Show this help message")
         print(f"  {_cyan('/quit')}             Exit the session")
@@ -2514,6 +2517,94 @@ class InteractiveMode:
         print()
         return False
 
+    def _cmd_intent(self, arg: str) -> bool:
+        """Inspect or configure the intent classifier.
+
+        Usage:
+          /intent            -- Show current status
+          /intent on         -- Enable intent classification
+          /intent off        -- Disable intent classification
+          /intent show       -- Toggle intent display in REPL output
+          /intent threshold <value> -- Set confidence threshold (0.0-1.0)
+          /intent test <prompt>     -- Dry-run classification without sending
+
+        Returns
+        -------
+        Always ``False`` (continue REPL).
+        """
+        from api.config import get_config
+
+        cfg = get_config()
+
+        if not arg:
+            # Show status
+            status = _green("enabled") if cfg.intent_enabled else _red("disabled")
+            print(f"  Intent classifier: {status}")
+            print(f"  Confidence threshold: {cfg.intent_confidence_threshold:.2f}")
+            print(f"  Show detection: {cfg.intent_show_detection}")
+            print(f"  LLM fallback: {cfg.intent_llm_fallback}")
+            if cfg.intent_default_agent_type:
+                print(f"  Default agent type: {cfg.intent_default_agent_type}")
+            return False
+
+        parts = arg.split(maxsplit=1)
+        sub = parts[0].lower()
+
+        if sub == "on":
+            cfg.intent_enabled = True
+            self._print_info("Intent classifier enabled.")
+            return False
+
+        if sub == "off":
+            cfg.intent_enabled = False
+            self._print_info("Intent classifier disabled.")
+            return False
+
+        if sub == "show":
+            cfg.intent_show_detection = not cfg.intent_show_detection
+            state = "on" if cfg.intent_show_detection else "off"
+            self._print_info(f"Intent display toggled {state}.")
+            return False
+
+        if sub == "threshold":
+            val_str = parts[1].strip() if len(parts) > 1 else ""
+            if not val_str:
+                print(f"  Current threshold: {cfg.intent_confidence_threshold:.2f}")
+                self._print_system("Usage: /intent threshold <0.0-1.0>")
+                return False
+            try:
+                val = float(val_str)
+                if not 0.0 <= val <= 1.0:
+                    self._print_error("Threshold must be between 0.0 and 1.0.")
+                    return False
+                cfg.intent_confidence_threshold = val
+                self._print_info(f"Confidence threshold set to {val:.2f}")
+            except ValueError:
+                self._print_error(f"Invalid number: {val_str}")
+            return False
+
+        if sub == "test":
+            test_prompt = parts[1].strip() if len(parts) > 1 else ""
+            if not test_prompt:
+                self._print_error("Usage: /intent test <prompt>")
+                return False
+            from runner.intent_classifier import classify_intent
+
+            result = classify_intent(test_prompt, threshold=cfg.intent_confidence_threshold)
+            if result.agent_type:
+                agent_label = _agent_color(result.agent_type, result.agent_type)
+                print(f"  Intent: {agent_label} (confidence: {result.confidence:.0%})")
+            else:
+                print(f"  Intent: {_dim('none')} (confidence: {result.confidence:.0%})")
+            print(f"  Reasoning: {_dim(result.reasoning)}")
+            if result.matched_patterns:
+                print(f"  Patterns: {_dim(', '.join(result.matched_patterns))}")
+            return False
+
+        self._print_error(f"Unknown /intent subcommand: {sub}")
+        self._print_system("Usage: /intent [on|off|show|threshold <val>|test <prompt>]")
+        return False
+
     def _cmd_quit(self, _arg: str) -> bool:
         """Signal the REPL to exit gracefully.
 
@@ -2639,6 +2730,38 @@ class InteractiveMode:
                         break
                 if prompt_denied:
                     continue
+
+                # Auto-detect intent if no explicit @agent_type and classifier is enabled
+                if agent_type is None:
+                    from api.config import get_config as _get_cfg
+                    from runner.intent_classifier import classify_intent
+
+                    cfg = _get_cfg()
+                    if cfg.intent_enabled:
+                        intent_result = classify_intent(
+                            stripped, threshold=cfg.intent_confidence_threshold
+                        )
+                        if intent_result.agent_type is not None:
+                            agent_type = intent_result.agent_type
+                            if cfg.intent_show_detection:
+                                print(
+                                    f"  {_agent_color(agent_type, '[auto]')} "
+                                    f"Detected intent: "
+                                    f"{_agent_color(agent_type, agent_type)} "
+                                    f"(confidence: {intent_result.confidence:.0%})"
+                                )
+                            # Fire SubagentStart hook for auto-detected agent types
+                            self._fire_hook(
+                                "SubagentStart",
+                                {
+                                    "agent_id": f"{agent_type}-{self.session.session_id[:8]}",
+                                    "agent_type": agent_type,
+                                    "session_id": self.session.session_id,
+                                    "model": self.session.model,
+                                    "prompt_preview": stripped[:100],
+                                    "auto_detected": True,
+                                },
+                            )
 
                 # Regular message -> send to session with llama spinner
                 try:
