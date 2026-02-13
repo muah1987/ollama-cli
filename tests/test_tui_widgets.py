@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import pytest
 from unittest.mock import MagicMock
 
+import pytest
 
 # ---------------------------------------------------------------------------
 # ChatMessage widget tests
@@ -122,8 +122,9 @@ class TestInputAreaSubmitted:
 
     def test_submitted_is_message_subclass(self):
         """InputArea.Submitted is a Textual Message subclass."""
-        from tui.widgets.input_area import InputArea
         from textual.message import Message
+
+        from tui.widgets.input_area import InputArea
 
         assert issubclass(InputArea.Submitted, Message)
 

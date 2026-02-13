@@ -8,7 +8,6 @@ from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import Label
 
-
 # Agent type color map (matching interactive.py)
 _AGENT_COLORS: dict[str, str] = {
     "code": "#bb9af7",  # magenta/purple

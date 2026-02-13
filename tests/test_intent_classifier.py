@@ -10,8 +10,8 @@ Tests cover:
 """
 
 import pytest  # type: ignore[import-untyped]
-from runner.intent_classifier import IntentClassifier, IntentResult, classify_intent
 
+from runner.intent_classifier import IntentClassifier, IntentResult, classify_intent
 
 # ---------------------------------------------------------------------------
 # Helpers

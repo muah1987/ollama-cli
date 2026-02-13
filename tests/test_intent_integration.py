@@ -21,7 +21,6 @@ from api.config import OllamaCliConfig
 from ollama_cmd.interactive import InteractiveMode
 from runner.intent_classifier import IntentResult
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------

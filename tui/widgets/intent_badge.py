@@ -7,7 +7,6 @@ from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import Label
 
-
 # Agent color map
 _AGENT_BADGE_COLORS: dict[str, str] = {
     "code": "#bb9af7",
