@@ -861,8 +861,12 @@ class InteractiveMode:
             local_models = _fetch_local_models(cfg.ollama_host)
 
             if local_models and arg not in local_models:
-                # Try partial match (e.g. "llama3.2" matches "llama3.2:latest")
+                # Try partial match (e.g. "llama3.2" matches "llama3.2:latest" or "glm-5" matches "glm-5:cloud")
                 matched = [m for m in local_models if m.startswith(arg + ":")]
+                # Reverse partial match: "glm-5:cloud" matches base name "glm-5" in local list
+                if not matched and ":" in arg:
+                    base_name = arg.split(":")[0]
+                    matched = [m for m in local_models if m == base_name or m.startswith(base_name + ":")]
                 if matched:
                     arg = matched[0]
                 else:

@@ -1027,7 +1027,14 @@ class ProviderRouter:
                     try:
                         available = await provider.list_models()
                         if available:
-                            fallback_model = available[0]
+                            # Try partial match first (e.g. "glm-5" → "glm-5:cloud")
+                            fallback_model = None
+                            for m in available:
+                                if m == effective_model or m.startswith(effective_model + ":"):
+                                    fallback_model = m
+                                    break
+                            if fallback_model is None:
+                                fallback_model = available[0]
                             logger.warning(
                                 "Model %r not found on Ollama; retrying with %r",
                                 effective_model,

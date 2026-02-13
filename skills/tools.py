@@ -407,36 +407,50 @@ TOOLS: dict[str, dict[str, Any]] = {
         "function": tool_file_read,
         "description": "Read file contents",
         "risk": "low",
+        "arg_map": lambda a: (a.get("path", ""),),
+        "kwarg_map": lambda a: {},
     },
     "file_write": {
         "function": tool_file_write,
         "description": "Write content to a file",
         "risk": "medium",
+        "arg_map": lambda a: (a.get("path", ""), a.get("content", "")),
+        "kwarg_map": lambda a: {},
     },
     "file_edit": {
         "function": tool_file_edit,
         "description": "Edit a file (find and replace)",
         "risk": "medium",
+        "arg_map": lambda a: (a.get("path", ""), a.get("old_text", ""), a.get("new_text", "")),
+        "kwarg_map": lambda a: {},
     },
     "grep_search": {
         "function": tool_grep_search,
         "description": "Search for patterns in files",
         "risk": "low",
+        "arg_map": lambda a: (a.get("pattern", ""), a.get("path", ".")),
+        "kwarg_map": lambda a: {},
     },
     "shell_exec": {
         "function": tool_shell_exec,
         "description": "Execute a shell command",
         "risk": "high",
+        "arg_map": lambda a: (a.get("command", ""),),
+        "kwarg_map": lambda a: {},
     },
     "web_fetch": {
         "function": tool_web_fetch,
         "description": "Fetch content from a URL",
         "risk": "low",
+        "arg_map": lambda a: (a.get("url", ""),),
+        "kwarg_map": lambda a: {},
     },
     "model_pull": {
         "function": tool_model_pull,
         "description": "Pull (download) a model from the Ollama registry",
         "risk": "medium",
+        "arg_map": lambda a: (a.get("model_name", ""),),
+        "kwarg_map": lambda a: {"force": a.get("force", False)},
     },
 }
 
@@ -455,6 +469,145 @@ def get_tool(name: str) -> dict[str, Any] | None:
 def list_tools() -> list[dict[str, str]]:
     """Return a summary of all available tools."""
     return [{"name": name, "description": info["description"], "risk": info["risk"]} for name, info in TOOLS.items()]
+
+
+def get_tools_schema() -> list[dict[str, Any]]:
+    """Return Ollama-native tool definitions for all built-in tools.
+
+    The returned list can be passed directly as the ``tools`` parameter
+    in an Ollama ``/api/chat`` request so that the model can invoke tools
+    natively instead of relying on text-based suggestions.
+
+    Returns
+    -------
+    List of tool definition dicts in Ollama function-calling format.
+    """
+    return [
+        {
+            "type": "function",
+            "function": {
+                "name": "file_read",
+                "description": "Read the contents of a file",
+                "parameters": {
+                    "type": "object",
+                    "required": ["path"],
+                    "properties": {
+                        "path": {"type": "string", "description": "Path to the file to read"},
+                    },
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "file_write",
+                "description": "Write content to a file (creates parent directories as needed)",
+                "parameters": {
+                    "type": "object",
+                    "required": ["path", "content"],
+                    "properties": {
+                        "path": {"type": "string", "description": "Destination file path"},
+                        "content": {"type": "string", "description": "Text content to write"},
+                    },
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "file_edit",
+                "description": "Replace the first occurrence of old_text with new_text in a file",
+                "parameters": {
+                    "type": "object",
+                    "required": ["path", "old_text", "new_text"],
+                    "properties": {
+                        "path": {"type": "string", "description": "File to edit"},
+                        "old_text": {"type": "string", "description": "Text to find and replace"},
+                        "new_text": {"type": "string", "description": "Replacement text"},
+                    },
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "grep_search",
+                "description": "Search for a pattern in files under a directory using grep",
+                "parameters": {
+                    "type": "object",
+                    "required": ["pattern"],
+                    "properties": {
+                        "pattern": {"type": "string", "description": "Text or regex pattern to search for"},
+                        "path": {"type": "string", "description": "Directory or file to search in (default: current dir)"},
+                    },
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "shell_exec",
+                "description": "Execute a shell command and return its output",
+                "parameters": {
+                    "type": "object",
+                    "required": ["command"],
+                    "properties": {
+                        "command": {"type": "string", "description": "Shell command to run"},
+                    },
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "web_fetch",
+                "description": "Fetch content from a URL",
+                "parameters": {
+                    "type": "object",
+                    "required": ["url"],
+                    "properties": {
+                        "url": {"type": "string", "description": "URL to fetch"},
+                    },
+                },
+            },
+        },
+    ]
+
+
+def execute_tool_call(tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+    """Execute a tool by name with the given arguments.
+
+    This is used by the session to auto-execute tool calls returned by
+    the model via native function calling.  Each tool entry in ``TOOLS``
+    includes ``arg_map`` and ``kwarg_map`` callables that translate the
+    argument dict into positional and keyword arguments for the tool
+    function, keeping dispatch generic.
+
+    Parameters
+    ----------
+    tool_name:
+        Name of the tool to execute (e.g. ``file_read``).
+    arguments:
+        Dict of keyword arguments for the tool function.
+
+    Returns
+    -------
+    Tool result dict with output or ``error`` key.
+    """
+    entry = TOOLS.get(tool_name)
+    if entry is None:
+        return {"error": f"Unknown tool: {tool_name}"}
+
+    func = entry["function"]
+    arg_map = entry.get("arg_map")
+    kwarg_map = entry.get("kwarg_map")
+
+    try:
+        args = arg_map(arguments) if arg_map else ()
+        kwargs = kwarg_map(arguments) if kwarg_map else {}
+        return func(*args, **kwargs)
+    except Exception as exc:
+        return {"error": str(exc)}
 
 
 def fire_skill_trigger(skill_name: str, skill_params: dict[str, Any] | None = None) -> bool:
