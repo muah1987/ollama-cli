@@ -863,12 +863,24 @@ class InteractiveMode:
             if local_models and arg not in local_models:
                 # Try partial match (e.g. "llama3.2" matches "llama3.2:latest" or "glm-5" matches "glm-5:cloud")
                 matched = [m for m in local_models if m.startswith(arg + ":")]
-                # Reverse partial match: "glm-5:cloud" matches base name "glm-5" in local list
+                # Reverse partial match: "glm-5:cloud" → look for "glm-5:cloud" among variants
                 if not matched and ":" in arg:
                     base_name = arg.split(":")[0]
-                    matched = [m for m in local_models if m == base_name or m.startswith(base_name + ":")]
+                    candidates = [m for m in local_models if m == base_name or m.startswith(base_name + ":")]
+                    # Prefer the user's exact tagged name if it exists in the candidates
+                    if arg in candidates:
+                        matched = [arg]
+                    elif candidates:
+                        # User's exact tag not available; keep user's choice as-is
+                        # rather than silently substituting a different variant.
+                        # The runtime fallback in provider_router will handle retries.
+                        pass
                 if matched:
                     arg = matched[0]
+                elif ":" in arg:
+                    # User explicitly specified a tag (e.g. "glm-5:cloud"); honour
+                    # their choice even if the exact tag isn't pulled locally yet.
+                    pass
                 else:
                     self._print_error(f"Model '{arg}' not found on local Ollama server.")
                     self._print_system(f"  Available models: {', '.join(local_models[:8])}")
