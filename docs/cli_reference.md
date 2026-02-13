@@ -73,11 +73,16 @@ Or in `.ollama/settings.json`:
 
 | Option | Description |
 |--------|-------------|
-| `--model <name>` | Override default model |
+| `--model <name>` | Override the default model for this session |
 | `--provider <name>` | Override provider (ollama, claude, gemini, codex, hf) |
+| `--api <url>` | Override the Ollama API host URL (e.g. `http://localhost:11434`) |
 | `--json` | Output in JSON format |
 | `--verbose` | Enable verbose output |
 | `--no-hooks` | Disable hooks |
+| `--system-prompt <text>` | Set a custom system prompt |
+| `--allowed-tools <list>` | Comma-separated list of allowed tool names |
+| `-p, --print` | Print response and exit (non-interactive mode) |
+| `-r, --resume` | Resume the most recent conversation |
 
 ---
 
@@ -110,6 +115,60 @@ In interactive mode:
 | Command | Description |
 |---------|-------------|
 | `/chain <prompt>` | Run multi-wave chain orchestration (analyze → plan → execute → finalize) |
+
+The orchestrator automatically allocates optimal models to each agent role based on
+configured agent model assignments. Roles map to agent types as follows:
+
+| Agent Role | Agent Type | Purpose |
+|------------|------------|---------|
+| `analyzer_a`, `analyzer_b` | `analysis` | Problem analysis |
+| `planner` | `plan` | Solution planning |
+| `validator`, `monitor` | `review` | Validation and quality |
+| `optimizer` | `debug` | Optimization and edge cases |
+| `executor_1`, `executor_2` | `code` | Code generation |
+| `reporter`, `cleaner` | `docs` | Documentation and formatting |
+
+Use `/set-agent-model` or environment variables to assign specific models per type.
+Unassigned types fall back to the session's current `--model`.
+
+---
+
+## Interactive Commands (Slash Commands)
+
+Type `/` in the REPL to see the full command menu. Key commands:
+
+### Session & Model
+
+| Command | Description |
+|---------|-------------|
+| `/model` | List available models and current status |
+| `/model <name>` | Switch to a new model |
+| `/model provider` | List available providers with status |
+| `/model provider <name>` | Switch to a new provider |
+| `/provider <name>` | Switch provider (shortcut) |
+| `/pull <model>` | Pull/download a model from the registry |
+| `/pull --force <model>` | Force re-download a model |
+| `/status` | Show session status |
+| `/clear` | Clear conversation history |
+| `/save [name]` | Save session |
+| `/load <name>` | Load session |
+
+### Tools
+
+| Command | Description |
+|---------|-------------|
+| `/tools` | List available built-in tools |
+| `/tool <name> [args]` | Invoke a tool (file\_read, shell\_exec, grep\_search, web\_fetch, model\_pull) |
+| `/diff` | Show git diff |
+
+### Memory & Context
+
+| Command | Description |
+|---------|-------------|
+| `/memory [note]` | View or add to project memory |
+| `/remember <key> <value>` | Store a memory entry |
+| `/recall [query]` | Recall stored memories |
+| `/compact` | Force context compaction |
 
 ---
 
@@ -154,6 +213,16 @@ ollama-cli --model codellama interactive
 ### Run with cloud provider
 ```bash
 ollama-cli --provider claude run "Review my code"
+```
+
+### Use a custom API host
+```bash
+ollama-cli --api http://myserver:11434 --model llama3.2 interactive
+```
+
+### Combine model, provider, and API
+```bash
+ollama-cli --model glm-5:cloud --provider hf --api http://remote:8080 interactive
 ```
 
 ### JSON output
