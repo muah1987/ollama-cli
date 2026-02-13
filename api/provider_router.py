@@ -22,6 +22,7 @@ from __future__ import annotations
 import abc
 import asyncio
 import json
+import logging
 import os
 from collections.abc import AsyncIterator
 from pathlib import Path
@@ -47,7 +48,9 @@ for _candidate in _env_candidates:
 # Lazy import: OllamaClient lives in the same package
 # ---------------------------------------------------------------------------
 
-from .ollama_client import OllamaClient, OllamaError  # noqa: E402
+from .ollama_client import OllamaClient, OllamaError, OllamaModelNotFoundError  # noqa: E402
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Custom exceptions
@@ -1017,6 +1020,28 @@ class ProviderRouter:
 
             try:
                 return await provider.chat(messages, model=effective_model, **kwargs)
+            except OllamaModelNotFoundError as exc:
+                # Model not found on Ollama -- try to auto-select a locally
+                # available model before falling through to other providers.
+                if provider_name == "ollama":
+                    try:
+                        available = await provider.list_models()
+                        if available:
+                            fallback_model = available[0]
+                            logger.warning(
+                                "Model %r not found on Ollama; retrying with %r",
+                                effective_model,
+                                fallback_model,
+                            )
+                            try:
+                                return await provider.chat(messages, model=fallback_model, **kwargs)
+                            except (ProviderError, OllamaError) as inner:
+                                last_error = inner
+                                continue
+                    except Exception:
+                        pass  # list_models failed; fall through normally
+                last_error = exc
+                continue
             except (ProviderError, OllamaError, httpx.ConnectError, httpx.TimeoutException) as exc:
                 last_error = exc
                 continue

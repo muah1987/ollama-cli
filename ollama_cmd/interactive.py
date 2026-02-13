@@ -851,6 +851,28 @@ class InteractiveMode:
 
         # Direct model switch
         old_model = self.session.model
+
+        # Validate the model exists locally when using the Ollama provider
+        if self.session.provider == "ollama":
+            from api.config import get_config
+            from ollama_cmd.root import _fetch_local_models
+
+            cfg = get_config()
+            local_models = _fetch_local_models(cfg.ollama_host)
+
+            if local_models and arg not in local_models:
+                # Try partial match (e.g. "llama3.2" matches "llama3.2:latest")
+                matched = [m for m in local_models if m.startswith(arg + ":") or m == arg]
+                if matched:
+                    arg = matched[0]
+                else:
+                    self._print_error(f"Model '{arg}' not found on local Ollama server.")
+                    self._print_system(f"  Available models: {', '.join(local_models[:8])}")
+                    if len(local_models) > 8:
+                        self._print_system(f"  ... and {len(local_models) - 8} more")
+                    self._print_system(f"  Pull it first with: /pull {arg}")
+                    return False
+
         self.session.model = arg
         self._print_info(f"🦙 Model switched: {old_model} → {arg}")
         self._print_status_bar()
