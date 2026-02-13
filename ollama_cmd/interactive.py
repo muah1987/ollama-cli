@@ -862,7 +862,7 @@ class InteractiveMode:
 
             if local_models and arg not in local_models:
                 # Try partial match (e.g. "llama3.2" matches "llama3.2:latest")
-                matched = [m for m in local_models if m.startswith(arg + ":") or m == arg]
+                matched = [m for m in local_models if m.startswith(arg + ":")]
                 if matched:
                     arg = matched[0]
                 else:

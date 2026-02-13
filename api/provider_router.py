@@ -1038,8 +1038,8 @@ class ProviderRouter:
                             except (ProviderError, OllamaError) as inner:
                                 last_error = inner
                                 continue
-                    except Exception:
-                        pass  # list_models failed; fall through normally
+                    except (OllamaError, httpx.ConnectError, httpx.TimeoutException) as list_exc:
+                        logger.debug("Failed to list Ollama models for fallback: %s", list_exc)
                 last_error = exc
                 continue
             except (ProviderError, OllamaError, httpx.ConnectError, httpx.TimeoutException) as exc:
