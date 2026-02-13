@@ -287,6 +287,14 @@ def cmd_interactive(args: argparse.Namespace) -> None:
     # Discover local models and resolve the best available model
     model = _resolve_model(cfg.ollama_model, cfg.ollama_host)
 
+    # Warn if a cloud model is selected but no API key is configured
+    if ":cloud" in model.lower() and not cfg.ollama_api_key:
+        console.print(
+            f"[yellow]Warning:[/yellow] Cloud model [bold]{model}[/bold] requires an API key."
+        )
+        console.print("  Run [green]ollama signin[/green] or set [green]OLLAMA_API_KEY[/green] in your .env file.")
+        console.print()
+
     # Resume the most recent session if --resume was passed
     session = None
     if getattr(args, "resume", False):
@@ -327,6 +335,15 @@ def cmd_run_prompt(args: argparse.Namespace) -> None:
 
     # Discover local models and resolve the best available model
     model = _resolve_model(cfg.ollama_model, cfg.ollama_host)
+
+    # Warn if a cloud model is selected but no API key is configured
+    if ":cloud" in model.lower() and not cfg.ollama_api_key:
+        console.print(
+            f"[yellow]Warning:[/yellow] Cloud model [bold]{model}[/bold] requires an API key."
+        )
+        console.print("  Run [green]ollama signin[/green] or set [green]OLLAMA_API_KEY[/green] in your .env file.")
+        console.print()
+
     session = Session(model=model, provider=cfg.provider)
 
     import asyncio

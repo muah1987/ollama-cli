@@ -893,7 +893,10 @@ class InteractiveMode:
         self._print_info(f"🦙 Model switched: {old_model} → {arg}")
         # Hint about cloud model authentication when a cloud tag is detected
         if ":cloud" in arg.lower():
-            self._print_system("  ☁️  Cloud models require authentication: run `ollama signin` first.")
+            has_key = bool(os.environ.get("OLLAMA_API_KEY", ""))
+            if not has_key:
+                self._print_system("  ☁️  Cloud models require an API key.")
+                self._print_system("  Run `ollama signin` or set OLLAMA_API_KEY in your .env file.")
             self._print_system("  Pull the model with: ollama pull " + arg)
         self._print_status_bar()
         return False
