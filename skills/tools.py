@@ -407,36 +407,50 @@ TOOLS: dict[str, dict[str, Any]] = {
         "function": tool_file_read,
         "description": "Read file contents",
         "risk": "low",
+        "arg_map": lambda a: (a.get("path", ""),),
+        "kwarg_map": lambda a: {},
     },
     "file_write": {
         "function": tool_file_write,
         "description": "Write content to a file",
         "risk": "medium",
+        "arg_map": lambda a: (a.get("path", ""), a.get("content", "")),
+        "kwarg_map": lambda a: {},
     },
     "file_edit": {
         "function": tool_file_edit,
         "description": "Edit a file (find and replace)",
         "risk": "medium",
+        "arg_map": lambda a: (a.get("path", ""), a.get("old_text", ""), a.get("new_text", "")),
+        "kwarg_map": lambda a: {},
     },
     "grep_search": {
         "function": tool_grep_search,
         "description": "Search for patterns in files",
         "risk": "low",
+        "arg_map": lambda a: (a.get("pattern", ""), a.get("path", ".")),
+        "kwarg_map": lambda a: {},
     },
     "shell_exec": {
         "function": tool_shell_exec,
         "description": "Execute a shell command",
         "risk": "high",
+        "arg_map": lambda a: (a.get("command", ""),),
+        "kwarg_map": lambda a: {},
     },
     "web_fetch": {
         "function": tool_web_fetch,
         "description": "Fetch content from a URL",
         "risk": "low",
+        "arg_map": lambda a: (a.get("url", ""),),
+        "kwarg_map": lambda a: {},
     },
     "model_pull": {
         "function": tool_model_pull,
         "description": "Pull (download) a model from the Ollama registry",
         "risk": "medium",
+        "arg_map": lambda a: (a.get("model_name", ""),),
+        "kwarg_map": lambda a: {"force": a.get("force", False)},
     },
 }
 
@@ -564,7 +578,10 @@ def execute_tool_call(tool_name: str, arguments: dict[str, Any]) -> dict[str, An
     """Execute a tool by name with the given arguments.
 
     This is used by the session to auto-execute tool calls returned by
-    the model via native function calling.
+    the model via native function calling.  Each tool entry in ``TOOLS``
+    includes ``arg_map`` and ``kwarg_map`` callables that translate the
+    argument dict into positional and keyword arguments for the tool
+    function, keeping dispatch generic.
 
     Parameters
     ----------
@@ -582,23 +599,13 @@ def execute_tool_call(tool_name: str, arguments: dict[str, Any]) -> dict[str, An
         return {"error": f"Unknown tool: {tool_name}"}
 
     func = entry["function"]
+    arg_map = entry.get("arg_map")
+    kwarg_map = entry.get("kwarg_map")
+
     try:
-        if tool_name == "file_read":
-            return func(arguments.get("path", ""))
-        elif tool_name == "file_write":
-            return func(arguments.get("path", ""), arguments.get("content", ""))
-        elif tool_name == "file_edit":
-            return func(arguments.get("path", ""), arguments.get("old_text", ""), arguments.get("new_text", ""))
-        elif tool_name == "grep_search":
-            return func(arguments.get("pattern", ""), arguments.get("path", "."))
-        elif tool_name == "shell_exec":
-            return func(arguments.get("command", ""))
-        elif tool_name == "web_fetch":
-            return func(arguments.get("url", ""))
-        elif tool_name == "model_pull":
-            return func(arguments.get("model_name", ""), force=arguments.get("force", False))
-        else:
-            return {"error": f"No invocation handler for tool: {tool_name}"}
+        args = arg_map(arguments) if arg_map else ()
+        kwargs = kwarg_map(arguments) if kwarg_map else {}
+        return func(*args, **kwargs)
     except Exception as exc:
         return {"error": str(exc)}
 
