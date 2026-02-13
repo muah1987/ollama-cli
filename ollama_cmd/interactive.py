@@ -863,12 +863,21 @@ class InteractiveMode:
             if local_models and arg not in local_models:
                 # Try partial match (e.g. "llama3.2" matches "llama3.2:latest" or "glm-5" matches "glm-5:cloud")
                 matched = [m for m in local_models if m.startswith(arg + ":")]
-                # Reverse partial match: "glm-5:cloud" matches base name "glm-5" in local list
+                # Reverse partial match: "glm-5:cloud" → look for "glm-5:cloud" among variants
                 if not matched and ":" in arg:
                     base_name = arg.split(":")[0]
-                    matched = [m for m in local_models if m == base_name or m.startswith(base_name + ":")]
+                    candidates = [m for m in local_models if m == base_name or m.startswith(base_name + ":")]
+                    if candidates:
+                        # User's exact tag not available; keep user's choice as-is
+                        # rather than silently substituting a different variant.
+                        # The runtime fallback in provider_router will handle retries.
+                        pass
                 if matched:
                     arg = matched[0]
+                elif ":" in arg:
+                    # User explicitly specified a tag (e.g. "glm-5:cloud"); honour
+                    # their choice even if the exact tag isn't pulled locally yet.
+                    pass
                 else:
                     self._print_error(f"Model '{arg}' not found on local Ollama server.")
                     self._print_system(f"  Available models: {', '.join(local_models[:8])}")
@@ -879,6 +888,14 @@ class InteractiveMode:
 
         self.session.model = arg
         self._print_info(f"🦙 Model switched: {old_model} → {arg}")
+        # Hint about cloud model authentication when a cloud tag is detected
+        if self.session.provider == "ollama" and ":cloud" in arg.lower():
+            from api.config import get_config as _get_config
+
+            if not _get_config().ollama_api_key:
+                self._print_system("  ☁️  Cloud models require an API key.")
+                self._print_system("  Run `ollama signin` or set OLLAMA_API_KEY in your .env file.")
+            self._print_system("  Pull the model with: ollama pull " + arg)
         self._print_status_bar()
         return False
 
@@ -1198,8 +1215,8 @@ class InteractiveMode:
             self._print_system("  Example: /set-agent-model code:hf:mistralai/Mistral-7B-Instruct-v0.3")
             return False
 
-        parts = arg.split(":")
-        if len(parts) != 3:
+        parts = arg.split(":", maxsplit=2)
+        if len(parts) < 3:
             self._print_error("Invalid format. Use: type:provider:model")
             return False
 

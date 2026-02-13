@@ -133,12 +133,14 @@ def _resolve_model(cfg_model: str, host: str) -> str:
         if m.startswith(cfg_model + ":") or m == cfg_model:
             return m
 
-    # Reverse partial match: "glm-5:cloud" matches base name "glm-5" in local list
+    # Reverse partial match: "glm-5:cloud" → keep configured model as-is
     if ":" in cfg_model:
         base_name = cfg_model.split(":")[0]
-        for m in local_models:
-            if m == base_name or m.startswith(base_name + ":"):
-                return m
+        candidates = [m for m in local_models if m == base_name or m.startswith(base_name + ":")]
+        # If related models exist but the exact tag isn't available,
+        # return the configured model as-is so the runtime can handle retries.
+        if candidates:
+            return cfg_model
 
     # Configured model not found – appoint the first available model
     chosen = local_models[0]
@@ -282,6 +284,14 @@ def cmd_interactive(args: argparse.Namespace) -> None:
     # Discover local models and resolve the best available model
     model = _resolve_model(cfg.ollama_model, cfg.ollama_host)
 
+    # Warn if a cloud model is selected but no API key is configured
+    if cfg.provider == "ollama" and ":cloud" in model.lower() and not cfg.ollama_api_key:
+        console.print(
+            f"[yellow]Warning:[/yellow] Cloud model [bold]{model}[/bold] requires an API key."
+        )
+        console.print("  Run [green]ollama signin[/green] or set [green]OLLAMA_API_KEY[/green] in your .env file.")
+        console.print()
+
     # Resume the most recent session if --resume was passed
     session = None
     if getattr(args, "resume", False):
@@ -322,6 +332,15 @@ def cmd_run_prompt(args: argparse.Namespace) -> None:
 
     # Discover local models and resolve the best available model
     model = _resolve_model(cfg.ollama_model, cfg.ollama_host)
+
+    # Warn if a cloud model is selected but no API key is configured
+    if cfg.provider == "ollama" and ":cloud" in model.lower() and not cfg.ollama_api_key:
+        console.print(
+            f"[yellow]Warning:[/yellow] Cloud model [bold]{model}[/bold] requires an API key."
+        )
+        console.print("  Run [green]ollama signin[/green] or set [green]OLLAMA_API_KEY[/green] in your .env file.")
+        console.print()
+
     session = Session(model=model, provider=cfg.provider)
 
     import asyncio
