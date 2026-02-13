@@ -104,12 +104,12 @@ class TestProviderFallbackModelOverride:
         assert "OK" in result.stdout
 
     def test_session_send_passes_model_to_router(self) -> None:
-        """Session.send() should pass self.model to provider_router.route()."""
+        """Session should pass self.model to provider_router.route()."""
         import inspect
 
         from model.session import Session
 
-        source = inspect.getsource(Session.send)
+        source = inspect.getsource(Session._route_with_tools)
         assert "model=self.model" in source
         assert "provider=self.provider" in source
 

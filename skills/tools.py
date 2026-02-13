@@ -457,6 +457,152 @@ def list_tools() -> list[dict[str, str]]:
     return [{"name": name, "description": info["description"], "risk": info["risk"]} for name, info in TOOLS.items()]
 
 
+def get_tools_schema() -> list[dict[str, Any]]:
+    """Return Ollama-native tool definitions for all built-in tools.
+
+    The returned list can be passed directly as the ``tools`` parameter
+    in an Ollama ``/api/chat`` request so that the model can invoke tools
+    natively instead of relying on text-based suggestions.
+
+    Returns
+    -------
+    List of tool definition dicts in Ollama function-calling format.
+    """
+    return [
+        {
+            "type": "function",
+            "function": {
+                "name": "file_read",
+                "description": "Read the contents of a file",
+                "parameters": {
+                    "type": "object",
+                    "required": ["path"],
+                    "properties": {
+                        "path": {"type": "string", "description": "Path to the file to read"},
+                    },
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "file_write",
+                "description": "Write content to a file (creates parent directories as needed)",
+                "parameters": {
+                    "type": "object",
+                    "required": ["path", "content"],
+                    "properties": {
+                        "path": {"type": "string", "description": "Destination file path"},
+                        "content": {"type": "string", "description": "Text content to write"},
+                    },
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "file_edit",
+                "description": "Replace the first occurrence of old_text with new_text in a file",
+                "parameters": {
+                    "type": "object",
+                    "required": ["path", "old_text", "new_text"],
+                    "properties": {
+                        "path": {"type": "string", "description": "File to edit"},
+                        "old_text": {"type": "string", "description": "Text to find and replace"},
+                        "new_text": {"type": "string", "description": "Replacement text"},
+                    },
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "grep_search",
+                "description": "Search for a pattern in files under a directory using grep",
+                "parameters": {
+                    "type": "object",
+                    "required": ["pattern"],
+                    "properties": {
+                        "pattern": {"type": "string", "description": "Text or regex pattern to search for"},
+                        "path": {"type": "string", "description": "Directory or file to search in (default: current dir)"},
+                    },
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "shell_exec",
+                "description": "Execute a shell command and return its output",
+                "parameters": {
+                    "type": "object",
+                    "required": ["command"],
+                    "properties": {
+                        "command": {"type": "string", "description": "Shell command to run"},
+                    },
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "web_fetch",
+                "description": "Fetch content from a URL",
+                "parameters": {
+                    "type": "object",
+                    "required": ["url"],
+                    "properties": {
+                        "url": {"type": "string", "description": "URL to fetch"},
+                    },
+                },
+            },
+        },
+    ]
+
+
+def execute_tool_call(tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+    """Execute a tool by name with the given arguments.
+
+    This is used by the session to auto-execute tool calls returned by
+    the model via native function calling.
+
+    Parameters
+    ----------
+    tool_name:
+        Name of the tool to execute (e.g. ``file_read``).
+    arguments:
+        Dict of keyword arguments for the tool function.
+
+    Returns
+    -------
+    Tool result dict with output or ``error`` key.
+    """
+    entry = TOOLS.get(tool_name)
+    if entry is None:
+        return {"error": f"Unknown tool: {tool_name}"}
+
+    func = entry["function"]
+    try:
+        if tool_name == "file_read":
+            return func(arguments.get("path", ""))
+        elif tool_name == "file_write":
+            return func(arguments.get("path", ""), arguments.get("content", ""))
+        elif tool_name == "file_edit":
+            return func(arguments.get("path", ""), arguments.get("old_text", ""), arguments.get("new_text", ""))
+        elif tool_name == "grep_search":
+            return func(arguments.get("pattern", ""), arguments.get("path", "."))
+        elif tool_name == "shell_exec":
+            return func(arguments.get("command", ""))
+        elif tool_name == "web_fetch":
+            return func(arguments.get("url", ""))
+        elif tool_name == "model_pull":
+            return func(arguments.get("model_name", ""), force=arguments.get("force", False))
+        else:
+            return {"error": f"No invocation handler for tool: {tool_name}"}
+    except Exception as exc:
+        return {"error": str(exc)}
+
+
 def fire_skill_trigger(skill_name: str, skill_params: dict[str, Any] | None = None) -> bool:
     """Fire the SkillTrigger hook for the skill→hook→.py pipeline.
 

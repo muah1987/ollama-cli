@@ -170,11 +170,11 @@ class TestSystemPromptToolAwareness:
         assert "grep_search" in prompt
 
     def test_system_prompt_mentions_tool_command(self) -> None:
-        """The system prompt should instruct the AI about /tool commands."""
+        """The system prompt should instruct the AI about tool calling."""
         from model.session import Session
 
         prompt = Session._build_system_prompt()
-        assert "/tool" in prompt
+        assert "tool" in prompt.lower()
 
     def test_session_start_sets_system_message(self) -> None:
         """Session.start() should always set a system message (even without OLLAMA.md)."""

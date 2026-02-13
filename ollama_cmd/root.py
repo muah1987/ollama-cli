@@ -128,10 +128,17 @@ def _resolve_model(cfg_model: str, host: str) -> str:
     if cfg_model in local_models:
         return cfg_model
 
-    # Partial match: "llama3.2" matches "llama3.2:latest"
+    # Partial match: "llama3.2" matches "llama3.2:latest" or "llama3.2:cloud"
     for m in local_models:
         if m.startswith(cfg_model + ":") or m == cfg_model:
             return m
+
+    # Reverse partial match: "glm-5:cloud" matches base name "glm-5" in local list
+    if ":" in cfg_model:
+        base_name = cfg_model.split(":")[0]
+        for m in local_models:
+            if m == base_name or m.startswith(base_name + ":"):
+                return m
 
     # Configured model not found – appoint the first available model
     chosen = local_models[0]

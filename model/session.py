@@ -217,78 +217,16 @@ class Session:
         if not messages or messages[-1]["role"] != "user" or messages[-1]["content"] != message:
             messages.append({"role": "user", "content": message})
 
+        # Load native tool definitions for function calling
+        tools_schema = self._get_tools_schema()
+
         try:
-            # Route through the provider router
-            response = await self.provider_router.route(
-                task_type="agent",
+            response_content, response_metrics = await self._route_with_tools(
                 messages=messages,
+                target_cm=target_cm,
+                tools_schema=tools_schema,
                 agent_type=agent_type,
-                model=self.model,
-                provider=self.provider,
             )
-
-            # Extract response content and metrics
-            if isinstance(response, dict):
-                # Handle non-streaming response -- multiple provider formats
-                # 1. OpenAI/Codex/HF format: {"choices": [{"message": {"content": ...}}]}
-                choices = response.get("choices", [])
-                if choices and isinstance(choices, list) and len(choices) > 0:
-                    message_content = choices[0].get("message", {})
-                    response_content = message_content.get("content", "[empty response]")
-                # 2. Ollama native format: {"message": {"role": "assistant", "content": ...}}
-                elif "message" in response and isinstance(response["message"], dict):
-                    response_content = response["message"].get("content", "[empty response]")
-                # 3. Anthropic format: {"content": [{"text": ...}]}
-                elif "content" in response and isinstance(response["content"], list):
-                    parts = response["content"]
-                    response_content = (
-                        " ".join(p.get("text", "") for p in parts if isinstance(p, dict) and p.get("text"))
-                        or "[empty response]"
-                    )
-                # 4. Gemini format: {"candidates": [{"content": {"parts": [{"text": ...}]}}]}
-                elif "candidates" in response:
-                    candidates = response["candidates"]
-                    if isinstance(candidates, list) and candidates:
-                        first = candidates[0]
-                        if isinstance(first, dict):
-                            cparts = first.get("content", {})
-                            if isinstance(cparts, dict):
-                                part_list = cparts.get("parts", [])
-                                if isinstance(part_list, list) and part_list:
-                                    response_content = str(part_list[0].get("text", "[empty response]"))
-                                else:
-                                    response_content = "[empty response]"
-                            else:
-                                response_content = "[empty response]"
-                        else:
-                            response_content = "[empty response]"
-                    else:
-                        response_content = "[empty response]"
-                # 5. Direct content string or fallback
-                elif "content" in response:
-                    response_content = str(response["content"])
-                # 6. Ollama generate format: {"response": "..."}
-                elif "response" in response:
-                    response_content = str(response["response"])
-                else:
-                    response_content = "[no content]"
-
-                # Extract token usage
-                usage = response.get("usage", {})
-                response_metrics = {
-                    "prompt_eval_count": usage.get("prompt_tokens", 0),
-                    "eval_count": usage.get("completion_tokens", 0),
-                    "total_tokens": usage.get("total_tokens", 0),
-                }
-            else:
-                # Handle streaming response (simple fallback)
-                response_content = f"[streaming response for: {message[:50]}...]"
-                response_metrics = {
-                    "prompt_eval_count": target_cm._estimated_context_tokens,
-                    "eval_count": max(1, len(response_content) // 4),
-                    "eval_duration": 1_000_000_000,  # 1 second stub
-                    "total_duration": 1_500_000_000,
-                }
         except Exception as e:
             logger.warning("Provider call failed, using placeholder: %s", e)
             # Fallback to placeholder on error
@@ -564,6 +502,200 @@ class Session:
 
     # -- private helpers -----------------------------------------------------
 
+    # Maximum number of consecutive tool-call rounds to prevent runaway loops
+    _MAX_TOOL_ROUNDS = 10
+
+    @staticmethod
+    def _get_tools_schema() -> list[dict[str, Any]]:
+        """Return the native tool definitions for the Ollama API.
+
+        Falls back to an empty list if the tools module is unavailable.
+        """
+        try:
+            from skills.tools import get_tools_schema
+
+            return get_tools_schema()
+        except Exception:
+            return []
+
+    @staticmethod
+    def _extract_response(response: dict[str, Any]) -> tuple[str, list[dict[str, Any]]]:
+        """Extract text content and tool calls from a provider response.
+
+        Returns
+        -------
+        Tuple of (response_text, tool_calls_list).
+        """
+        tool_calls: list[dict[str, Any]] = []
+
+        # 1. OpenAI/Codex/HF format: {"choices": [{"message": {"content":..., "tool_calls":...}}]}
+        choices = response.get("choices", [])
+        if choices and isinstance(choices, list) and len(choices) > 0:
+            msg = choices[0].get("message", {})
+            content = msg.get("content") or ""
+            tool_calls = msg.get("tool_calls", []) or []
+            return content or "[empty response]", tool_calls
+
+        # 2. Ollama native format: {"message": {"role": "assistant", "content":..., "tool_calls":...}}
+        if "message" in response and isinstance(response["message"], dict):
+            msg = response["message"]
+            content = msg.get("content") or ""
+            tool_calls = msg.get("tool_calls", []) or []
+            return content or "[empty response]", tool_calls
+
+        # 3. Anthropic format: {"content": [{"text":...} | {"type":"tool_use",...}]}
+        if "content" in response and isinstance(response["content"], list):
+            parts = response["content"]
+            text_parts = [p.get("text", "") for p in parts if isinstance(p, dict) and p.get("text")]
+            content = " ".join(text_parts) or "[empty response]"
+            return content, tool_calls
+
+        # 4. Gemini format: {"candidates": [{"content": {"parts": [{"text":...}]}}]}
+        if "candidates" in response:
+            candidates = response["candidates"]
+            if isinstance(candidates, list) and candidates:
+                first = candidates[0]
+                if isinstance(first, dict):
+                    cparts = first.get("content", {})
+                    if isinstance(cparts, dict):
+                        part_list = cparts.get("parts", [])
+                        if isinstance(part_list, list) and part_list:
+                            return str(part_list[0].get("text", "[empty response]")), tool_calls
+            return "[empty response]", tool_calls
+
+        # 5. Direct content string
+        if "content" in response:
+            return str(response["content"]), tool_calls
+
+        # 6. Ollama generate format: {"response": "..."}
+        if "response" in response:
+            return str(response["response"]), tool_calls
+
+        return "[no content]", tool_calls
+
+    @staticmethod
+    def _extract_metrics(response: dict[str, Any]) -> dict[str, Any]:
+        """Extract token usage metrics from a provider response."""
+        usage = response.get("usage", {})
+        return {
+            "prompt_eval_count": usage.get("prompt_tokens", 0),
+            "eval_count": usage.get("completion_tokens", 0),
+            "total_tokens": usage.get("total_tokens", 0),
+        }
+
+    async def _route_with_tools(
+        self,
+        messages: list[dict[str, Any]],
+        target_cm: Any,
+        tools_schema: list[dict[str, Any]],
+        agent_type: str | None = None,
+    ) -> tuple[str, dict[str, Any]]:
+        """Route a request and handle tool-call loops.
+
+        When the model responds with tool calls, this method auto-executes
+        the tools and feeds the results back to the model, repeating until
+        the model produces a final text response or the maximum number of
+        rounds is reached.
+
+        Returns
+        -------
+        Tuple of (final_response_content, response_metrics).
+        """
+        kwargs: dict[str, Any] = {}
+        if tools_schema:
+            kwargs["tools"] = tools_schema
+
+        accumulated_content: list[str] = []
+
+        for _round in range(self._MAX_TOOL_ROUNDS):
+            response = await self.provider_router.route(
+                task_type="agent",
+                messages=messages,
+                agent_type=agent_type,
+                model=self.model,
+                provider=self.provider,
+                **kwargs,
+            )
+
+            if not isinstance(response, dict):
+                # Streaming response – no tool-call support
+                content = "[streaming response]"
+                metrics: dict[str, Any] = {
+                    "prompt_eval_count": target_cm._estimated_context_tokens,
+                    "eval_count": max(1, len(content) // 4),
+                    "eval_duration": 1_000_000_000,
+                    "total_duration": 1_500_000_000,
+                }
+                return content, metrics
+
+            response_content, tool_calls = self._extract_response(response)
+            response_metrics = self._extract_metrics(response)
+
+            if not tool_calls:
+                # No tool calls – return the final text response
+                if accumulated_content:
+                    accumulated_content.append(response_content)
+                    return "\n".join(accumulated_content), response_metrics
+                return response_content, response_metrics
+
+            # The model wants to call tools – execute them
+            if response_content and response_content != "[empty response]":
+                accumulated_content.append(response_content)
+
+            # Append the assistant message with tool calls to the conversation
+            assistant_msg: dict[str, Any] = {"role": "assistant", "content": response_content or ""}
+            assistant_msg["tool_calls"] = tool_calls
+            messages.append(assistant_msg)
+
+            # Execute each tool call and append results
+            for tc in tool_calls:
+                func_info = tc.get("function", tc)
+                tool_name = func_info.get("name", "")
+                arguments = func_info.get("arguments", {})
+                if isinstance(arguments, str):
+                    try:
+                        arguments = json.loads(arguments)
+                    except (json.JSONDecodeError, TypeError):
+                        arguments = {}
+
+                tool_result = self._execute_tool(tool_name, arguments)
+                result_str = json.dumps(tool_result, default=str)[:3000]
+
+                logger.info("Tool %s executed: %s", tool_name, result_str[:200])
+
+                # Append tool result as a tool message
+                messages.append({
+                    "role": "tool",
+                    "content": result_str,
+                })
+
+        # Max rounds reached – return what we have
+        if accumulated_content:
+            return "\n".join(accumulated_content), response_metrics
+        return response_content, response_metrics
+
+    @staticmethod
+    def _execute_tool(tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+        """Execute a built-in tool by name.
+
+        Parameters
+        ----------
+        tool_name:
+            Name of the tool (e.g. ``file_read``).
+        arguments:
+            Keyword arguments for the tool.
+
+        Returns
+        -------
+        Tool result dict.
+        """
+        try:
+            from skills.tools import execute_tool_call
+
+            return execute_tool_call(tool_name, arguments)
+        except Exception as exc:
+            return {"error": str(exc)}
+
     @staticmethod
     def _build_system_prompt() -> str:
         """Build a system prompt that includes available tools and skills.
@@ -589,18 +721,11 @@ class Session:
             for t in tools:
                 prompt += f"- {t['name']}: {t['description']}\n"
             prompt += (
-                "\nWhen a user asks you to perform an action that requires a tool "
-                "(e.g. reading files, editing code, running shell commands, fetching URLs, "
-                "or searching files), explain which tool to use and suggest the "
-                "appropriate /tool command. For example:\n"
-                "- To read a file: /tool file_read <path>\n"
-                "- To run a command: /tool shell_exec <command>\n"
-                "- To search: /tool grep_search <pattern>\n"
-                "- To fetch a URL: /tool web_fetch <url>\n"
-                "- To clone a repo: /tool shell_exec git clone <url>\n"
-                "\nAlways provide actionable suggestions using available tools "
-                "when the user's request involves file system operations, "
-                "shell commands, or web resources.\n"
+                "\nYou can call these tools directly using native function calling. "
+                "When a user asks you to perform an action (e.g. reading files, editing code, "
+                "running shell commands, fetching URLs, searching files, or cloning a repo), "
+                "use the appropriate tool call to execute the action. "
+                "Analyze the tool results and provide a helpful summary to the user.\n"
             )
 
         return prompt
