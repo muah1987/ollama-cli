@@ -557,6 +557,39 @@ class TestBuildCommand:
         assert result.returncode == 0
         assert "not found" in result.stdout.lower()
 
+    def test_build_with_plan_file(self) -> None:
+        """Should run without AttributeError when building a real plan file."""
+        script = (
+            "import sys, asyncio, tempfile, os\n"
+            "sys.path.insert(0, '.')\n"
+            "from model.session import Session\n"
+            "from ollama_cmd.interactive import InteractiveMode\n"
+            "async def t():\n"
+            "    s = Session(model='m', provider='ollama')\n"
+            "    await s.start()\n"
+            "    # Pre-send a message so the planner_messages path is exercised\n"
+            "    s.agent_comm.send(sender_id='planner', recipient_id='builder',\n"
+            "                      content='context info', message_type='info')\n"
+            "    r = InteractiveMode(s)\n"
+            "    fd, p = tempfile.mkstemp(suffix='.md')\n"
+            "    try:\n"
+            "        with open(p, 'w') as f:\n"
+            "            f.write('# Plan\\nStep 1: test\\n')\n"
+            "        result = await r._cmd_build(p)\n"
+            "        print('exit:', result)\n"
+            "    finally:\n"
+            "        os.unlink(p)\n"
+            "asyncio.run(t())\n"
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_DIR,
+        )
+        assert result.returncode == 0, f"stderr: {result.stderr}"
+        assert "AttributeError" not in result.stderr
+
 
 class TestTeamPlanningCommand:
     """Tests for the /team_planning slash command."""
