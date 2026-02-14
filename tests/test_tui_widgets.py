@@ -168,10 +168,10 @@ class TestInputAreaCSS:
         assert "InputArea" in InputArea.DEFAULT_CSS
 
     def test_css_has_dock_bottom(self):
-        """InputArea CSS docks to bottom."""
+        """InputArea CSS does not dock individually (parent #bottom-zone docks)."""
         from tui.widgets.input_area import InputArea
 
-        assert "dock: bottom" in InputArea.DEFAULT_CSS
+        assert "dock: bottom" not in InputArea.DEFAULT_CSS
 
 
 # ---------------------------------------------------------------------------
@@ -342,10 +342,10 @@ class TestStatusPanelCSS:
         assert "StatusPanel" in StatusPanel.DEFAULT_CSS
 
     def test_css_has_dock_bottom(self):
-        """StatusPanel CSS docks to bottom."""
+        """StatusPanel CSS does not dock individually (parent #bottom-zone docks)."""
         from tui.widgets.status_panel import StatusPanel
 
-        assert "dock: bottom" in StatusPanel.DEFAULT_CSS
+        assert "dock: bottom" not in StatusPanel.DEFAULT_CSS
 
 
 # ---------------------------------------------------------------------------
@@ -530,3 +530,19 @@ class TestLlamaSpinnerCSS:
 
         assert LlamaSpinner.DEFAULT_CSS is not None
         assert "LlamaSpinner" in LlamaSpinner.DEFAULT_CSS
+
+
+# ---------------------------------------------------------------------------
+# ChatScreen bottom-zone layout tests (regression for input visibility)
+# ---------------------------------------------------------------------------
+
+
+class TestChatScreenBottomZone:
+    """Verify InputArea and StatusPanel are stacked in #bottom-zone."""
+
+    def test_bottom_zone_has_dock_bottom(self):
+        """The #bottom-zone container should dock to bottom in ChatScreen CSS."""
+        from tui.screens.chat import ChatScreen
+
+        assert "#bottom-zone" in ChatScreen.DEFAULT_CSS
+        assert "dock: bottom" in ChatScreen.DEFAULT_CSS

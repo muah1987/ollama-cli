@@ -183,6 +183,12 @@ class ChatScreen(Screen):
         padding: 1 2;
         text-align: center;
     }
+
+    #bottom-zone {
+        dock: bottom;
+        height: auto;
+        max-height: 14;
+    }
     """
 
     def __init__(self, session=None, **kwargs) -> None:
@@ -219,13 +225,16 @@ class ChatScreen(Screen):
             id="message-area",
         )
 
-        # ── MIDDLE zone: intent badge + spinner + input box ──
+        # ── MIDDLE zone: intent badge + spinner ──
         yield IntentBadge()
         yield LlamaSpinner()
-        yield InputArea()
 
-        # ── BOTTOM zone: persistent status bar ──
-        yield StatusPanel()
+        # ── BOTTOM zone: input box + persistent status bar ──
+        yield Vertical(
+            InputArea(),
+            StatusPanel(),
+            id="bottom-zone",
+        )
 
     def on_mount(self) -> None:
         """Initialize the screen after mounting."""

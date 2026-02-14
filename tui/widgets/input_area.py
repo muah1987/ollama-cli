@@ -20,7 +20,6 @@ class InputArea(Widget):
 
     DEFAULT_CSS = """
     InputArea {
-        dock: bottom;
         height: auto;
         max-height: 8;
         padding: 0 1;
