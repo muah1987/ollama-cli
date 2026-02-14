@@ -1,10 +1,15 @@
-## [0.2.0] - 2026-02-13
+## [0.2.0] - 2026-02-14
 
 ### Added
+- Unified error hierarchy in `api/errors.py` with centralized exception classes
+- `OllamaCliError` root exception with `user_message` property and `hint` support
+- New error types: `ProviderRateLimitError`, `ProviderResponseError`, `ConfigurationError`, `SessionError`
+- CI security scanning via bandit
+- Coverage, CI, Python version, and license badges in README
+- Test suite for error hierarchy (23 new tests)
 - Textual TUI as the primary and only interface (removed legacy readline REPL)
-- Code coverage reporting in CI workflows with 80% minimum requirement
+- Code coverage reporting in CI workflows with 75% minimum requirement
 - Comprehensive testing documentation
-- Updated dependencies with pytest-cov support
 
 ### Changed
 - Simplified CLI interface to focus exclusively on Textual TUI

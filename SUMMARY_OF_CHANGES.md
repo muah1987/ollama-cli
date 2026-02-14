@@ -1,6 +1,39 @@
 # Summary of Changes Made
 
-## Completed Tasks
+## v0.2.0 Quality Improvements (2026-02-14)
+
+### Completed Tasks
+
+1. **Unified Error Hierarchy**:
+   - Created `api/errors.py` with centralized exception classes
+   - Root `OllamaCliError` with `user_message` property and `hint` support
+   - Provider errors: `ProviderError`, `ProviderUnavailableError`, `ProviderAuthError`, `ProviderRateLimitError`, `ProviderResponseError`
+   - Ollama errors: `OllamaError`, `OllamaConnectionError`, `OllamaModelNotFoundError`
+   - Session/config errors: `ConfigurationError`, `SessionError`
+   - Refactored `ollama_client.py` and `provider_router.py` to import from centralized module
+   - Updated `api/__init__.py` to export all error types
+
+2. **CI/CD Pipeline Enhancement**:
+   - Added security scanning (bandit) to CI workflow
+   - Added import sorting check to CI workflow
+   - Coverage reporting enforced at 75% minimum
+
+3. **README Badges**:
+   - Added CI build status badge
+   - Added Codecov coverage badge
+   - Added Python version badge
+   - Added MIT license badge
+
+4. **New Tests**:
+   - Added `test_error_hierarchy.py` with 23 tests for unified error hierarchy
+   - Total test count: 1,135 passing, 4 skipped
+
+5. **Documentation Updates**:
+   - Updated `IMPROVEMENT_PLAN.md` with completion status for all Sprint 1 items
+   - Updated `TODO.md` with accurate test counts and completed tasks
+   - Updated `ROADMAP.md` to reflect v0.2.0 current status
+
+## Previous Changes (v0.2.0 Initial)
 
 1. **Interface Simplification**:
    - Removed legacy readline-based REPL fallback in `ollama_cmd/root.py`
