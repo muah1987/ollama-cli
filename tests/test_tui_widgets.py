@@ -544,5 +544,8 @@ class TestChatScreenBottomZone:
         """The #bottom-zone container should dock to bottom in ChatScreen CSS."""
         from tui.screens.chat import ChatScreen
 
-        assert "#bottom-zone" in ChatScreen.DEFAULT_CSS
-        assert "dock: bottom" in ChatScreen.DEFAULT_CSS
+        css = ChatScreen.DEFAULT_CSS
+        # Find the #bottom-zone block and verify it contains dock: bottom
+        start = css.index("#bottom-zone")
+        block = css[start : css.index("}", start) + 1]
+        assert "dock: bottom" in block

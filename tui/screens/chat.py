@@ -187,6 +187,7 @@ class ChatScreen(Screen):
     #bottom-zone {
         dock: bottom;
         height: auto;
+        /* InputArea max-height (8) + StatusPanel max-height (5) + 1 padding */
         max-height: 14;
     }
     """
