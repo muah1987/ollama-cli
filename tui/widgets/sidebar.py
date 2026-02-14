@@ -1,4 +1,4 @@
-"""Sidebar widget -- sessions, agents, tools panel."""
+"""Sidebar widget -- Claude Code-style sessions, agents, tools panel."""
 
 from __future__ import annotations
 
@@ -16,8 +16,8 @@ class Sidebar(Widget):
     Sidebar {
         dock: left;
         width: 30;
-        background: #1e2030;
-        border-right: solid #24283b;
+        background: #010409;
+        border-right: solid #21262d;
         padding: 1 0;
         display: block;
     }
@@ -28,7 +28,7 @@ class Sidebar(Widget):
 
     Sidebar .sidebar-header {
         text-style: bold;
-        color: #7aa2f7;
+        color: #7c8aff;
         padding: 0 2;
         margin: 0 0 1 0;
     }
@@ -39,18 +39,18 @@ class Sidebar(Widget):
     }
 
     Sidebar .section-title {
-        color: #bb9af7;
+        color: #a78bfa;
         text-style: bold;
         padding: 0 1;
     }
 
     Sidebar .sidebar-item {
-        color: #c0caf5;
+        color: #e6edf3;
         padding: 0 2;
     }
 
     Sidebar .sidebar-item-dim {
-        color: #565f89;
+        color: #484f58;
         padding: 0 2;
     }
     """

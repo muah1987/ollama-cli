@@ -1,52 +1,52 @@
-/* Light theme */
+/* Light theme -- Claude Code light variant */
 
 Screen {
-    background: #f5f5f5;
-    color: #1a1b26;
+    background: #ffffff;
+    color: #1f2328;
 }
 
 Header {
-    background: #e1e2e7;
-    color: #3760bf;
+    background: #f6f8fa;
+    color: #5b4fcf;
 }
 
 Footer {
-    background: #e1e2e7;
-    color: #6172b0;
+    background: #f6f8fa;
+    color: #656d76;
 }
 
 #message-area {
     background: #ffffff;
-    scrollbar-color: #b4b8c6;
-    scrollbar-color-hover: #3760bf;
+    scrollbar-color: #d0d7de;
+    scrollbar-color-hover: #5b4fcf;
 }
 
 .system-message {
-    color: #6172b0;
+    color: #656d76;
     text-style: dim italic;
     padding: 0 2;
 }
 
 Sidebar {
-    background: #e9e9ec;
-    border-right: solid #d0d0d0;
+    background: #f6f8fa;
+    border-right: solid #d0d7de;
 }
 
 Input {
-    border: round #b4b8c6;
+    border: round #d0d7de;
     background: #ffffff;
-    color: #1a1b26;
+    color: #1f2328;
 }
 
 Input:focus {
-    border: round #3760bf;
+    border: round #5b4fcf;
 }
 
 Button {
-    background: #3760bf;
+    background: #5b4fcf;
     color: #ffffff;
 }
 
 Button:hover {
-    background: #5a7dd3;
+    background: #7c6fe0;
 }

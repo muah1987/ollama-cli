@@ -1,4 +1,4 @@
-"""Input area widget -- multi-line input with command awareness."""
+"""Input area widget -- Claude Code-style input with prompt indicator."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ class InputArea(Widget):
         height: auto;
         max-height: 6;
         padding: 0 1;
-        background: #1a1b26;
+        background: #0d1117;
     }
 
     InputArea Horizontal {
@@ -30,20 +30,20 @@ class InputArea(Widget):
 
     InputArea Input {
         width: 1fr;
-        border: round #565f89;
-        background: #24283b;
-        color: #c0caf5;
+        border: round #30363d;
+        background: #161b22;
+        color: #e6edf3;
     }
 
     InputArea Input:focus {
-        border: round #7aa2f7;
+        border: round #7c8aff;
     }
 
     InputArea .prompt-indicator {
-        width: 4;
+        width: 3;
         height: 3;
         content-align: center middle;
-        color: #7aa2f7;
+        color: #a78bfa;
         text-style: bold;
     }
     """
@@ -62,7 +62,7 @@ class InputArea(Widget):
 
     def compose(self) -> ComposeResult:
         with Horizontal():
-            yield Label(">>>", classes="prompt-indicator")
+            yield Label("❯", classes="prompt-indicator")
             yield Input(placeholder="Type a message or /command...", id="chat-input")
 
     def on_input_submitted(self, event: Input.Submitted) -> None:

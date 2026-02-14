@@ -31,12 +31,12 @@ class ChatScreen(Screen):
 
     #message-area {
         height: 1fr;
-        padding: 1 2;
-        background: #1a1b26;
+        padding: 0 1;
+        background: #0d1117;
     }
 
     #welcome-message {
-        color: #565f89;
+        color: #484f58;
         text-style: italic;
         padding: 1 2;
         text-align: center;
@@ -53,10 +53,13 @@ class ChatScreen(Screen):
         yield Sidebar()
         yield ScrollableContainer(
             Static(
-                "Welcome to ollama-cli!\n\n"
-                "Type a message to chat with the AI.\n"
-                "Use /command for slash commands or @agent for agent routing.\n"
-                "Press Ctrl+P for the command palette.",
+                "╭──────────────────────────────────────╮\n"
+                "│       ollama-cli · AI Assistant       │\n"
+                "╰──────────────────────────────────────╯\n\n"
+                "  Type a message to start a conversation.\n"
+                "  Use /command for slash commands.\n"
+                "  Use @agent to route to a specific agent.\n"
+                "  Press Ctrl+B to toggle the sidebar.",
                 id="welcome-message",
             ),
             id="message-area",
@@ -68,6 +71,11 @@ class ChatScreen(Screen):
 
     def on_mount(self) -> None:
         """Initialize the screen after mounting."""
+        # Hide sidebar by default (toggle with Ctrl+B)
+        sidebar = self.query_one(Sidebar)
+        sidebar.add_class("-hidden")
+        sidebar.visible = False
+
         # Hide spinner initially
         spinner = self.query_one(LlamaSpinner)
         spinner.display = False

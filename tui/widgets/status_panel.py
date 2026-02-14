@@ -1,4 +1,4 @@
-"""Status panel widget -- real-time session status display."""
+"""Status panel widget -- Claude Code-style compact status bar."""
 
 from __future__ import annotations
 
@@ -8,16 +8,16 @@ from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import Label
 
-# Agent type color map (matching interactive.py)
+# Agent type color map
 _AGENT_COLORS: dict[str, str] = {
-    "code": "#bb9af7",  # magenta/purple
-    "review": "#7dcfff",  # cyan
-    "test": "#e0af68",  # yellow
-    "plan": "#7aa2f7",  # blue
-    "docs": "#9ece6a",  # green
-    "debug": "#f7768e",  # red
-    "orchestrator": "#ff9e64",  # orange
-    "default": "#c0caf5",  # white/gray
+    "code": "#a78bfa",  # purple
+    "review": "#79c0ff",  # blue
+    "test": "#e3b341",  # yellow
+    "plan": "#7c8aff",  # indigo
+    "docs": "#7ee787",  # green
+    "debug": "#ff7b72",  # red
+    "orchestrator": "#ffa657",  # orange
+    "default": "#e6edf3",  # white
 }
 
 
@@ -28,8 +28,8 @@ class StatusPanel(Widget):
     StatusPanel {
         dock: bottom;
         height: 1;
-        background: #24283b;
-        color: #565f89;
+        background: #161b22;
+        color: #484f58;
         padding: 0 1;
     }
 
@@ -44,28 +44,28 @@ class StatusPanel(Widget):
     }
 
     StatusPanel .status-model {
-        color: #7aa2f7;
+        color: #7c8aff;
         text-style: bold;
     }
 
     StatusPanel .status-provider {
-        color: #bb9af7;
+        color: #a78bfa;
     }
 
     StatusPanel .status-context {
-        color: #9ece6a;
+        color: #7ee787;
     }
 
     StatusPanel .status-tokens {
-        color: #e0af68;
+        color: #e3b341;
     }
 
     StatusPanel .status-cost {
-        color: #7dcfff;
+        color: #79c0ff;
     }
 
     StatusPanel .status-job {
-        color: #f7768e;
+        color: #ff7b72;
         text-style: bold;
     }
     """
@@ -124,11 +124,11 @@ class StatusPanel(Widget):
             label.update(f"Context: {value:.0%}")
             # Color-code: green <50%, yellow <75%, red >=75%
             if value < 0.5:
-                label.styles.color = "#9ece6a"
+                label.styles.color = "#7ee787"
             elif value < 0.75:
-                label.styles.color = "#e0af68"
+                label.styles.color = "#e3b341"
             else:
-                label.styles.color = "#f7768e"
+                label.styles.color = "#ff7b72"
         except Exception:
             pass
 
