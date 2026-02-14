@@ -1537,7 +1537,7 @@ class CommandProcessor:
     # -- project commands ----------------------------------------------------
 
     def _cmd_init(self, arg: str) -> CommandResult:
-        """Initialize the current folder as an cli-ollama project."""
+        """Initialize the current folder as a cli-ollama project."""
         from pathlib import Path
 
         project_memory = Path("OLLAMA.md")

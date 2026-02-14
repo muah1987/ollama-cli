@@ -35,7 +35,7 @@ def test_ollama_detection_command() -> None:
     assert hook_path.exists(), "install_ollama.py hook should exist"
 
 
-def test_pyproject_only_has_ollama_cli_entry_point() -> None:
+def test_pyproject_only_has_cli_ollama_entry_point() -> None:
     """Test that pyproject.toml only defines 'cli-ollama', not a bare 'ollama' entry point."""
     pyproject_path = PROJECT_ROOT / "pyproject.toml"
     with open(pyproject_path, "rb") as f:
@@ -51,8 +51,8 @@ def test_pyproject_only_has_ollama_cli_entry_point() -> None:
     )
 
 
-def test_install_sh_wrapper_is_ollama_cli() -> None:
-    """Test that install.sh creates an 'cli-ollama' wrapper and not a bare 'ollama' wrapper."""
+def test_install_sh_wrapper_is_cli_ollama() -> None:
+    """Test that install.sh creates a 'cli-ollama' wrapper and not a bare 'ollama' wrapper."""
     install_script = PROJECT_ROOT / "install.sh"
     content = install_script.read_text()
 

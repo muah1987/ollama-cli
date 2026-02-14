@@ -1472,7 +1472,7 @@ class InteractiveMode:
         return False
 
     def _cmd_init(self, _arg: str) -> bool:
-        """Initialize the current folder as an cli-ollama project.
+        """Initialize the current folder as a cli-ollama project.
 
         Creates ``OLLAMA.md`` (project memory) and ``.ollama/`` (local config
         directory) if they do not already exist.  Also detects instruction
