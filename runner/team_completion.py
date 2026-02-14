@@ -45,6 +45,9 @@ logger = logging.getLogger(__name__)
 SPEC_DIR = Path(".ollama/spec")
 TASKS_DIR = Path(".ollama/tasks")
 
+# Maximum characters to display from a command result in accumulated context
+_MAX_RESULT_DISPLAY_LEN = 200
+
 # Commands that agents are NOT allowed to invoke autonomously
 _BLOCKED_COMMANDS = frozenset({"/quit", "/exit", "/clear"})
 
@@ -107,7 +110,11 @@ def extract_command_requests(text: str) -> list[str]:
     pattern = r"\[CMD:\s*(/[^\]]+)\]"
     matches = re.findall(pattern, text)
     # Filter out blocked commands
-    return [m.strip() for m in matches if m.strip().split()[0] not in _BLOCKED_COMMANDS]
+    return [
+        m.strip()
+        for m in matches
+        if m.strip() and m.strip().split()[0] not in _BLOCKED_COMMANDS
+    ]
 
 
 # ---------------------------------------------------------------------------
@@ -459,7 +466,7 @@ class TeamCompletionLoop:
         if analysis.commands_executed:
             total_commands += len(analysis.commands_executed)
             cmd_block = "\n".join(
-                f"  > {c['command']}: {c['result'][:200]}" for c in analysis.commands_executed
+                f"  > {c['command']}: {c['result'][:_MAX_RESULT_DISPLAY_LEN]}" for c in analysis.commands_executed
             )
             accumulated_context += f"\n\n### Command Results (analyst)\n{cmd_block}"
 
@@ -470,7 +477,7 @@ class TeamCompletionLoop:
         if plan.commands_executed:
             total_commands += len(plan.commands_executed)
             cmd_block = "\n".join(
-                f"  > {c['command']}: {c['result'][:200]}" for c in plan.commands_executed
+                f"  > {c['command']}: {c['result'][:_MAX_RESULT_DISPLAY_LEN]}" for c in plan.commands_executed
             )
             accumulated_context += f"\n\n### Command Results (planner)\n{cmd_block}"
 
@@ -481,7 +488,7 @@ class TeamCompletionLoop:
         if validation.commands_executed:
             total_commands += len(validation.commands_executed)
             cmd_block = "\n".join(
-                f"  > {c['command']}: {c['result'][:200]}" for c in validation.commands_executed
+                f"  > {c['command']}: {c['result'][:_MAX_RESULT_DISPLAY_LEN]}" for c in validation.commands_executed
             )
             accumulated_context += f"\n\n### Command Results (validator)\n{cmd_block}"
 

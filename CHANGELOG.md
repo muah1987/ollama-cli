@@ -9,7 +9,12 @@
 - Test suite for error hierarchy (23 new tests)
 - Textual TUI as the primary and only interface (removed legacy readline REPL)
 - Code coverage reporting in CI workflows with 75% minimum requirement
-- Comprehensive testing documentation
+- `/complete_w_team` agentic sub-agent completion loop (analyse→plan→validate→spec→review)
+- Autonomous command execution: agents can invoke slash commands via `[CMD: /command]` directives
+- Command knowledge injection into all team completion agents
+- `team` and `research` agent types in intent classifier
+- Comprehensive system workflow documentation (`docs/SYSTEM_WORKFLOW.md`)
+- 34 new tests for team completion loop
 
 ### Changed
 - Simplified CLI interface to focus exclusively on Textual TUI
