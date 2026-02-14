@@ -272,7 +272,6 @@ def cmd_interactive(args: argparse.Namespace) -> None:
     # Import here to avoid circular imports
     from model.session import Session
 
-    from .interactive import InteractiveMode
     from .onboarding import needs_onboarding, run_onboarding
 
     cfg = get_config()
