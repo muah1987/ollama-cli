@@ -196,10 +196,10 @@ class TestBuild:
         import zipfile
 
         dist_dir = Path(_PROJECT_DIR) / "dist"
-        wheel_candidates = sorted(dist_dir.glob("ollama_cli-*.whl"))
+        wheel_candidates = sorted(dist_dir.glob("cli_ollama-*.whl"))
         if not wheel_candidates:
             subprocess.run(["uv", "build", "--wheel"], cwd=_PROJECT_DIR, capture_output=True)
-            wheel_candidates = sorted(dist_dir.glob("ollama_cli-*.whl"))
+            wheel_candidates = sorted(dist_dir.glob("cli_ollama-*.whl"))
         assert wheel_candidates, "Wheel file not found after build"
         whl_path = wheel_candidates[-1]
 
