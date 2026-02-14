@@ -1,4 +1,10 @@
-"""Chat screen -- primary view for the ollama-cli TUI."""
+"""Chat screen -- primary view for the ollama-cli TUI.
+
+Layout follows the documented 3-zone structure:
+  TOP:    ASCII banner (scrolls away after first interaction)
+  MIDDLE: Conversation area + bordered input box (the ONLY interactive zone)
+  BOTTOM: Persistent status bar with hints and model metrics
+"""
 
 from __future__ import annotations
 
@@ -6,7 +12,7 @@ import datetime
 import logging
 
 from textual.app import ComposeResult
-from textual.containers import ScrollableContainer
+from textual.containers import ScrollableContainer, Vertical
 from textual.screen import Screen
 from textual.widgets import Static
 
@@ -20,13 +26,35 @@ from tui.widgets.status_panel import StatusPanel
 
 logger = logging.getLogger(__name__)
 
+# ── TOP zone: ASCII banner ──────────────────────────────────────────────
+_BANNER = """\
+ ██████╗ ██╗     ██╗      █████╗ ███╗   ███╗ █████╗      ██████╗██╗     ██╗
+██╔═══██╗██║     ██║     ██╔══██╗████╗ ████║██╔══██╗    ██╔════╝██║     ██║
+██║   ██║██║     ██║     ███████║██╔████╔██║███████║    ██║     ██║     ██║
+██║   ██║██║     ██║     ██╔══██║██║╚██╔╝██║██╔══██║    ██║     ██║     ██║
+╚██████╔╝███████╗███████╗██║  ██║██║ ╚═╝ ██║██║  ██║██╗╚██████╗███████╗██║
+ ╚═════╝ ╚══════╝╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝ ╚═════╝╚══════╝╚═╝\
+"""
+
 
 class ChatScreen(Screen):
-    """Main chat screen with message area, input, and status panel."""
+    """Main chat screen with 3-zone layout: TOP / MIDDLE / BOTTOM."""
 
     DEFAULT_CSS = """
     ChatScreen {
         layout: vertical;
+    }
+
+    #top-zone {
+        height: auto;
+        padding: 1 2;
+        background: #0d1117;
+    }
+
+    #ascii-banner {
+        color: #a78bfa;
+        text-align: center;
+        padding: 0;
     }
 
     #message-area {
@@ -51,22 +79,28 @@ class ChatScreen(Screen):
 
     def compose(self) -> ComposeResult:
         yield Sidebar()
+
+        # ── TOP zone: ASCII banner (inside scrollable so it scrolls away) ──
         yield ScrollableContainer(
+            Vertical(
+                Static(_BANNER, id="ascii-banner"),
+                id="top-zone",
+            ),
             Static(
-                "╭──────────────────────────────────────╮\n"
-                "│       ollama-cli · AI Assistant       │\n"
-                "╰──────────────────────────────────────╯\n\n"
                 "  Type a message to start a conversation.\n"
                 "  Use /command for slash commands.\n"
-                "  Use @agent to route to a specific agent.\n"
-                "  Press Ctrl+B to toggle the sidebar.",
+                "  Use @agent to route to a specific agent.",
                 id="welcome-message",
             ),
             id="message-area",
         )
+
+        # ── MIDDLE zone: intent badge + spinner + input box ──
         yield IntentBadge()
         yield LlamaSpinner()
         yield InputArea()
+
+        # ── BOTTOM zone: persistent status bar ──
         yield StatusPanel()
 
     def on_mount(self) -> None:
@@ -302,12 +336,12 @@ class ChatScreen(Screen):
         msg = ChatMessage(content=content, role="user", timestamp=timestamp)
         container = self.query_one("#message-area", ScrollableContainer)
 
-        # Remove welcome message on first real message
-        try:
-            welcome = self.query_one("#welcome-message")
-            welcome.remove()
-        except Exception:
-            pass
+        # Remove welcome message and banner on first real message
+        for widget_id in ("#welcome-message", "#top-zone"):
+            try:
+                self.query_one(widget_id).remove()
+            except Exception:
+                pass
 
         container.mount(msg)
         container.scroll_end(animate=False)
