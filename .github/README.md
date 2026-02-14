@@ -1,6 +1,6 @@
 [![Auto Release](https://github.com/muah1987/cli-ollama/actions/workflows/autorelease.yml/badge.svg?branch=main)](https://github.com/muah1987/cli-ollama/actions/workflows/autorelease.yml) [![Release](https://github.com/muah1987/cli-ollama/actions/workflows/release.yml/badge.svg)](https://github.com/muah1987/cli-ollama/actions/workflows/release.yml) [![Deploy to PyPI](https://github.com/muah1987/cli-ollama/actions/workflows/pypi-publish.yml/badge.svg)](https://github.com/muah1987/cli-ollama/actions/workflows/pypi-publish.yml) [![Dependabot Updates](https://github.com/muah1987/cli-ollama/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/muah1987/cli-ollama/actions/workflows/dependabot/dependabot-updates) [![Build and Test](https://github.com/muah1987/cli-ollama/actions/workflows/build-test.yml/badge.svg)](https://github.com/muah1987/cli-ollama/actions/workflows/build-test.yml)
 
-# Ollama CLI
+# Cli Ollama
 
 An open-source AI coding assistant with Textual TUI interface that runs in your terminal, powered by [Ollama](https://ollama.ai) with multi-provider support for Claude, Gemini, OpenAI Codex, and Hugging Face.
 
