@@ -201,6 +201,11 @@ class TestWebSearchAndCrawlerTools:
         result = tool_web_search("ollama cli")
         assert result.get("error") == "SEARCH_API_KEY is not set"
 
+    def test_web_search_rejects_api_key_argument(self, monkeypatch):
+        monkeypatch.setenv("SEARCH_API_KEY", "test-key")
+        result = tool_web_search("ollama cli", api_key="inline-secret")
+        assert "not supported" in result.get("error", "")
+
     def test_web_search_tavily_success(self, monkeypatch):
         monkeypatch.setenv("SEARCH_API_KEY", "test-key")
 
@@ -257,3 +262,17 @@ class TestWebSearchAndCrawlerTools:
         result = tool_meta_crawler("ollama")
         assert result.get("query") == "ollama"
         assert result.get("results", [])[0]["content"] == "crawled content"
+
+    def test_meta_crawler_fails_fast_for_non_crawl_provider(self, monkeypatch):
+        monkeypatch.setenv("SEARCH_API_KEY", "test-key")
+
+        class _Resp:
+            def raise_for_status(self) -> None:
+                return None
+
+            def json(self) -> dict:
+                return {"organic": [{"title": "A", "link": "https://example.com", "snippet": "s"}]}
+
+        monkeypatch.setattr("httpx.post", lambda *args, **kwargs: _Resp())
+        result = tool_meta_crawler("ollama", provider="serper")
+        assert result.get("error") == "Unsupported meta crawler provider: serper"

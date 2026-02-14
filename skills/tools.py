@@ -317,10 +317,10 @@ def tool_web_fetch(url: str, *, max_length: int = 5000) -> dict[str, Any]:
         return {"error": f"Fetch failed: {exc}"}
 
 
-def _resolve_search_provider_and_key(provider: str | None, api_key: str | None) -> tuple[str, str]:
-    """Resolve search provider/key from explicit args or environment variables."""
+def _resolve_search_provider_and_key(provider: str | None) -> tuple[str, str]:
+    """Resolve search provider/key from explicit provider and environment variables."""
     resolved_provider = (provider or os.environ.get("SEARCH_API_PROVIDER", "tavily")).strip().lower()
-    resolved_key = (api_key or os.environ.get("SEARCH_API_KEY", "")).strip()
+    resolved_key = os.environ.get("SEARCH_API_KEY", "").strip()
     return resolved_provider, resolved_key
 
 
@@ -332,9 +332,11 @@ def tool_web_search(
     max_results: int = 5,
 ) -> dict[str, Any]:
     """Search the web using a provider API key (Tavily or Serper)."""
+    if api_key.strip():
+        return {"error": "api_key argument is not supported; use SEARCH_API_KEY environment variable"}
     if not query.strip():
         return {"error": "No search query provided"}
-    resolved_provider, resolved_key = _resolve_search_provider_and_key(provider, api_key)
+    resolved_provider, resolved_key = _resolve_search_provider_and_key(provider)
     if not resolved_key:
         return {"error": "SEARCH_API_KEY is not set"}
 
@@ -358,7 +360,12 @@ def tool_web_search(
             data = resp.json()
             results = data.get("results", [])
             normalized = [
-                {"title": r.get("title", ""), "url": r.get("url", ""), "content": r.get("content", "")} for r in results
+                {
+                    "title": r.get("title", ""),
+                    "url": r.get("url", ""),
+                    "content": r.get("content", ""),
+                }
+                for r in results
             ]
             return {"provider": resolved_provider, "query": query, "results": normalized}
 
@@ -373,7 +380,12 @@ def tool_web_search(
             data = resp.json()
             results = data.get("organic", [])
             normalized = [
-                {"title": r.get("title", ""), "url": r.get("link", ""), "content": r.get("snippet", "")} for r in results
+                {
+                    "title": r.get("title", ""),
+                    "url": r.get("link", ""),
+                    "content": r.get("snippet", ""),
+                }
+                for r in results
             ]
             return {"provider": resolved_provider, "query": query, "results": normalized}
 
@@ -390,9 +402,11 @@ def tool_web_crawler(
     max_length: int = 5000,
 ) -> dict[str, Any]:
     """Crawl a URL using provider API (currently Tavily extract API)."""
+    if api_key.strip():
+        return {"error": "api_key argument is not supported; use SEARCH_API_KEY environment variable"}
     if not url.strip():
         return {"error": "No URL provided"}
-    resolved_provider, resolved_key = _resolve_search_provider_and_key(provider, api_key)
+    resolved_provider, resolved_key = _resolve_search_provider_and_key(provider)
     if not resolved_key:
         return {"error": "SEARCH_API_KEY is not set"}
     if resolved_provider != "tavily":
@@ -430,15 +444,20 @@ def tool_meta_crawler(
     max_length: int = 2000,
 ) -> dict[str, Any]:
     """Run search then crawl top results with the same provider API."""
+    if api_key.strip():
+        return {"error": "api_key argument is not supported; use SEARCH_API_KEY environment variable"}
     search_result = tool_web_search(query, provider=provider, api_key=api_key, max_results=max_results)
     if "error" in search_result:
         return search_result
+    resolved_provider = str(search_result.get("provider", provider)).strip().lower()
+    if resolved_provider != "tavily":
+        return {"error": f"Unsupported meta crawler provider: {resolved_provider}"}
     crawled: list[dict[str, Any]] = []
-    for item in search_result.get("results", [])[: max(1, min(max_results, 10))]:
+    for item in search_result.get("results", []):
         target_url = str(item.get("url", "")).strip()
         if not target_url:
             continue
-        crawl_result = tool_web_crawler(target_url, provider=provider, api_key=api_key, max_length=max_length)
+        crawl_result = tool_web_crawler(target_url, provider=resolved_provider, max_length=max_length)
         crawled.append(
             {
                 "title": item.get("title", ""),
@@ -447,7 +466,7 @@ def tool_meta_crawler(
                 "error": crawl_result.get("error"),
             }
         )
-    return {"provider": search_result.get("provider", provider), "query": query, "results": crawled}
+    return {"provider": resolved_provider, "query": query, "results": crawled}
 
 
 def tool_model_pull(model_name: str, *, force: bool = False) -> dict[str, Any]:
@@ -585,7 +604,6 @@ TOOLS: dict[str, dict[str, Any]] = {
         "arg_map": lambda a: (a.get("query", ""),),
         "kwarg_map": lambda a: {
             "provider": a.get("provider", ""),
-            "api_key": a.get("api_key", ""),
             "max_results": a.get("max_results", 5),
         },
     },
@@ -596,7 +614,6 @@ TOOLS: dict[str, dict[str, Any]] = {
         "arg_map": lambda a: (a.get("url", ""),),
         "kwarg_map": lambda a: {
             "provider": a.get("provider", ""),
-            "api_key": a.get("api_key", ""),
             "max_length": a.get("max_length", 5000),
         },
     },
@@ -607,7 +624,6 @@ TOOLS: dict[str, dict[str, Any]] = {
         "arg_map": lambda a: (a.get("query", ""),),
         "kwarg_map": lambda a: {
             "provider": a.get("provider", ""),
-            "api_key": a.get("api_key", ""),
             "max_results": a.get("max_results", 3),
             "max_length": a.get("max_length", 2000),
         },
