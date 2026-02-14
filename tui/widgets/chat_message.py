@@ -1,4 +1,4 @@
-"""Chat message widget -- renders user and assistant messages."""
+"""Chat message widget -- Claude Code-style flat message rendering."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from textual.widgets import Label, Markdown, Static
 
 
 class ChatMessage(Widget):
-    """A single chat message bubble.
+    """A single chat message in Claude Code style.
 
     Parameters
     ----------
@@ -24,33 +24,32 @@ class ChatMessage(Widget):
     ChatMessage {
         width: 100%;
         padding: 0 1;
-        margin: 1 0;
+        margin: 0 0;
     }
 
     ChatMessage .user-message {
-        background: #2d4f67;
-        color: #c0caf5;
-        padding: 1 2;
-        margin: 0 0 0 10;
-        border: round #7aa2f7;
+        background: transparent;
+        color: #e6edf3;
+        padding: 0 1;
+        margin: 0 0;
     }
 
     ChatMessage .assistant-message {
-        background: #24283b;
-        color: #c0caf5;
-        padding: 1 2;
-        margin: 0 10 0 0;
-        border: round #565f89;
+        background: transparent;
+        color: #e6edf3;
+        padding: 0 1;
+        margin: 0 0;
+        border-left: tall #7c8aff;
     }
 
     ChatMessage .message-header {
-        color: #565f89;
+        color: #484f58;
         text-style: dim;
-        padding: 0 0 1 0;
+        padding: 0 0 0 0;
     }
 
     ChatMessage .agent-badge {
-        color: #7aa2f7;
+        color: #7c8aff;
         text-style: bold;
     }
     """
@@ -75,9 +74,9 @@ class ChatMessage(Widget):
     def compose(self) -> ComposeResult:
         header_parts = []
         if self.role == "user":
-            header_parts.append("You")
+            header_parts.append("❯")
         else:
-            header_parts.append("Assistant")
+            header_parts.append("⏎")
             if self.agent_type:
                 header_parts.append(f"[{self.agent_type}]")
         if self.timestamp:

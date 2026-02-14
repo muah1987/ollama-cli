@@ -16,7 +16,7 @@ class SettingsScreen(Screen):
     DEFAULT_CSS = """
     SettingsScreen {
         layout: vertical;
-        background: #1a1b26;
+        background: #0d1117;
     }
 
     #settings-container {
@@ -26,7 +26,7 @@ class SettingsScreen(Screen):
 
     .setting-title {
         text-style: bold;
-        color: #7aa2f7;
+        color: #7c8aff;
         padding: 1 0;
     }
 
@@ -37,11 +37,11 @@ class SettingsScreen(Screen):
 
     .setting-label {
         width: 30;
-        color: #c0caf5;
+        color: #e6edf3;
     }
 
     .setting-value {
-        color: #9ece6a;
+        color: #7ee787;
     }
 
     #btn-back {

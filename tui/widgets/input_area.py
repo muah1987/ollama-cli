@@ -1,16 +1,19 @@
-"""Input area widget -- multi-line input with command awareness."""
+"""Input area widget -- bordered input box with › prompt indicator.
+
+Part of the MIDDLE zone in the 3-zone layout.
+"""
 
 from __future__ import annotations
 
 from textual.app import ComposeResult
-from textual.containers import Horizontal
+from textual.containers import Vertical
 from textual.message import Message
 from textual.widget import Widget
-from textual.widgets import Input, Label
+from textual.widgets import Input, Static
 
 
 class InputArea(Widget):
-    """Chat input area with Enter-to-send and command completion.
+    """Chat input area with bordered box, › prompt, and Enter-to-send.
 
     Emits InputArea.Submitted when the user presses Enter.
     """
@@ -19,32 +22,39 @@ class InputArea(Widget):
     InputArea {
         dock: bottom;
         height: auto;
-        max-height: 6;
+        max-height: 8;
         padding: 0 1;
-        background: #1a1b26;
+        background: #0d1117;
     }
 
-    InputArea Horizontal {
+    InputArea #input-box {
+        border: round #30363d;
+        background: #161b22;
+        padding: 0 1;
         height: auto;
+    }
+
+    InputArea #input-hint {
+        color: #484f58;
+        padding: 0 0;
+        height: 1;
     }
 
     InputArea Input {
         width: 1fr;
-        border: round #565f89;
-        background: #24283b;
-        color: #c0caf5;
+        border: none;
+        background: #161b22;
+        color: #e6edf3;
     }
 
     InputArea Input:focus {
-        border: round #7aa2f7;
+        border: none;
     }
 
     InputArea .prompt-indicator {
-        width: 4;
-        height: 3;
-        content-align: center middle;
-        color: #7aa2f7;
-        text-style: bold;
+        color: #484f58;
+        height: 1;
+        padding: 0 0;
     }
     """
 
@@ -61,9 +71,9 @@ class InputArea(Widget):
         self._history_index: int = -1
 
     def compose(self) -> ComposeResult:
-        with Horizontal():
-            yield Label(">>>", classes="prompt-indicator")
-            yield Input(placeholder="Type a message or /command...", id="chat-input")
+        with Vertical(id="input-box"):
+            yield Static("› Type your message or @path/to/file", id="input-hint")
+            yield Input(placeholder="> ", id="chat-input")
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
         """Handle Enter key in the input field."""

@@ -9,13 +9,13 @@ from textual.widgets import Label
 
 # Agent color map
 _AGENT_BADGE_COLORS: dict[str, str] = {
-    "code": "#bb9af7",
-    "review": "#7dcfff",
-    "test": "#e0af68",
-    "plan": "#7aa2f7",
-    "docs": "#9ece6a",
-    "debug": "#f7768e",
-    "orchestrator": "#ff9e64",
+    "code": "#a78bfa",
+    "review": "#79c0ff",
+    "test": "#e3b341",
+    "plan": "#7c8aff",
+    "docs": "#7ee787",
+    "debug": "#ff7b72",
+    "orchestrator": "#ffa657",
 }
 
 
@@ -32,7 +32,7 @@ class IntentBadge(Widget):
 
     IntentBadge Label {
         text-style: italic;
-        color: #565f89;
+        color: #484f58;
     }
     """
 

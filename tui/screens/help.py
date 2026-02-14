@@ -73,7 +73,7 @@ class HelpScreen(Screen):
 
     DEFAULT_CSS = """
     HelpScreen {
-        background: #1a1b26;
+        background: #0d1117;
     }
 
     #help-content {

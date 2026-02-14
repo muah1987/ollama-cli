@@ -1,53 +1,53 @@
-/* Dark theme -- Charmbracelet / Tokyo Night inspired */
+/* Dark theme -- Claude Code inspired */
 
 Screen {
-    background: #1a1b26;
-    color: #c0caf5;
+    background: #0d1117;
+    color: #e6edf3;
 }
 
 Header {
-    background: #24283b;
-    color: #7aa2f7;
+    background: #161b22;
+    color: #7c8aff;
 }
 
 Footer {
-    background: #24283b;
-    color: #565f89;
+    background: #161b22;
+    color: #484f58;
 }
 
 #message-area {
-    background: #1a1b26;
-    scrollbar-color: #565f89;
-    scrollbar-color-hover: #7aa2f7;
-    scrollbar-color-active: #bb9af7;
+    background: #0d1117;
+    scrollbar-color: #30363d;
+    scrollbar-color-hover: #7c8aff;
+    scrollbar-color-active: #a78bfa;
 }
 
 .system-message {
-    color: #565f89;
+    color: #484f58;
     text-style: dim italic;
     padding: 0 2;
 }
 
 Sidebar {
-    background: #1e2030;
-    border-right: solid #24283b;
+    background: #010409;
+    border-right: solid #21262d;
 }
 
 Input {
-    border: round #565f89;
-    background: #24283b;
-    color: #c0caf5;
+    border: round #30363d;
+    background: #161b22;
+    color: #e6edf3;
 }
 
 Input:focus {
-    border: round #7aa2f7;
+    border: round #7c8aff;
 }
 
 Button {
-    background: #7aa2f7;
-    color: #1a1b26;
+    background: #7c8aff;
+    color: #0d1117;
 }
 
 Button:hover {
-    background: #bb9af7;
+    background: #a78bfa;
 }

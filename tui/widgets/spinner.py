@@ -27,7 +27,7 @@ class LlamaSpinner(Widget):
         height: 1;
         width: 100%;
         padding: 0 2;
-        color: #e0af68;
+        color: #a78bfa;
         text-style: italic;
     }
     """

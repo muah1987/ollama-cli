@@ -35,7 +35,7 @@ from model.session import Session  # noqa: E402
 
 # Import bypass permissions if available
 try:
-    from permissions.bypass import bypass_confirm_prompt, bypass_input_prompt, should_bypass_permissions
+    from permissions.bypass import should_bypass_permissions
     HAS_BYPASS = True
 except ImportError:
     HAS_BYPASS = False

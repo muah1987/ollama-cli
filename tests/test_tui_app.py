@@ -41,7 +41,7 @@ class TestChatAppBindings:
     def test_has_bindings(self):
         """ChatApp has BINDINGS list."""
         app = ChatApp()
-        assert len(app.BINDINGS) == 4
+        assert len(app.BINDINGS) == 5
 
     def test_binding_ctrl_q_quit(self):
         """Ctrl+Q is bound to quit."""

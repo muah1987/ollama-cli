@@ -1,12 +1,19 @@
-"""Chat screen -- primary view for the ollama-cli TUI."""
+"""Chat screen -- primary view for the ollama-cli TUI.
+
+Layout follows the documented 3-zone structure:
+  TOP:    ASCII banner with side info (scrolls away after first interaction)
+  MIDDLE: Conversation area + bordered input box (the ONLY interactive zone)
+  BOTTOM: Persistent status bar with hints and model metrics
+"""
 
 from __future__ import annotations
 
 import datetime
 import logging
+import os
 
 from textual.app import ComposeResult
-from textual.containers import ScrollableContainer
+from textual.containers import ScrollableContainer, Vertical
 from textual.screen import Screen
 from textual.widgets import Static
 
@@ -20,23 +27,157 @@ from tui.widgets.status_panel import StatusPanel
 
 logger = logging.getLogger(__name__)
 
+# ── TOP zone: ASCII banner lines (without side info) ────────────────────
+_BANNER_LINES = [
+    " ██████╗ ██╗     ██╗      █████╗ ███╗   ███╗ █████╗      ██████╗██╗     ██╗",
+    "██╔═══██╗██║     ██║     ██╔══██╗████╗ ████║██╔══██╗    ██╔════╝██║     ██║",
+    "██║   ██║██║     ██║     ███████║██╔████╔██║███████║    ██║     ██║     ██║",
+    "██║   ██║██║     ██║     ██╔══██║██║╚██╔╝██║██╔══██║    ██║     ██║     ██║",
+    "╚██████╔╝███████╗███████╗██║  ██║██║ ╚═╝ ██║██║  ██║██╗╚██████╗███████╗██║",
+    " ╚═════╝ ╚══════╝╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝ ╚═════╝╚══════╝╚═╝",
+]
+
+# Pad each banner line to equal width for side-info alignment
+_BANNER_WIDTH = max(len(line) for line in _BANNER_LINES)
+
+# Default model name used when no session is active
+_DEFAULT_MODEL = "llama3.2"
+
+
+def _build_banner(session=None, warnings: list[str] | None = None) -> str:
+    """Build the TOP zone banner with side info next to the ASCII art."""
+    try:
+        from importlib.metadata import version as pkg_version
+
+        ver = pkg_version("ollama-cli")
+    except Exception:
+        ver = "dev"
+
+    model = getattr(session, "model", _DEFAULT_MODEL) if session else _DEFAULT_MODEL
+    provider = getattr(session, "provider", "ollama") if session else "ollama"
+    host = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
+    now = datetime.datetime.now(tz=datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    cwd_path = os.getcwd()
+    cwd_short = os.path.basename(cwd_path) or "~"
+
+    # Context size from session or default
+    ctx = "128k"
+    if session and hasattr(session, "context_manager"):
+        cm = session.context_manager
+        if hasattr(cm, "max_tokens"):
+            ctx = f"{cm.max_tokens // 1000}k"
+
+    # Check for OLLAMA.md size warning
+    warning_line = ""
+    memory_line = ""
+    ollama_md = os.path.join(cwd_path, "OLLAMA.md")
+    if os.path.isfile(ollama_md):
+        try:
+            with open(ollama_md, encoding="utf-8", errors="replace") as fh:
+                chars = len(fh.read())
+            limit = 40_000
+            if chars > limit:
+                warning_line = (
+                    f"⚠ large OLLAMA.md may impact performance "
+                    f"({chars / 1000:.1f}k chars > {limit / 1000:.1f}k)"
+                )
+                memory_line = "• /memory to edit"
+        except OSError:
+            pass
+
+    side_info = [
+        f"Ollama CLI v{ver}",
+        f"Model: {model}  •  Context: {ctx}",
+        f"Runtime: {provider}  •  API: {host}",
+        f"{now}  •  cwd: {cwd_short}",
+        warning_line,
+        memory_line,
+    ]
+
+    # Combine banner lines with side info
+    lines = []
+    for i, art_line in enumerate(_BANNER_LINES):
+        padded = art_line.ljust(_BANNER_WIDTH)
+        info = f"   {side_info[i]}" if i < len(side_info) and side_info[i] else ""
+        lines.append(f"{padded}{info}")
+
+    # Extra line for tip below banner
+    lines.append(
+        " " * _BANNER_WIDTH + "   Tip: /model to switch  •  /help for commands"
+    )
+
+    return "\n".join(lines)
+
+
+def _build_notification_boxes() -> list[str]:
+    """Build notification boxes shown between tips and the input area."""
+    boxes: list[str] = []
+
+    # Update available notification
+    try:
+        from importlib.metadata import PackageNotFoundError, version as pkg_version
+
+        installed = pkg_version("ollama-cli")
+    except (PackageNotFoundError, ModuleNotFoundError):
+        installed = "dev"
+    latest = os.environ.get("OLLAMA_LATEST_VERSION", "")
+    if latest and latest != installed and installed != "dev":
+        boxes.append(
+            f"Update available: ollama {installed} → {latest}\n"
+            "Installed system-wide. Attempting to automatically update now..."
+        )
+
+    # Home directory warning
+    home = os.path.expanduser("~")
+    if os.getcwd() == home:
+        boxes.append(
+            "Warning: running in your home directory.\n"
+            "This warning can be disabled in /settings"
+        )
+
+    return boxes
+
 
 class ChatScreen(Screen):
-    """Main chat screen with message area, input, and status panel."""
+    """Main chat screen with 3-zone layout: TOP / MIDDLE / BOTTOM."""
 
     DEFAULT_CSS = """
     ChatScreen {
         layout: vertical;
     }
 
+    #top-zone {
+        height: auto;
+        padding: 1 2;
+        background: #0d1117;
+    }
+
+    #ascii-banner {
+        color: #a78bfa;
+        padding: 0;
+    }
+
+    .banner-tips {
+        color: #484f58;
+        padding: 1 2 0 2;
+    }
+
+    .notification-box {
+        border: round #b2a266;
+        background: #161b22;
+        color: #e6edf3;
+        padding: 0 2;
+        margin: 1 2 0 2;
+    }
+
     #message-area {
         height: 1fr;
-        padding: 1 2;
-        background: #1a1b26;
+        padding: 0 1;
+        background: #0d1117;
     }
 
     #welcome-message {
-        color: #565f89;
+        color: #484f58;
         text-style: italic;
         padding: 1 2;
         text-align: center;
@@ -51,23 +192,47 @@ class ChatScreen(Screen):
 
     def compose(self) -> ComposeResult:
         yield Sidebar()
+
+        banner_text = _build_banner(self._session)
+
+        tips = (
+            "Tips for getting started:\n"
+            "1. Ask questions, edit files, or run commands.\n"
+            "2. Be specific for the best results.\n"
+            "3. /help for more information."
+        )
+
+        # Build notification boxes
+        notification_widgets: list[Static] = []
+        for box_text in _build_notification_boxes():
+            notification_widgets.append(Static(box_text, classes="notification-box"))
+
+        # ── TOP zone: ASCII banner with side info (scrolls away) ──
+        top_children = [
+            Static(banner_text, id="ascii-banner"),
+            Static(tips, classes="banner-tips"),
+            *notification_widgets,
+        ]
         yield ScrollableContainer(
-            Static(
-                "Welcome to ollama-cli!\n\n"
-                "Type a message to chat with the AI.\n"
-                "Use /command for slash commands or @agent for agent routing.\n"
-                "Press Ctrl+P for the command palette.",
-                id="welcome-message",
-            ),
+            Vertical(*top_children, id="top-zone"),
             id="message-area",
         )
+
+        # ── MIDDLE zone: intent badge + spinner + input box ──
         yield IntentBadge()
         yield LlamaSpinner()
         yield InputArea()
+
+        # ── BOTTOM zone: persistent status bar ──
         yield StatusPanel()
 
     def on_mount(self) -> None:
         """Initialize the screen after mounting."""
+        # Hide sidebar by default (toggle with Ctrl+B)
+        sidebar = self.query_one(Sidebar)
+        sidebar.add_class("-hidden")
+        sidebar.visible = False
+
         # Hide spinner initially
         spinner = self.query_one(LlamaSpinner)
         spinner.display = False
@@ -294,12 +459,12 @@ class ChatScreen(Screen):
         msg = ChatMessage(content=content, role="user", timestamp=timestamp)
         container = self.query_one("#message-area", ScrollableContainer)
 
-        # Remove welcome message on first real message
-        try:
-            welcome = self.query_one("#welcome-message")
-            welcome.remove()
-        except Exception:
-            pass
+        # Remove welcome message and banner on first real message
+        for widget_id in ("#welcome-message", "#top-zone"):
+            try:
+                self.query_one(widget_id).remove()
+            except Exception:
+                pass
 
         container.mount(msg)
         container.scroll_end(animate=False)

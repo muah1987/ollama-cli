@@ -33,7 +33,7 @@ from api.config import get_config  # noqa: E402
 
 # Import bypass permissions
 try:
-    from permissions.bypass import bypass_confirm_prompt, should_bypass_permissions
+    from permissions.bypass import should_bypass_permissions
     HAS_BYPASS = True
 except ImportError:
     HAS_BYPASS = False

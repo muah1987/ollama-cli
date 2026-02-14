@@ -1,4 +1,4 @@
-"""ollama-cli TUI application powered by Textual."""
+"""ollama-cli TUI application powered by Textual — Claude Code-style layout."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from textual.binding import Binding
 
 
 class ChatApp(App):
-    """Ollama CLI -- beautiful TUI powered by Textual."""
+    """Ollama CLI -- Claude Code-style TUI powered by Textual."""
 
     TITLE = "ollama-cli"
     SUB_TITLE = "AI Coding Assistant"
@@ -18,6 +18,7 @@ class ChatApp(App):
         Binding("ctrl+p", "command_palette", "Commands"),
         Binding("ctrl+b", "toggle_sidebar", "Sidebar"),
         Binding("f1", "help", "Help"),
+        Binding("escape", "interrupt", "Interrupt", show=False),
     ]
 
     def __init__(self, session=None, **kwargs):
@@ -49,3 +50,18 @@ class ChatApp(App):
         from tui.screens.help import HelpScreen
 
         self.push_screen(HelpScreen())
+
+    def action_interrupt(self) -> None:
+        """Handle Escape to interrupt current operation."""
+        try:
+            from tui.widgets.spinner import LlamaSpinner
+
+            spinner = self.query_one(LlamaSpinner)
+            if spinner.spinning:
+                spinner.stop()
+                from tui.widgets.status_panel import StatusPanel
+
+                status = self.query_one(StatusPanel)
+                status.job_status = "idle"
+        except Exception:  # noqa: BLE001
+            pass  # Widget may not exist if no screen is active

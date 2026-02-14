@@ -1,4 +1,4 @@
-/* ollama-cli TUI base layout */
+/* ollama-cli TUI base layout -- Claude Code inspired */
 
 Screen {
     layout: vertical;
@@ -6,11 +6,11 @@ Screen {
 
 #message-area {
     height: 1fr;
-    padding: 1 2;
+    padding: 0 1;
 }
 
 .system-message {
-    color: #565f89;
+    color: #484f58;
     text-style: dim italic;
     padding: 0 2;
     margin: 0 0;

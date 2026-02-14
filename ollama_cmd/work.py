@@ -17,7 +17,6 @@ and implements work-oriented behaviors.
 
 from __future__ import annotations
 
-import argparse
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
