@@ -763,15 +763,27 @@ class TestReplHelpers:
 
     def test_resolve_agent_type_no_prefix(self):
         mode = self._make_mode()
-        agent_type, text = mode._resolve_agent_type("hello world")
-        assert agent_type is None
-        assert text == "hello world"
+        with patch.object(mode, "_fire_hook") as mock_hook:
+            agent_type, text = mode._resolve_agent_type("hello world")
+            assert agent_type is None
+            assert text == "hello world"
+            mock_hook.assert_not_called()
 
     def test_resolve_agent_type_with_prefix(self):
         mode = self._make_mode()
-        agent_type, text = mode._resolve_agent_type("@code write a function")
-        assert agent_type == "code"
-        assert text == "write a function"
+        with patch.object(mode, "_fire_hook") as mock_hook:
+            agent_type, text = mode._resolve_agent_type("@code write a function")
+            assert agent_type == "code"
+            assert text == "write a function"
+            mock_hook.assert_called_once()
+            call_args = mock_hook.call_args
+            assert call_args[0][0] == "SubagentStart"
+            payload = call_args[0][1]
+            assert payload["agent_type"] == "code"
+            assert "agent_id" in payload
+            assert "session_id" in payload
+            assert "model" in payload
+            assert "prompt_preview" in payload
 
     def test_resolve_agent_type_at_only(self):
         mode = self._make_mode()
@@ -784,6 +796,22 @@ class TestReplHelpers:
         # Hooks not available, so returns False (not denied)
         denied = mode._check_prompt_hooks("test prompt")
         assert denied is False
+
+    def test_check_prompt_hooks_denied(self):
+        mode = self._make_mode()
+        mock_result = MagicMock()
+        mock_result.permission_decision = "deny"
+        with patch.object(mode, "_fire_hook", return_value=[mock_result]):
+            denied = mode._check_prompt_hooks("test prompt")
+            assert denied is True
+
+    def test_check_prompt_hooks_allowed(self):
+        mode = self._make_mode()
+        mock_result = MagicMock()
+        mock_result.permission_decision = "allow"
+        with patch.object(mode, "_fire_hook", return_value=[mock_result]):
+            denied = mode._check_prompt_hooks("test prompt")
+            assert denied is False
 
     def test_display_response_metrics(self, capsys):
         mode = self._make_mode()
@@ -808,5 +836,18 @@ class TestReplHelpers:
 
     def test_fire_session_lifecycle_hooks(self):
         mode = self._make_mode()
-        # Should not raise even without real hook runner
-        mode._fire_session_lifecycle_hooks()
+        with patch.object(mode, "_fire_hook") as mock_hook:
+            mode._fire_session_lifecycle_hooks()
+            assert mock_hook.call_count == 2
+            hook_names = [call[0][0] for call in mock_hook.call_args_list]
+            assert hook_names == ["Setup", "SessionStart"]
+            # Verify Setup payload has required fields
+            setup_payload = mock_hook.call_args_list[0][0][1]
+            assert "trigger" in setup_payload
+            assert "session_id" in setup_payload
+            assert "cwd" in setup_payload
+            # Verify SessionStart payload has required fields
+            start_payload = mock_hook.call_args_list[1][0][1]
+            assert "session_id" in start_payload
+            assert "source" in start_payload
+            assert start_payload["source"] == "interactive"
