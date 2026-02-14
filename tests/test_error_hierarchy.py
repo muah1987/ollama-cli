@@ -78,7 +78,7 @@ class TestUserMessage:
 
     def test_empty_message_uses_docstring(self) -> None:
         err = ProviderRateLimitError()
-        assert "rate-limit" in err.user_message.lower() or "rate" in err.user_message.lower()
+        assert "rate-limit" in err.user_message.lower()
 
     def test_hint_stored(self) -> None:
         err = ConfigurationError("bad config", hint="check .env")
