@@ -66,6 +66,43 @@ _KNOWN_INSTRUCTION_FILES: tuple[Path, ...] = (
 )
 
 # ---------------------------------------------------------------------------
+# Tool argument parsers — data-driven dispatch for /tool invocations
+# ---------------------------------------------------------------------------
+
+
+def _parse_tool_args(tool_name: str, tool_arg: str) -> tuple[tuple[Any, ...], dict[str, Any], str | None]:
+    """Parse tool arguments into positional args, keyword args, and optional error.
+
+    Returns ``(args, kwargs, error_message)``.  When *error_message* is not
+    ``None`` the caller should display it and skip invocation.
+    """
+    if tool_name == "file_write":
+        parts = tool_arg.split(maxsplit=1)
+        if len(parts) < 2:
+            return (), {}, "Usage: /tool file_write <path> <content>"
+        return (parts[0], parts[1]), {}, None
+
+    if tool_name == "file_edit":
+        parts = tool_arg.split("|||")
+        if len(parts) != 3:
+            return (), {}, "Usage: /tool file_edit <path>|||<old_text>|||<new_text>"
+        return (parts[0].strip(), parts[1], parts[2]), {}, None
+
+    if tool_name == "grep_search":
+        parts = tool_arg.split(maxsplit=1)
+        pattern = parts[0] if parts else ""
+        path = parts[1] if len(parts) > 1 else "."
+        return (pattern, path), {}, None
+
+    if tool_name == "model_pull":
+        force = "--force" in tool_arg
+        name = tool_arg.replace("--force", "").strip()
+        return (name,), {"force": force}, None
+
+    # Default: pass the whole argument string as a single positional arg
+    return (tool_arg,), {}, None
+
+# ---------------------------------------------------------------------------
 # ANSI escape helpers
 # ---------------------------------------------------------------------------
 
@@ -1567,40 +1604,14 @@ class InteractiveMode:
         except Exception:
             logger.debug("PreToolUse hook check failed, proceeding", exc_info=True)
 
-        # Execute the tool
+        # Execute the tool using data-driven argument parsing
         func = entry["function"]
         try:
-            if tool_name == "file_read":
-                result = func(tool_arg)
-            elif tool_name == "file_write":
-                # /tool file_write path content...
-                write_parts = tool_arg.split(maxsplit=1)
-                if len(write_parts) < 2:
-                    self._print_error("Usage: /tool file_write <path> <content>")
-                    return False
-                result = func(write_parts[0], write_parts[1])
-            elif tool_name == "file_edit":
-                # /tool file_edit path|||old_text|||new_text
-                edit_parts = tool_arg.split("|||")
-                if len(edit_parts) != 3:
-                    self._print_error("Usage: /tool file_edit <path>|||<old_text>|||<new_text>")
-                    return False
-                result = func(edit_parts[0].strip(), edit_parts[1], edit_parts[2])
-            elif tool_name == "grep_search":
-                search_parts = tool_arg.split(maxsplit=1)
-                pattern = search_parts[0] if search_parts else ""
-                path = search_parts[1] if len(search_parts) > 1 else "."
-                result = func(pattern, path)
-            elif tool_name == "shell_exec":
-                result = func(tool_arg)
-            elif tool_name == "web_fetch":
-                result = func(tool_arg)
-            elif tool_name == "model_pull":
-                force = "--force" in tool_arg
-                name = tool_arg.replace("--force", "").strip()
-                result = func(name, force=force)
-            else:
-                result = {"error": f"No invocation handler for tool: {tool_name}"}
+            args, kwargs, parse_error = _parse_tool_args(tool_name, tool_arg)
+            if parse_error:
+                self._print_error(parse_error)
+                return False
+            result = func(*args, **kwargs)
         except Exception as exc:
             result = {"error": str(exc)}
 
@@ -2666,7 +2677,210 @@ class InteractiveMode:
         """
         return True
 
-    # -- main REPL loop -------------------------------------------------------
+    # -- REPL loop helpers ----------------------------------------------------
+
+    def _fire_session_lifecycle_hooks(self) -> None:
+        """Fire the Setup and SessionStart hooks at REPL startup."""
+        self._fire_hook(
+            "Setup",
+            {
+                "trigger": "init",
+                "session_id": self.session.session_id,
+                "model": self.session.model,
+                "provider": self.session.provider,
+                "cwd": os.getcwd(),
+            },
+        )
+        self._fire_hook(
+            "SessionStart",
+            {
+                "session_id": self.session.session_id,
+                "model": self.session.model,
+                "provider": self.session.provider,
+                "source": "interactive",
+                "context_length": self.session.context_manager.max_context_length,
+            },
+        )
+
+    def _resolve_agent_type(self, stripped: str) -> tuple[str | None, str]:
+        """Extract an explicit ``@agent`` prefix and fire SubagentStart if found.
+
+        Returns ``(agent_type, remaining_text)``.  When no ``@`` prefix is
+        present, returns ``(None, stripped)`` unchanged.
+        """
+        if not stripped.startswith("@"):
+            return None, stripped
+
+        parts = stripped.split(" ", 1)
+        if len(parts) <= 1:
+            return None, stripped
+
+        agent_type = parts[0][1:]  # Remove the @ symbol
+        remaining = parts[1]
+        self._fire_hook(
+            "SubagentStart",
+            {
+                "agent_id": f"{agent_type}-{self.session.session_id[:8]}",
+                "agent_type": agent_type,
+                "session_id": self.session.session_id,
+                "model": self.session.model,
+                "prompt_preview": remaining[:100],
+            },
+        )
+        return agent_type, remaining
+
+    def _check_prompt_hooks(self, stripped: str) -> bool:
+        """Fire UserPromptSubmit hook and return True if the prompt was denied."""
+        prompt_results = self._fire_hook(
+            "UserPromptSubmit",
+            {
+                "prompt": stripped,
+                "session_id": self.session.session_id,
+                "model": self.session.model,
+                "timestamp": __import__("datetime")
+                .datetime.now(tz=__import__("datetime").timezone.utc)
+                .isoformat(),
+            },
+        )
+        for pr in prompt_results:
+            if pr.permission_decision == "deny":
+                self._print_error("Prompt blocked by UserPromptSubmit hook.")
+                return True
+        return False
+
+    def _auto_detect_intent(self, stripped: str) -> str | None:
+        """Auto-detect agent type via intent classifier if enabled.
+
+        Returns the detected agent type, or ``None``.
+        """
+        from api.config import get_config as _get_cfg
+        from runner.intent_classifier import classify_intent
+
+        cfg = _get_cfg()
+        if not cfg.intent_enabled:
+            return None
+
+        intent_result = classify_intent(stripped, threshold=cfg.intent_confidence_threshold)
+        if intent_result.agent_type is None:
+            return None
+
+        agent_type = intent_result.agent_type
+        if cfg.intent_show_detection:
+            print(
+                f"  {_agent_color(agent_type, '[auto]')} "
+                f"Detected intent: "
+                f"{_agent_color(agent_type, agent_type)} "
+                f"(confidence: {intent_result.confidence:.0%})"
+            )
+        self._fire_hook(
+            "SubagentStart",
+            {
+                "agent_id": f"{agent_type}-{self.session.session_id[:8]}",
+                "agent_type": agent_type,
+                "session_id": self.session.session_id,
+                "model": self.session.model,
+                "prompt_preview": stripped[:100],
+                "auto_detected": True,
+            },
+        )
+        return agent_type
+
+    async def _send_and_display(self, stripped: str, agent_type: str | None) -> None:
+        """Send a message to the session, display the response, and fire hooks."""
+        try:
+            self._current_job = "thinking"
+            spinner = self._spinner(_LLAMA_SPINNER_FRAMES)
+            spinner.start()
+            try:
+                result = await self.session.send(stripped, agent_type=agent_type)
+            finally:
+                spinner.stop()
+        except Exception as exc:
+            self._current_job = "idle"
+            self._print_error(f"Error: {exc}")
+            logger.exception("Failed to send message")
+            return
+
+        # Display response with agent-colored output
+        content = result.get("content", "")
+        self._print_response(content, agent_type=agent_type)
+
+        # Fire Stop hook (model finished responding)
+        self._fire_hook(
+            "Stop",
+            {
+                "session_id": self.session.session_id,
+                "model": self.session.model,
+                "stop_hook_active": True,
+            },
+        )
+
+        # Fire SubagentStop for agent-specific commands
+        if agent_type:
+            self._fire_hook(
+                "SubagentStop",
+                {
+                    "agent_id": f"{agent_type}-{self.session.session_id[:8]}",
+                    "agent_type": agent_type,
+                    "session_id": self.session.session_id,
+                    "stop_hook_active": True,
+                },
+            )
+
+        self._display_response_metrics(result)
+        self._current_job = "idle"
+        self._print_status_bar()
+
+    def _display_response_metrics(self, result: dict[str, Any]) -> None:
+        """Print token usage and handle auto-compaction notification."""
+        metrics = result.get("metrics", {})
+        total = metrics.get("total_tokens", 0)
+        cost = metrics.get("cost_estimate", 0.0)
+        context = self.session.context_manager.get_context_usage()
+        pct = context.get("percentage", 0)
+        self._print_system(f"  tokens: {total:,} | context: {pct}% | cost: ${cost:.4f}")
+
+        if result.get("compacted"):
+            self._current_job = "compacting"
+            self._print_system("(Context was auto-compacted)")
+            self._fire_notification("info", "Context was auto-compacted")
+
+    async def _end_session(self) -> None:
+        """Save history, auto-save session, fire SessionEnd hook, and display summary."""
+        self._save_history()
+
+        # Auto-save the session so --resume can pick it up
+        try:
+            self.session.save()
+        except Exception:
+            logger.warning(
+                "Failed to auto-save session; --resume may not work for this session",
+                exc_info=True,
+            )
+
+        try:
+            summary = await self.session.end()
+            duration = summary.get("duration_str", "unknown")
+            total_msgs = summary.get("messages", 0)
+            total_tokens = summary.get("total_tokens", 0)
+            cost = summary.get("cost_estimate", 0.0)
+            self._print_system(
+                f"Session ended: {duration}, {total_msgs} messages, {total_tokens:,} tokens, ${cost:.4f}"
+            )
+            self._fire_hook(
+                "SessionEnd",
+                {
+                    "session_id": self.session.session_id,
+                    "model": self.session.model,
+                    "provider": self.session.provider,
+                    "duration": duration,
+                    "messages": total_msgs,
+                    "total_tokens": total_tokens,
+                    "cost": cost,
+                },
+            )
+        except Exception:
+            logger.warning("Failed to end session cleanly", exc_info=True)
 
     async def run(self) -> None:
         """Start the interactive REPL loop.
@@ -2683,29 +2897,7 @@ class InteractiveMode:
         if self._should_prompt_workspace_trust():
             self._prompt_workspace_trust()
 
-        # Fire Setup hook (init trigger)
-        self._fire_hook(
-            "Setup",
-            {
-                "trigger": "init",
-                "session_id": self.session.session_id,
-                "model": self.session.model,
-                "provider": self.session.provider,
-                "cwd": os.getcwd(),
-            },
-        )
-
-        # Fire SessionStart hook
-        self._fire_hook(
-            "SessionStart",
-            {
-                "session_id": self.session.session_id,
-                "model": self.session.model,
-                "provider": self.session.provider,
-                "source": "interactive",
-                "context_length": self.session.context_manager.max_context_length,
-            },
-        )
+        self._fire_session_lifecycle_hooks()
 
         # Show initial bottom status bar
         self._print_status_bar()
@@ -2742,178 +2934,22 @@ class InteractiveMode:
                     continue
 
                 # Check if this is an agent-specific command
-                agent_type = None
-                if stripped.startswith("@"):
-                    # Extract agent type from command (e.g., "@code write a function")
-                    parts = stripped.split(" ", 1)
-                    if len(parts) > 1:
-                        agent_type = parts[0][1:]  # Remove the @ symbol
-                        stripped = parts[1]
-                        # Fire SubagentStart hook for agent-specific commands
-                        self._fire_hook(
-                            "SubagentStart",
-                            {
-                                "agent_id": f"{agent_type}-{self.session.session_id[:8]}",
-                                "agent_type": agent_type,
-                                "session_id": self.session.session_id,
-                                "model": self.session.model,
-                                "prompt_preview": stripped[:100],
-                            },
-                        )
+                agent_type, stripped = self._resolve_agent_type(stripped)
 
                 # Fire UserPromptSubmit hook before processing
-                prompt_results = self._fire_hook(
-                    "UserPromptSubmit",
-                    {
-                        "prompt": stripped,
-                        "session_id": self.session.session_id,
-                        "model": self.session.model,
-                        "timestamp": __import__("datetime")
-                        .datetime.now(tz=__import__("datetime").timezone.utc)
-                        .isoformat(),
-                    },
-                )
-                # Check if the prompt was denied by the hook
-                prompt_denied = False
-                for pr in prompt_results:
-                    if pr.permission_decision == "deny":
-                        self._print_error("Prompt blocked by UserPromptSubmit hook.")
-                        prompt_denied = True
-                        break
-                if prompt_denied:
+                if self._check_prompt_hooks(stripped):
                     continue
 
-                # Auto-detect intent if no explicit @agent_type and classifier is enabled
+                # Auto-detect intent if no explicit @agent_type
                 if agent_type is None:
-                    from api.config import get_config as _get_cfg
-                    from runner.intent_classifier import classify_intent
-
-                    cfg = _get_cfg()
-                    if cfg.intent_enabled:
-                        intent_result = classify_intent(
-                            stripped, threshold=cfg.intent_confidence_threshold
-                        )
-                        if intent_result.agent_type is not None:
-                            agent_type = intent_result.agent_type
-                            if cfg.intent_show_detection:
-                                print(
-                                    f"  {_agent_color(agent_type, '[auto]')} "
-                                    f"Detected intent: "
-                                    f"{_agent_color(agent_type, agent_type)} "
-                                    f"(confidence: {intent_result.confidence:.0%})"
-                                )
-                            # Fire SubagentStart hook for auto-detected agent types
-                            self._fire_hook(
-                                "SubagentStart",
-                                {
-                                    "agent_id": f"{agent_type}-{self.session.session_id[:8]}",
-                                    "agent_type": agent_type,
-                                    "session_id": self.session.session_id,
-                                    "model": self.session.model,
-                                    "prompt_preview": stripped[:100],
-                                    "auto_detected": True,
-                                },
-                            )
+                    agent_type = self._auto_detect_intent(stripped)
 
                 # Regular message -> send to session with llama spinner
-                try:
-                    self._current_job = "thinking"
-                    spinner = self._spinner(_LLAMA_SPINNER_FRAMES)
-                    spinner.start()
-                    try:
-                        result = await self.session.send(stripped, agent_type=agent_type)
-                    finally:
-                        spinner.stop()
-                except Exception as exc:
-                    self._current_job = "idle"
-                    self._print_error(f"Error: {exc}")
-                    logger.exception("Failed to send message")
-                    continue
-
-                # Display response with agent-colored output
-                content = result.get("content", "")
-                self._print_response(content, agent_type=agent_type)
-
-                # Fire Stop hook (model finished responding)
-                self._fire_hook(
-                    "Stop",
-                    {
-                        "session_id": self.session.session_id,
-                        "model": self.session.model,
-                        "stop_hook_active": True,
-                    },
-                )
-
-                # Fire SubagentStop for agent-specific commands
-                if agent_type:
-                    self._fire_hook(
-                        "SubagentStop",
-                        {
-                            "agent_id": f"{agent_type}-{self.session.session_id[:8]}",
-                            "agent_type": agent_type,
-                            "session_id": self.session.session_id,
-                            "stop_hook_active": True,
-                        },
-                    )
-
-                # Show token usage after each response (like Claude Code)
-                metrics = result.get("metrics", {})
-                total = metrics.get("total_tokens", 0)
-                cost = metrics.get("cost_estimate", 0.0)
-                context = self.session.context_manager.get_context_usage()
-                pct = context.get("percentage", 0)
-                self._print_system(f"  tokens: {total:,} | context: {pct}% | cost: ${cost:.4f}")
-
-                # Notify on auto-compaction
-                if result.get("compacted"):
-                    self._current_job = "compacting"
-                    self._print_system("(Context was auto-compacted)")
-                    self._fire_notification("info", "Context was auto-compacted")
-
-                self._current_job = "idle"
-
-                # BOTTOM: persistent status bar after every response
-                self._print_status_bar()
+                await self._send_and_display(stripped, agent_type)
 
         finally:
             self._running = False
-            self._save_history()
-
-            # Auto-save the session so --resume can pick it up
-            try:
-                self.session.save()
-            except Exception:
-                logger.warning(
-                    "Failed to auto-save session; --resume may not work for this session",
-                    exc_info=True,
-                )
-
-            # End the session
-            try:
-                summary = await self.session.end()
-                duration = summary.get("duration_str", "unknown")
-                total_msgs = summary.get("messages", 0)
-                total_tokens = summary.get("total_tokens", 0)
-                cost = summary.get("cost_estimate", 0.0)
-                self._print_system(
-                    f"Session ended: {duration}, {total_msgs} messages, {total_tokens:,} tokens, ${cost:.4f}"
-                )
-
-                # Fire SessionEnd hook
-                self._fire_hook(
-                    "SessionEnd",
-                    {
-                        "session_id": self.session.session_id,
-                        "model": self.session.model,
-                        "provider": self.session.provider,
-                        "duration": duration,
-                        "messages": total_msgs,
-                        "total_tokens": total_tokens,
-                        "cost": cost,
-                    },
-                )
-            except Exception:
-                logger.warning("Failed to end session cleanly", exc_info=True)
+            await self._end_session()
 
 
 # ---------------------------------------------------------------------------
