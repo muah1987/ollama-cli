@@ -195,6 +195,12 @@ class TestWebSearchAndCrawlerTools:
         result = tool_web_search("ollama cli")
         assert result.get("error") == "SEARCH_API_KEY is not set"
 
+    def test_web_search_provider_without_key_still_errors(self, monkeypatch):
+        monkeypatch.delenv("SEARCH_API_KEY", raising=False)
+        monkeypatch.setenv("SEARCH_API_PROVIDER", "serper")
+        result = tool_web_search("ollama cli")
+        assert result.get("error") == "SEARCH_API_KEY is not set"
+
     def test_web_search_tavily_success(self, monkeypatch):
         monkeypatch.setenv("SEARCH_API_KEY", "test-key")
 

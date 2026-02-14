@@ -327,7 +327,7 @@ def _resolve_search_provider_and_key(provider: str | None, api_key: str | None) 
 def tool_web_search(
     query: str,
     *,
-    provider: str = "tavily",
+    provider: str = "",
     api_key: str = "",
     max_results: int = 5,
 ) -> dict[str, Any]:
@@ -385,7 +385,7 @@ def tool_web_search(
 def tool_web_crawler(
     url: str,
     *,
-    provider: str = "tavily",
+    provider: str = "",
     api_key: str = "",
     max_length: int = 5000,
 ) -> dict[str, Any]:
@@ -424,7 +424,7 @@ def tool_web_crawler(
 def tool_meta_crawler(
     query: str,
     *,
-    provider: str = "tavily",
+    provider: str = "",
     api_key: str = "",
     max_results: int = 3,
     max_length: int = 2000,
@@ -584,7 +584,7 @@ TOOLS: dict[str, dict[str, Any]] = {
         "risk": "low",
         "arg_map": lambda a: (a.get("query", ""),),
         "kwarg_map": lambda a: {
-            "provider": a.get("provider", "tavily"),
+            "provider": a.get("provider", ""),
             "api_key": a.get("api_key", ""),
             "max_results": a.get("max_results", 5),
         },
@@ -595,7 +595,7 @@ TOOLS: dict[str, dict[str, Any]] = {
         "risk": "low",
         "arg_map": lambda a: (a.get("url", ""),),
         "kwarg_map": lambda a: {
-            "provider": a.get("provider", "tavily"),
+            "provider": a.get("provider", ""),
             "api_key": a.get("api_key", ""),
             "max_length": a.get("max_length", 5000),
         },
@@ -606,7 +606,7 @@ TOOLS: dict[str, dict[str, Any]] = {
         "risk": "low",
         "arg_map": lambda a: (a.get("query", ""),),
         "kwarg_map": lambda a: {
-            "provider": a.get("provider", "tavily"),
+            "provider": a.get("provider", ""),
             "api_key": a.get("api_key", ""),
             "max_results": a.get("max_results", 3),
             "max_length": a.get("max_length", 2000),
