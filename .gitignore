@@ -140,6 +140,8 @@ cython_debug/
 .env
 .ollama/sessions/
 .ollama/memory/
+.ollama/bugs/
+.ollama/tasks/
 logs/
 specs/
 

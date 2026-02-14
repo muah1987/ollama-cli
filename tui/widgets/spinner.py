@@ -8,14 +8,30 @@ from textual.widget import Widget
 from textual.widgets import Label
 
 _LLAMA_SPINNER_FRAMES = [
-    "🦙 Thinking...",
-    "🦙 Chewing on that...",
-    "🦙 Ruminating...",
-    "🦙 Spitting ideas...",
-    "🦙 Grazing for answers...",
-    "🦙 Trotting through context...",
-    "🦙 Llama-nating...",
-    "🦙 Herding tokens...",
+    "🦙 Thinking .  ",
+    "🦙 Thinking .. ",
+    "🦙 Thinking ...",
+    "🦙 Chewing on that .  ",
+    "🦙 Chewing on that .. ",
+    "🦙 Chewing on that ...",
+    "🦙 Ruminating .  ",
+    "🦙 Ruminating .. ",
+    "🦙 Ruminating ...",
+    "🦙 Spitting ideas .  ",
+    "🦙 Spitting ideas .. ",
+    "🦙 Spitting ideas ...",
+    "🦙 Grazing for answers .  ",
+    "🦙 Grazing for answers .. ",
+    "🦙 Grazing for answers ...",
+    "🦙 Trotting through context .  ",
+    "🦙 Trotting through context .. ",
+    "🦙 Trotting through context ...",
+    "🦙 Llama-nating .  ",
+    "🦙 Llama-nating .. ",
+    "🦙 Llama-nating ...",
+    "🦙 Herding tokens .  ",
+    "🦙 Herding tokens .. ",
+    "🦙 Herding tokens ...",
 ]
 
 
@@ -44,7 +60,7 @@ class LlamaSpinner(Widget):
         self.frame_index = 0
         self.display = True
         self._advance()
-        self.set_interval(0.8, self._advance, name="spinner-timer")
+        self.set_interval(0.4, self._advance, name="spinner-timer")
 
     def stop(self) -> None:
         """Stop the spinner animation."""

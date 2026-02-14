@@ -161,7 +161,19 @@ def load_config(env_path: str | Path | None = None, config_json_path: str | Path
 
     # Overlay from JSON config file if it exists
     if config_json_path is None:
-        config_json_path = Path(__file__).resolve().parent.parent / ".ollama" / "config.json"
+        # Try CWD first, then source directory (so per-project config takes priority)
+        candidates = [
+            Path.cwd() / ".ollama" / "config.json",
+            Path(__file__).resolve().parent.parent / ".ollama" / "config.json",
+        ]
+        config_json_path = None
+        for candidate in candidates:
+            if candidate.exists():
+                config_json_path = candidate
+                break
+        if config_json_path is None:
+            # Use CWD as default save location for new configs
+            config_json_path = Path.cwd() / ".ollama" / "config.json"
     else:
         config_json_path = Path(config_json_path)
 
@@ -249,7 +261,13 @@ def save_config(config: OllamaCliConfig, path: str | Path | None = None) -> Path
     Path to the written file.
     """
     if path is None:
-        path = Path(__file__).resolve().parent.parent / ".ollama" / "config.json"
+        # Prefer CWD for per-project config; fall back to source directory
+        cwd_path = Path.cwd() / ".ollama" / "config.json"
+        src_path = Path(__file__).resolve().parent.parent / ".ollama" / "config.json"
+        if cwd_path.parent.exists() or not src_path.parent.exists():
+            path = cwd_path
+        else:
+            path = src_path
     else:
         path = Path(path)
 
