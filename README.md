@@ -1,5 +1,6 @@
 # Ollama CLI
 
+[![PyPI version](https://img.shields.io/pypi/v/ollama_cli.svg)](https://pypi.org/project/ollama_cli/)
 [![Build & Test](https://github.com/muah1987/ollama-cli/actions/workflows/build-test.yml/badge.svg)](https://github.com/muah1987/ollama-cli/actions/workflows/build-test.yml)
 [![codecov](https://codecov.io/gh/muah1987/ollama-cli/branch/main/graph/badge.svg)](https://codecov.io/gh/muah1987/ollama-cli)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
@@ -17,11 +18,23 @@ An open-source AI coding assistant with Textual TUI interface that runs in your 
 
 ### Install
 
+**Via installer script (recommended):**
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/muah1987/ollama-cli/main/install.sh | bash
 ```
 
 This installs `ollama-cli` to `~/.local/bin/`, sets up dependencies, and installs Ollama if needed.
+
+**Via PyPI:**
+
+```bash
+pip install ollama_cli
+# or
+pipx install ollama_cli
+```
+
+This installs the `ollama-cli` command globally.
 
 ### Start chatting
 

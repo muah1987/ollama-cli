@@ -21,7 +21,19 @@ This script automatically installs Ollama if missing:
 curl -fsSL https://raw.githubusercontent.com/muah1987/ollama-cli/main/install.sh | bash
 ```
 
-### Option 2: Manual Installation
+### Option 2: PyPI Installation
+
+```bash
+# Install from PyPI
+pip install ollama_cli
+
+# Or with pipx for isolated installation
+pipx install ollama_cli
+```
+
+This installs the `ollama-cli` command globally.
+
+### Option 3: Manual Installation from Source
 
 ```bash
 # Clone the repository

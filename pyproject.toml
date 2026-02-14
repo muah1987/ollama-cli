@@ -1,5 +1,5 @@
 [project]
-name = "ollama-cli"
+name = "ollama_cli"
 version = "0.2.0"
 description = "Full-featured AI coding assistant powered by Ollama with multi-provider support, 13 lifecycle hooks, MCP integration, and chain orchestration"
 readme = "README.md"
