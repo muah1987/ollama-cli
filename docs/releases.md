@@ -172,8 +172,20 @@ If a workflow fails:
 
 See [CHANGELOG.md](../CHANGELOG.md) for detailed version history.
 
+## Prerequisites
+
+Before using the release workflows, ensure you have completed the repository settings setup:
+
+📋 **See [GitHub Settings Setup Guide](GITHUB_SETTINGS_SETUP.md) for detailed configuration instructions**
+
+Required:
+- `GH_TOKEN` secret configured with appropriate permissions
+- Workflow permissions set to "Read and write"
+- PyPI Trusted Publisher configured (for PyPI publishing)
+
 ## Related Documentation
 
+- [GitHub Settings Setup Guide](GITHUB_SETTINGS_SETUP.md) - **Start here for initial setup**
 - [Conventional Commits](https://www.conventionalcommits.org/)
 - [Semantic Versioning](https://semver.org/)
 - [Python Semantic Release](https://python-semantic-release.readthedocs.io/)
