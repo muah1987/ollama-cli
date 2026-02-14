@@ -42,6 +42,8 @@ class OllamaCliConfig:
     openai_api_key: str = ""
     hf_token: str = ""
     gh_token: str = ""
+    search_api_key: str = ""
+    search_api_provider: str = "tavily"
     hooks_enabled: bool = True
     output_format: str = "text"
     allowed_tools: list[str] | None = None
@@ -138,6 +140,8 @@ def load_config(env_path: str | Path | None = None, config_json_path: str | Path
         openai_api_key=os.getenv("OPENAI_API_KEY", OllamaCliConfig.openai_api_key),
         hf_token=os.getenv("HF_TOKEN", OllamaCliConfig.hf_token),
         gh_token=os.getenv("GH_TOKEN", OllamaCliConfig.gh_token),
+        search_api_key=os.getenv("SEARCH_API_KEY", OllamaCliConfig.search_api_key),
+        search_api_provider=os.getenv("SEARCH_API_PROVIDER", OllamaCliConfig.search_api_provider),
         hooks_enabled=_bool_from_env(os.getenv("HOOKS_ENABLED"), OllamaCliConfig.hooks_enabled),
         intent_enabled=_bool_from_env(os.getenv("OLLAMA_CLI_INTENT_ENABLED"), OllamaCliConfig.intent_enabled),
         intent_confidence_threshold=_float_from_env(
@@ -283,6 +287,7 @@ def save_config(config: OllamaCliConfig, path: str | Path | None = None) -> Path
         "openai_api_key",
         "hf_token",
         "gh_token",
+        "search_api_key",
         "allowed_tools",
     }
     for key in excluded_keys:

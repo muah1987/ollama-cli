@@ -62,6 +62,14 @@ class TestMultiModelConfig:
             cfg = load_config()
             assert cfg.gh_token == "test-gh-token"
 
+    def test_load_config_reads_search_api_key(self) -> None:
+        """load_config should read SEARCH_API_KEY from environment."""
+        from api.config import load_config
+
+        with patch.dict(os.environ, {"SEARCH_API_KEY": "test-search-key"}, clear=False):
+            cfg = load_config()
+            assert cfg.search_api_key == "test-search-key"
+
     def test_save_config_excludes_tokens(self) -> None:
         """save_config should not persist API keys or tokens."""
         from api.config import OllamaCliConfig, save_config
@@ -81,6 +89,7 @@ class TestMultiModelConfig:
             assert "hf_token" not in data
             assert "gh_token" not in data
             assert "anthropic_api_key" not in data
+            assert "search_api_key" not in data
         finally:
             os.unlink(path)
 
