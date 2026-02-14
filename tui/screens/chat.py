@@ -2,7 +2,7 @@
 
 Layout follows the documented 3-zone structure:
   TOP:    ASCII banner with side info (scrolls away after first interaction)
-  MIDDLE: Conversation area + intent badge + spinner (the ONLY scrollable zone)
+  MIDDLE: Conversation/message area (scrollable #message-area) plus intent badge and spinner (non-scrollable)
   BOTTOM: Bordered input box + persistent status bar (docked via #bottom-zone)
 """
 

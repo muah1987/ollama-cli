@@ -167,7 +167,7 @@ class TestInputAreaCSS:
         assert InputArea.DEFAULT_CSS is not None
         assert "InputArea" in InputArea.DEFAULT_CSS
 
-    def test_css_has_dock_bottom(self):
+    def test_css_does_not_dock_bottom(self):
         """InputArea CSS does not dock individually (parent #bottom-zone docks)."""
         from tui.widgets.input_area import InputArea
 
@@ -341,7 +341,7 @@ class TestStatusPanelCSS:
         assert StatusPanel.DEFAULT_CSS is not None
         assert "StatusPanel" in StatusPanel.DEFAULT_CSS
 
-    def test_css_has_dock_bottom(self):
+    def test_css_does_not_dock_bottom(self):
         """StatusPanel CSS does not dock individually (parent #bottom-zone docks)."""
         from tui.widgets.status_panel import StatusPanel
 
