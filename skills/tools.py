@@ -317,6 +317,139 @@ def tool_web_fetch(url: str, *, max_length: int = 5000) -> dict[str, Any]:
         return {"error": f"Fetch failed: {exc}"}
 
 
+def _resolve_search_provider_and_key(provider: str | None, api_key: str | None) -> tuple[str, str]:
+    """Resolve search provider/key from explicit args or environment variables."""
+    resolved_provider = (provider or os.environ.get("SEARCH_API_PROVIDER", "tavily")).strip().lower()
+    resolved_key = (api_key or os.environ.get("SEARCH_API_KEY", "")).strip()
+    return resolved_provider, resolved_key
+
+
+def tool_web_search(
+    query: str,
+    *,
+    provider: str = "tavily",
+    api_key: str = "",
+    max_results: int = 5,
+) -> dict[str, Any]:
+    """Search the web using a provider API key (Tavily or Serper)."""
+    if not query.strip():
+        return {"error": "No search query provided"}
+    resolved_provider, resolved_key = _resolve_search_provider_and_key(provider, api_key)
+    if not resolved_key:
+        return {"error": "SEARCH_API_KEY is not set"}
+
+    try:
+        import httpx
+    except ImportError:
+        return {"error": "httpx not installed"}
+
+    try:
+        if resolved_provider == "tavily":
+            resp = httpx.post(
+                "https://api.tavily.com/search",
+                json={
+                    "api_key": resolved_key,
+                    "query": query,
+                    "max_results": max(1, min(max_results, 20)),
+                },
+                timeout=20.0,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            results = data.get("results", [])
+            normalized = [
+                {"title": r.get("title", ""), "url": r.get("url", ""), "content": r.get("content", "")} for r in results
+            ]
+            return {"provider": resolved_provider, "query": query, "results": normalized}
+
+        if resolved_provider in {"serper", "google-serper"}:
+            resp = httpx.post(
+                "https://google.serper.dev/search",
+                headers={"X-API-KEY": resolved_key},
+                json={"q": query, "num": max(1, min(max_results, 10))},
+                timeout=20.0,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            results = data.get("organic", [])
+            normalized = [
+                {"title": r.get("title", ""), "url": r.get("link", ""), "content": r.get("snippet", "")} for r in results
+            ]
+            return {"provider": resolved_provider, "query": query, "results": normalized}
+
+        return {"error": f"Unsupported search provider: {resolved_provider}"}
+    except Exception as exc:
+        return {"error": f"Search failed: {exc}"}
+
+
+def tool_web_crawler(
+    url: str,
+    *,
+    provider: str = "tavily",
+    api_key: str = "",
+    max_length: int = 5000,
+) -> dict[str, Any]:
+    """Crawl a URL using provider API (currently Tavily extract API)."""
+    if not url.strip():
+        return {"error": "No URL provided"}
+    resolved_provider, resolved_key = _resolve_search_provider_and_key(provider, api_key)
+    if not resolved_key:
+        return {"error": "SEARCH_API_KEY is not set"}
+    if resolved_provider != "tavily":
+        return {"error": f"Unsupported crawler provider: {resolved_provider}"}
+
+    try:
+        import httpx
+    except ImportError:
+        return {"error": "httpx not installed"}
+
+    try:
+        resp = httpx.post(
+            "https://api.tavily.com/extract",
+            json={"api_key": resolved_key, "urls": [url]},
+            timeout=30.0,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        results = data.get("results", [])
+        first = results[0] if results else {}
+        content = str(first.get("raw_content", "") or first.get("content", ""))
+        if len(content) > max_length:
+            content = content[:max_length] + f"\n... (truncated at {max_length} chars)"
+        return {"provider": resolved_provider, "url": url, "content": content}
+    except Exception as exc:
+        return {"error": f"Crawl failed: {exc}"}
+
+
+def tool_meta_crawler(
+    query: str,
+    *,
+    provider: str = "tavily",
+    api_key: str = "",
+    max_results: int = 3,
+    max_length: int = 2000,
+) -> dict[str, Any]:
+    """Run search then crawl top results with the same provider API."""
+    search_result = tool_web_search(query, provider=provider, api_key=api_key, max_results=max_results)
+    if "error" in search_result:
+        return search_result
+    crawled: list[dict[str, Any]] = []
+    for item in search_result.get("results", [])[: max(1, min(max_results, 10))]:
+        target_url = str(item.get("url", "")).strip()
+        if not target_url:
+            continue
+        crawl_result = tool_web_crawler(target_url, provider=provider, api_key=api_key, max_length=max_length)
+        crawled.append(
+            {
+                "title": item.get("title", ""),
+                "url": target_url,
+                "content": crawl_result.get("content", ""),
+                "error": crawl_result.get("error"),
+            }
+        )
+    return {"provider": search_result.get("provider", provider), "query": query, "results": crawled}
+
+
 def tool_model_pull(model_name: str, *, force: bool = False) -> dict[str, Any]:
     """Pull (download) a model from the Ollama registry.
 
@@ -445,6 +578,40 @@ TOOLS: dict[str, dict[str, Any]] = {
         "arg_map": lambda a: (a.get("url", ""),),
         "kwarg_map": lambda a: {},
     },
+    "web_search": {
+        "function": tool_web_search,
+        "description": "Search the web using SEARCH_API_KEY-backed providers",
+        "risk": "low",
+        "arg_map": lambda a: (a.get("query", ""),),
+        "kwarg_map": lambda a: {
+            "provider": a.get("provider", "tavily"),
+            "api_key": a.get("api_key", ""),
+            "max_results": a.get("max_results", 5),
+        },
+    },
+    "web_crawler": {
+        "function": tool_web_crawler,
+        "description": "Crawl a URL using a search API provider",
+        "risk": "low",
+        "arg_map": lambda a: (a.get("url", ""),),
+        "kwarg_map": lambda a: {
+            "provider": a.get("provider", "tavily"),
+            "api_key": a.get("api_key", ""),
+            "max_length": a.get("max_length", 5000),
+        },
+    },
+    "meta_crawler": {
+        "function": tool_meta_crawler,
+        "description": "Search then crawl top results using the provider API",
+        "risk": "low",
+        "arg_map": lambda a: (a.get("query", ""),),
+        "kwarg_map": lambda a: {
+            "provider": a.get("provider", "tavily"),
+            "api_key": a.get("api_key", ""),
+            "max_results": a.get("max_results", 3),
+            "max_length": a.get("max_length", 2000),
+        },
+    },
     "model_pull": {
         "function": tool_model_pull,
         "description": "Pull (download) a model from the Ollama registry",
@@ -567,6 +734,55 @@ def get_tools_schema() -> list[dict[str, Any]]:
                     "required": ["url"],
                     "properties": {
                         "url": {"type": "string", "description": "URL to fetch"},
+                    },
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "web_search",
+                "description": "Search the web using SEARCH_API_KEY-backed providers (tavily, serper)",
+                "parameters": {
+                    "type": "object",
+                    "required": ["query"],
+                    "properties": {
+                        "query": {"type": "string", "description": "Search query"},
+                        "provider": {"type": "string", "description": "Search provider (default: tavily)"},
+                        "max_results": {"type": "integer", "description": "Maximum search results to return"},
+                    },
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "web_crawler",
+                "description": "Crawl a URL using the provider API (tavily extract)",
+                "parameters": {
+                    "type": "object",
+                    "required": ["url"],
+                    "properties": {
+                        "url": {"type": "string", "description": "URL to crawl"},
+                        "provider": {"type": "string", "description": "Crawler provider (default: tavily)"},
+                        "max_length": {"type": "integer", "description": "Maximum content length to return"},
+                    },
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "meta_crawler",
+                "description": "Search then crawl top results with the same provider API",
+                "parameters": {
+                    "type": "object",
+                    "required": ["query"],
+                    "properties": {
+                        "query": {"type": "string", "description": "Search query"},
+                        "provider": {"type": "string", "description": "Provider used for search/crawl"},
+                        "max_results": {"type": "integer", "description": "Maximum results to crawl"},
+                        "max_length": {"type": "integer", "description": "Maximum content length per crawled result"},
                     },
                 },
             },

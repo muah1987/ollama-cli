@@ -9,7 +9,10 @@ from skills.tools import (
     tool_file_read,
     tool_file_write,
     tool_grep_search,
+    tool_meta_crawler,
     tool_shell_exec,
+    tool_web_crawler,
+    tool_web_search,
 )
 
 # ---------------------------------------------------------------------------
@@ -184,3 +187,67 @@ class TestToolShellExec:
         clear_ignore_cache()
         result = tool_shell_exec("false")
         assert result.get("returncode", 0) != 0
+
+
+class TestWebSearchAndCrawlerTools:
+    def test_web_search_requires_api_key(self, monkeypatch):
+        monkeypatch.delenv("SEARCH_API_KEY", raising=False)
+        result = tool_web_search("ollama cli")
+        assert result.get("error") == "SEARCH_API_KEY is not set"
+
+    def test_web_search_tavily_success(self, monkeypatch):
+        monkeypatch.setenv("SEARCH_API_KEY", "test-key")
+
+        class _Resp:
+            def raise_for_status(self) -> None:
+                return None
+
+            def json(self) -> dict:
+                return {
+                    "results": [
+                        {"title": "A", "url": "https://example.com", "content": "snippet"},
+                    ]
+                }
+
+        monkeypatch.setattr("httpx.post", lambda *args, **kwargs: _Resp())
+        result = tool_web_search("ollama cli")
+        assert result.get("provider") == "tavily"
+        assert result.get("results", [])[0]["url"] == "https://example.com"
+
+    def test_web_crawler_tavily_success(self, monkeypatch):
+        monkeypatch.setenv("SEARCH_API_KEY", "test-key")
+
+        class _Resp:
+            def raise_for_status(self) -> None:
+                return None
+
+            def json(self) -> dict:
+                return {"results": [{"raw_content": "page body"}]}
+
+        monkeypatch.setattr("httpx.post", lambda *args, **kwargs: _Resp())
+        result = tool_web_crawler("https://example.com")
+        assert result.get("provider") == "tavily"
+        assert "page body" in result.get("content", "")
+
+    def test_meta_crawler_combines_search_and_crawl(self, monkeypatch):
+        monkeypatch.setenv("SEARCH_API_KEY", "test-key")
+
+        class _Resp:
+            def __init__(self, payload: dict) -> None:
+                self._payload = payload
+
+            def raise_for_status(self) -> None:
+                return None
+
+            def json(self) -> dict:
+                return self._payload
+
+        def _mock_post(url: str, *args, **kwargs):
+            if url.endswith("/search"):
+                return _Resp({"results": [{"title": "A", "url": "https://example.com", "content": "snippet"}]})
+            return _Resp({"results": [{"raw_content": "crawled content"}]})
+
+        monkeypatch.setattr("httpx.post", _mock_post)
+        result = tool_meta_crawler("ollama")
+        assert result.get("query") == "ollama"
+        assert result.get("results", [])[0]["content"] == "crawled content"
