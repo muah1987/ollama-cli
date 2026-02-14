@@ -109,51 +109,26 @@ Navigate to: **Settings → Actions → General**
 
 ## PyPI Trusted Publisher Setup
 
-Trusted Publishing (OIDC) is the modern, secure way to publish to PyPI without API tokens.
+✅ **Already Configured** - PyPI Trusted Publishing is set up for this repository.
 
-### Prerequisites
-- You must have ownership or maintainer access to the PyPI project
-- The project must already exist on PyPI (or create it first with manual upload)
+### Current Configuration
 
-### Setup Steps
+The repository is configured to use OIDC-based trusted publishing:
 
-1. **Go to PyPI Project Settings**
-   - Visit: https://pypi.org/manage/project/cli-ollama/settings/publishing/
+- **Publisher:** GitHub Actions
+- **Repository:** muah1987/cli-ollama
+- **Workflow:** pypi-publish.yml
+- **Authentication:** OIDC (no API tokens required)
 
-2. **Add a new pending publisher**
-   - Click "Add a new pending publisher"
-   - Fill in the form:
-     ```
-     PyPI Project Name: cli-ollama
-     Owner: muah1987
-     Repository name: cli-ollama
-     Workflow name: pypi-publish.yml
-     Environment name: (leave blank)
-     ```
-   - Click "Add"
+### How It Works
 
-3. **Verify Configuration**
-   - The publisher should appear in the "Pending publishers" section
-   - Once the first release workflow runs successfully, it will move to "Active publishers"
+When a GitHub Release is published:
+1. The `pypi-publish.yml` workflow runs
+2. GitHub generates a short-lived OIDC token
+3. PyPI verifies the token and allows the upload
+4. Package is published to https://pypi.org/project/cli-ollama/
 
-### First-Time Publishing
-
-If the package doesn't exist on PyPI yet, you can either:
-
-**Option A: Manual first upload (recommended)**
-```bash
-# Build the package locally
-uv build
-
-# Upload using twine with PyPI token
-uv pip install twine
-uv run twine upload dist/*
-```
-
-**Option B: Use trusted publisher from the start**
-- The first workflow run will fail with "package does not exist"
-- Contact PyPI support to enable the trusted publisher before the package exists
-- Or use TestPyPI first to test the workflow
+No manual API token management is needed.
 
 ---
 

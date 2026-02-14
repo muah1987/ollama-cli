@@ -129,27 +129,29 @@ This will:
   - Troubleshooting section
   - Release checklist
 
-## PyPI Configuration Required
+## PyPI Configuration
 
-The repository uses **Trusted Publishing** which requires one-time setup:
+✅ **PyPI Trusted Publishing Already Configured**
 
-1. Go to PyPI project: https://pypi.org/manage/project/cli-ollama/
-2. Navigate to "Publishing" settings
-3. Add trusted publisher:
-   - **Publisher:** GitHub
-   - **Owner:** muah1987
-   - **Repository:** cli-ollama
-   - **Workflow:** pypi-publish.yml
-   - **Environment:** (leave blank)
+The repository is set up with OIDC-based trusted publishing:
 
-Once configured, no API tokens are needed - the workflow authenticates using OIDC.
+- **Publisher:** GitHub Actions
+- **Repository:** muah1987/cli-ollama
+- **Workflow:** pypi-publish.yml
+- **Authentication:** OIDC (no API tokens needed)
+
+When a GitHub Release is published, the `pypi-publish.yml` workflow will automatically:
+1. Build the package
+2. Authenticate using OIDC
+3. Publish to https://pypi.org/project/cli-ollama/
+
+No additional configuration or API tokens required.
 
 ## Recommendations
 
 ### Immediate Actions
 1. **Push tag v0.2.0** to trigger first release
-2. **Configure PyPI trusted publisher** as described above
-3. **Monitor the release workflow** to ensure all steps complete
+2. **Monitor the release workflow** to ensure all steps complete
 
 ### Future Improvements
 1. Consider adding pre-release workflow for testing
@@ -180,15 +182,12 @@ The release process is now:
 git fetch --tags
 git push origin v0.2.0
 
-# 2. Configure PyPI trusted publisher (one-time setup)
-# Visit PyPI project settings and add GitHub as trusted publisher
-
-# 3. Monitor workflows
+# 2. Monitor workflows
 # Check GitHub Actions tab for:
 # - Release workflow completion
-# - PyPI publish workflow completion
+# - PyPI publish workflow completion (automatic)
 
-# 4. Verify release
+# 3. Verify release
 pip install cli-ollama==0.2.0
 cli-ollama --version
 ```

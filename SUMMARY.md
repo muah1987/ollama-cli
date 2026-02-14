@@ -148,11 +148,13 @@ Check Actions tab:
 - ✅ Release appears at https://github.com/muah1987/cli-ollama/releases
 - ✅ Contains `.whl` and `.tar.gz` files
 
-### 3. Verify PyPI Publication (if configured)
+### 3. Verify PyPI Publication
 ```bash
 pip install cli-ollama --upgrade
 cli-ollama --version
 ```
+
+**Note:** PyPI trusted publishing is already configured. The package will be automatically published to PyPI when a GitHub Release is created.
 
 ## Current Status
 
@@ -166,7 +168,7 @@ cli-ollama --version
 | Version Tag | ⏳ Created | Local only, needs push |
 | GH_TOKEN Secret | ⏳ Pending | Owner must configure |
 | Workflow Permissions | ⏳ Pending | Owner must enable |
-| PyPI Publisher | ⏳ Optional | For PyPI publishing |
+| PyPI Publisher | ✅ Configured | OIDC trusted publishing ready |
 
 ## Quick Start for Repository Owner
 
@@ -180,13 +182,9 @@ cli-ollama --version
 # 3. Push the tag
 git push origin v0.2.0
 
-# 4. Monitor workflows in Actions tab
-# ✅ Release workflow
-# ✅ PyPI publish workflow (optional)
-
-# 5. Verify
+# 4. Verify
 # - Check GitHub Releases page
-# - Try installing from PyPI (if configured)
+# - Package will be automatically published to PyPI
 ```
 
 **Full documentation:** See `docs/GITHUB_SETTINGS_SETUP.md`

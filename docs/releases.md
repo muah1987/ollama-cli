@@ -52,8 +52,8 @@ The project uses an automated release workflow with three key components:
 - No manual API tokens required
 
 **Requirements:**
-- PyPI trusted publisher must be configured for this repository
-- Repository must have `id-token: write` permission (already configured)
+- ✅ PyPI trusted publisher already configured for this repository
+- ✅ Repository has `id-token: write` permission (already configured)
 
 ## Version Management
 
@@ -105,7 +105,7 @@ git push origin v0.2.0
 This will:
 1. Trigger the `release.yml` workflow
 2. Create a GitHub Release
-3. Trigger PyPI publication
+3. Trigger PyPI publication (PyPI trusted publishing already configured ✅)
 
 **Note:** Manual tags should only be used for testing or emergency releases. The automated process is preferred.
 
@@ -121,7 +121,7 @@ Before creating a release:
 - [ ] Documentation is current
 - [ ] Version number in `pyproject.toml` reflects intended release
 
-## Troubleshooting
+### Troubleshooting
 
 ### Semantic Release Configuration
 
@@ -149,14 +149,16 @@ ls -la dist/
 # - cli_ollama-X.Y.Z-py3-none-any.whl
 ```
 
-### PyPI Trusted Publishing
+### PyPI Publishing
 
-The repository uses [Trusted Publishing](https://docs.pypi.org/trusted-publishers/) which eliminates the need for API tokens.
+**Status:** ✅ PyPI Trusted Publishing is already configured
 
-To configure (repository owner only):
-1. Go to PyPI project settings
-2. Add GitHub as a trusted publisher
-3. Specify: `muah1987/cli-ollama` and workflow `pypi-publish.yml`
+The `pypi-publish.yml` workflow uses OIDC authentication and will automatically publish to PyPI when a GitHub Release is created. No API tokens or manual configuration needed.
+
+If you encounter issues:
+- Verify the GitHub Release was created successfully
+- Check the Actions tab for the "Deploy to PyPI" workflow
+- Ensure the workflow completed without errors
 
 ### Failed Workflows
 
