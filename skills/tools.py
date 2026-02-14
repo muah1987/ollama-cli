@@ -332,7 +332,7 @@ def tool_web_search(
     max_results: int = 5,
 ) -> dict[str, Any]:
     """Search the web using a provider API key (Tavily or Serper)."""
-    if api_key.strip():
+    if (api_key or "").strip():
         return {"error": "api_key argument is not supported; use SEARCH_API_KEY environment variable"}
     if not query.strip():
         return {"error": "No search query provided"}
@@ -402,7 +402,7 @@ def tool_web_crawler(
     max_length: int = 5000,
 ) -> dict[str, Any]:
     """Crawl a URL using provider API (currently Tavily extract API)."""
-    if api_key.strip():
+    if (api_key or "").strip():
         return {"error": "api_key argument is not supported; use SEARCH_API_KEY environment variable"}
     if not url.strip():
         return {"error": "No URL provided"}
@@ -444,9 +444,9 @@ def tool_meta_crawler(
     max_length: int = 2000,
 ) -> dict[str, Any]:
     """Run search then crawl top results with the same provider API."""
-    if api_key.strip():
+    if (api_key or "").strip():
         return {"error": "api_key argument is not supported; use SEARCH_API_KEY environment variable"}
-    search_result = tool_web_search(query, provider=provider, api_key=api_key, max_results=max_results)
+    search_result = tool_web_search(query, provider=provider, api_key="", max_results=max_results)
     if "error" in search_result:
         return search_result
     resolved_provider = str(search_result.get("provider", provider)).strip().lower()
