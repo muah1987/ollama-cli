@@ -1,0 +1,22 @@
+{
+  "id": "20260214_141401",
+  "description": "No description provided",
+  "model": "llama3.2",
+  "provider": "ollama",
+  "session_id": "test-12345678",
+  "timestamp": "2026-02-14T14:14:01.580843+00:00",
+  "messages": 2,
+  "token_metrics": {
+    "prompt_tokens": 50,
+    "completion_tokens": 50,
+    "total_tokens": 100,
+    "tokens_per_second": 25.0,
+    "cost_estimate": 0.001
+  },
+  "context_usage": {
+    "used": 100,
+    "max": 4096,
+    "percentage": 2,
+    "remaining": 3996
+  }
+}

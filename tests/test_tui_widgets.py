@@ -471,11 +471,11 @@ class TestLlamaSpinnerInit:
 class TestLlamaSpinnerFrames:
     """Test the spinner frame definitions."""
 
-    def test_has_eight_frames(self):
-        """There are 8 spinner frames defined."""
+    def test_has_animated_frames(self):
+        """There are 24 spinner frames defined (8 messages × 3 dot states)."""
         from tui.widgets.spinner import _LLAMA_SPINNER_FRAMES
 
-        assert len(_LLAMA_SPINNER_FRAMES) == 8
+        assert len(_LLAMA_SPINNER_FRAMES) == 24
 
     def test_all_frames_contain_llama_emoji(self):
         """Every frame contains the llama emoji."""

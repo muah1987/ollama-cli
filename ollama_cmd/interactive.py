@@ -156,14 +156,30 @@ _OLLAMA_LOGO = (
 
 # Funny llama-themed spinner frames for "thinking" animation
 _LLAMA_SPINNER_FRAMES = [
-    "🦙 Thinking...",
-    "🦙 Chewing on that...",
-    "🦙 Ruminating...",
-    "🦙 Spitting ideas...",
-    "🦙 Grazing for answers...",
-    "🦙 Trotting through context...",
-    "🦙 Llama-nating...",
-    "🦙 Herding tokens...",
+    "🦙 Thinking .  ",
+    "🦙 Thinking .. ",
+    "🦙 Thinking ...",
+    "🦙 Chewing on that .  ",
+    "🦙 Chewing on that .. ",
+    "🦙 Chewing on that ...",
+    "🦙 Ruminating .  ",
+    "🦙 Ruminating .. ",
+    "🦙 Ruminating ...",
+    "🦙 Spitting ideas .  ",
+    "🦙 Spitting ideas .. ",
+    "🦙 Spitting ideas ...",
+    "🦙 Grazing for answers .  ",
+    "🦙 Grazing for answers .. ",
+    "🦙 Grazing for answers ...",
+    "🦙 Trotting through context .  ",
+    "🦙 Trotting through context .. ",
+    "🦙 Trotting through context ...",
+    "🦙 Llama-nating .  ",
+    "🦙 Llama-nating .. ",
+    "🦙 Llama-nating ...",
+    "🦙 Herding tokens .  ",
+    "🦙 Herding tokens .. ",
+    "🦙 Herding tokens ...",
 ]
 
 _LLAMA_PLAN_SPINNER = [
@@ -207,9 +223,9 @@ class _LlamaSpinner:
     """
 
     _JOIN_TIMEOUT: float = 2.0  # seconds to wait for spinner thread to stop
-    _DEFAULT_INTERVAL: float = 0.8  # seconds between frame changes
+    _DEFAULT_INTERVAL: float = 0.4  # seconds between frame changes
 
-    def __init__(self, frames: list[str], interval: float = 0.8) -> None:
+    def __init__(self, frames: list[str], interval: float = 0.4) -> None:
         self._frames = frames
         self._interval = interval
         self._stop_event = threading.Event()
@@ -339,8 +355,10 @@ class InteractiveMode:
         "/tool": "_cmd_tool",
         "/diff": "_cmd_diff",
         "/config": "_cmd_config",
+        "/settings": "_cmd_config",
         "/bug": "_cmd_bug",
         "/team_planning": "_cmd_team_planning",
+        "/plan": "_cmd_team_planning",
         "/build": "_cmd_build",
         "/resume": "_cmd_resume",
         "/update_status_line": "_cmd_update_status_line",
