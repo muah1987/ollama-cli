@@ -48,25 +48,16 @@ for _candidate in _env_candidates:
 # Lazy import: OllamaClient lives in the same package
 # ---------------------------------------------------------------------------
 
-from .ollama_client import OllamaClient, OllamaError, OllamaModelNotFoundError  # noqa: E402
+from .errors import (  # noqa: E402
+    OllamaError,
+    OllamaModelNotFoundError,
+    ProviderAuthError,
+    ProviderError,
+    ProviderUnavailableError,
+)
+from .ollama_client import OllamaClient  # noqa: E402
 
 logger = logging.getLogger(__name__)
-
-# ---------------------------------------------------------------------------
-# Custom exceptions
-# ---------------------------------------------------------------------------
-
-
-class ProviderError(Exception):
-    """Base exception for provider-related errors."""
-
-
-class ProviderUnavailableError(ProviderError):
-    """Raised when a provider cannot be reached or is not responding."""
-
-
-class ProviderAuthError(ProviderError):
-    """Raised when authentication with a provider fails (missing or invalid key)."""
 
 
 # ---------------------------------------------------------------------------

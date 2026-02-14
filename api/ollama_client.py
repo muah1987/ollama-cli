@@ -35,21 +35,7 @@ from typing import Any
 
 import httpx
 
-# ---------------------------------------------------------------------------
-# Custom exceptions
-# ---------------------------------------------------------------------------
-
-
-class OllamaError(Exception):
-    """Base exception for Ollama API errors."""
-
-
-class OllamaConnectionError(OllamaError):
-    """Raised when the Ollama server is unreachable."""
-
-
-class OllamaModelNotFoundError(OllamaError):
-    """Raised when a requested model does not exist."""
+from .errors import OllamaConnectionError, OllamaError, OllamaModelNotFoundError
 
 
 # ---------------------------------------------------------------------------
