@@ -68,6 +68,8 @@ class StatusPanel(Widget):
 
     # Default context window size (tokens) -- overridden by session data
     _DEFAULT_CONTEXT_SIZE = 200_000
+    # Display length for truncated session ID in the status bar (8 hex + dash + 4 hex)
+    _SESSION_ID_DISPLAY_LEN = 13
 
     model_name: reactive[str] = reactive("llama3.2")
     provider_name: reactive[str] = reactive("ollama")
@@ -108,7 +110,7 @@ class StatusPanel(Widget):
             f"{remaining_str} left",
         ]
         if self.session_id:
-            parts.append(self.session_id[:13])
+            parts.append(self.session_id[:self._SESSION_ID_DISPLAY_LEN])
         if self.job_status and self.job_status != "idle":
             parts.append(f"● {self.job_status}")
         return " | ".join(parts)

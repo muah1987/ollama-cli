@@ -40,6 +40,9 @@ _BANNER_LINES = [
 # Pad each banner line to equal width for side-info alignment
 _BANNER_WIDTH = max(len(line) for line in _BANNER_LINES)
 
+# Default model name used when no session is active
+_DEFAULT_MODEL = "llama3.2"
+
 
 def _build_banner(session=None) -> str:
     """Build the TOP zone banner with side info next to the ASCII art."""
@@ -50,7 +53,7 @@ def _build_banner(session=None) -> str:
     except Exception:
         ver = "dev"
 
-    model = getattr(session, "model", "llama3.2") if session else "llama3.2"
+    model = getattr(session, "model", _DEFAULT_MODEL) if session else _DEFAULT_MODEL
     provider = getattr(session, "provider", "ollama") if session else "ollama"
     host = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
     now = datetime.datetime.now(tz=datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
