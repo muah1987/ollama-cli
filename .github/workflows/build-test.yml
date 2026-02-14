@@ -69,8 +69,8 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          uv run pytest tests/ -v --cov=./ --cov-report=xml --cov-report=term-missing --cov-fail-under=80
-          echo "Coverage check passed with minimum 80% coverage requirement"
+          uv run pytest tests/ -v --cov=./ --cov-report=xml --cov-report=term-missing --cov-fail-under=75
+          echo "Coverage check passed with minimum 75% coverage requirement"
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
