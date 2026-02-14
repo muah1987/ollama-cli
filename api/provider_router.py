@@ -67,11 +67,14 @@ logger = logging.getLogger(__name__)
 _DEFAULT_TIMEOUT = 120.0
 
 # Fallback priority: try these providers in order if the primary is down
-_FALLBACK_CHAIN: list[str] = ["ollama", "claude", "gemini", "codex", "hf"]
+_FALLBACK_CHAIN: list[str] = ["ollama", "llamacpp", "vllm", "other", "claude", "gemini", "codex", "hf"]
 
 # Default models per provider (used when no model is specified)
 _DEFAULT_MODELS: dict[str, str] = {
     "ollama": "llama3.2",
+    "llamacpp": "default",
+    "vllm": "default",
+    "other": "default",
     "claude": "claude-sonnet-4-20250514",
     "gemini": "gemini-2.0-flash",
     "codex": "gpt-4.1",
@@ -845,6 +848,424 @@ class HfProvider(BaseProvider):
 
 
 # ---------------------------------------------------------------------------
+# LlamaCppProvider -- llama.cpp OpenAI-compatible server
+# ---------------------------------------------------------------------------
+
+
+class LlamaCppProvider(BaseProvider):
+    """Provider backed by a llama.cpp server (``llama-server``).
+
+    llama.cpp exposes an OpenAI-compatible ``/v1/chat/completions`` endpoint
+    when started with ``--api-key`` (optional).  Runs locally on all platforms
+    (Linux, macOS, Windows) with CPU, CUDA, Metal, and Vulkan backends.
+
+    Environment variables
+    ---------------------
+    LLAMACPP_HOST : str
+        Server URL (default ``http://localhost:8080``).
+    LLAMACPP_API_KEY : str
+        Optional Bearer token for authenticated requests.
+    LLAMACPP_MODEL : str
+        Default model alias exposed by the running server.
+    """
+
+    name = "llamacpp"
+
+    def __init__(self, host: str | None = None, api_key: str | None = None) -> None:
+        self._host = host or os.environ.get("LLAMACPP_HOST", "http://localhost:8080")
+        self._api_key = api_key or os.environ.get("LLAMACPP_API_KEY", "")
+        self._default_model = os.environ.get("LLAMACPP_MODEL", _DEFAULT_MODELS["llamacpp"])
+        headers: dict[str, str] = {"Content-Type": "application/json"}
+        if self._api_key:
+            headers["Authorization"] = f"Bearer {self._api_key}"
+        self._client = httpx.AsyncClient(
+            base_url=self._host,
+            timeout=httpx.Timeout(_DEFAULT_TIMEOUT),
+            headers=headers,
+        )
+
+    # -- internal helpers ---------------------------------------------------
+
+    async def _stream_openai(self, response: httpx.Response) -> AsyncIterator[dict[str, Any]]:
+        """Parse OpenAI SSE stream into dicts."""
+        try:
+            async for line in response.aiter_lines():
+                line = line.strip()
+                if not line or not line.startswith("data: "):
+                    continue
+                data_str = line[6:]
+                if data_str == "[DONE]":
+                    break
+                try:
+                    yield json.loads(data_str)
+                except json.JSONDecodeError:
+                    continue
+        finally:
+            await response.aclose()
+
+    # -- BaseProvider implementation ----------------------------------------
+
+    async def chat(
+        self,
+        messages: list[dict[str, str]],
+        model: str | None = None,
+        stream: bool = False,
+        **kwargs: Any,
+    ) -> dict[str, Any] | AsyncIterator[dict[str, Any]]:
+        payload: dict[str, Any] = {
+            "model": model or self._default_model,
+            "messages": messages,
+            "stream": stream,
+        }
+        if "max_tokens" in kwargs:
+            payload["max_tokens"] = kwargs.pop("max_tokens")
+        if "temperature" in kwargs:
+            payload["temperature"] = kwargs.pop("temperature")
+        payload.update(kwargs)
+
+        if stream:
+            req = self._client.build_request("POST", "/v1/chat/completions", json=payload)
+            response = await self._client.send(req, stream=True)
+            if response.status_code >= 400:
+                body = await response.aread()
+                await response.aclose()
+                raise ProviderError(f"llama.cpp API error {response.status_code}: {body.decode()}")
+            return self._stream_openai(response)
+
+        response = await self._client.post("/v1/chat/completions", json=payload)
+        if response.status_code >= 400:
+            raise ProviderError(f"llama.cpp API error {response.status_code}: {response.text}")
+        return response.json()
+
+    async def complete(self, prompt: str, model: str | None = None, **kwargs: Any) -> str:
+        messages = [{"role": "user", "content": prompt}]
+        raw = await self.chat(messages, model=model, stream=False, **kwargs)
+        result = cast(dict[str, Any], raw)
+        choices = result.get("choices", [])
+        if isinstance(choices, list) and choices:
+            first = choices[0]
+            if isinstance(first, dict):
+                message = first.get("message", {})
+                if isinstance(message, dict):
+                    return str(message.get("content", ""))
+        return ""
+
+    async def health_check(self) -> bool:
+        try:
+            response = await self._client.get("/health")
+            return response.status_code == 200
+        except (httpx.ConnectError, httpx.TimeoutException):
+            return False
+
+    async def list_models(self) -> list[str]:
+        try:
+            response = await self._client.get("/v1/models")
+            if response.status_code != 200:
+                return []
+            data = response.json()
+            data_list = data.get("data", [])
+            if not isinstance(data_list, list):
+                return []
+            result: list[str] = []
+            for m in data_list:
+                if isinstance(m, dict):
+                    model_id = m.get("id", "")
+                    if isinstance(model_id, str):
+                        result.append(model_id)
+            return result
+        except (httpx.ConnectError, httpx.TimeoutException):
+            return []
+
+    async def close(self) -> None:
+        if not self._client.is_closed:
+            await self._client.aclose()
+
+
+# ---------------------------------------------------------------------------
+# VllmProvider -- vLLM OpenAI-compatible server with tensor parallelism
+# ---------------------------------------------------------------------------
+
+
+class VllmProvider(BaseProvider):
+    """Provider backed by a vLLM inference server.
+
+    vLLM exposes an OpenAI-compatible ``/v1/chat/completions`` endpoint and
+    supports tensor parallelism (``--tensor-parallel-size N``) for distributed
+    inference across multiple GPUs.  It runs on Linux and supports CUDA GPUs.
+
+    Environment variables
+    ---------------------
+    VLLM_HOST : str
+        Server URL (default ``http://localhost:8000``).
+    VLLM_API_KEY : str
+        Optional Bearer token for authenticated requests.
+    VLLM_MODEL : str
+        Default model served by the running vLLM instance.
+    VLLM_TENSOR_PARALLEL_SIZE : str
+        Number of GPUs used for tensor parallelism (informational).
+    """
+
+    name = "vllm"
+
+    def __init__(self, host: str | None = None, api_key: str | None = None) -> None:
+        self._host = host or os.environ.get("VLLM_HOST", "http://localhost:8000")
+        self._api_key = api_key or os.environ.get("VLLM_API_KEY", "")
+        self._default_model = os.environ.get("VLLM_MODEL", _DEFAULT_MODELS["vllm"])
+        self._tensor_parallel_size = int(os.environ.get("VLLM_TENSOR_PARALLEL_SIZE", "1"))
+        headers: dict[str, str] = {"Content-Type": "application/json"}
+        if self._api_key:
+            headers["Authorization"] = f"Bearer {self._api_key}"
+        self._client = httpx.AsyncClient(
+            base_url=self._host,
+            timeout=httpx.Timeout(_DEFAULT_TIMEOUT),
+            headers=headers,
+        )
+
+    @property
+    def tensor_parallel_size(self) -> int:
+        """Number of GPUs configured for tensor parallelism."""
+        return self._tensor_parallel_size
+
+    # -- internal helpers ---------------------------------------------------
+
+    async def _stream_openai(self, response: httpx.Response) -> AsyncIterator[dict[str, Any]]:
+        """Parse OpenAI SSE stream into dicts."""
+        try:
+            async for line in response.aiter_lines():
+                line = line.strip()
+                if not line or not line.startswith("data: "):
+                    continue
+                data_str = line[6:]
+                if data_str == "[DONE]":
+                    break
+                try:
+                    yield json.loads(data_str)
+                except json.JSONDecodeError:
+                    continue
+        finally:
+            await response.aclose()
+
+    # -- BaseProvider implementation ----------------------------------------
+
+    async def chat(
+        self,
+        messages: list[dict[str, str]],
+        model: str | None = None,
+        stream: bool = False,
+        **kwargs: Any,
+    ) -> dict[str, Any] | AsyncIterator[dict[str, Any]]:
+        payload: dict[str, Any] = {
+            "model": model or self._default_model,
+            "messages": messages,
+            "stream": stream,
+        }
+        if "max_tokens" in kwargs:
+            payload["max_tokens"] = kwargs.pop("max_tokens")
+        if "temperature" in kwargs:
+            payload["temperature"] = kwargs.pop("temperature")
+        payload.update(kwargs)
+
+        if stream:
+            req = self._client.build_request("POST", "/v1/chat/completions", json=payload)
+            response = await self._client.send(req, stream=True)
+            if response.status_code >= 400:
+                body = await response.aread()
+                await response.aclose()
+                raise ProviderError(f"vLLM API error {response.status_code}: {body.decode()}")
+            return self._stream_openai(response)
+
+        response = await self._client.post("/v1/chat/completions", json=payload)
+        if response.status_code >= 400:
+            raise ProviderError(f"vLLM API error {response.status_code}: {response.text}")
+        return response.json()
+
+    async def complete(self, prompt: str, model: str | None = None, **kwargs: Any) -> str:
+        messages = [{"role": "user", "content": prompt}]
+        raw = await self.chat(messages, model=model, stream=False, **kwargs)
+        result = cast(dict[str, Any], raw)
+        choices = result.get("choices", [])
+        if isinstance(choices, list) and choices:
+            first = choices[0]
+            if isinstance(first, dict):
+                message = first.get("message", {})
+                if isinstance(message, dict):
+                    return str(message.get("content", ""))
+        return ""
+
+    async def health_check(self) -> bool:
+        try:
+            response = await self._client.get("/health")
+            return response.status_code == 200
+        except (httpx.ConnectError, httpx.TimeoutException):
+            return False
+
+    async def list_models(self) -> list[str]:
+        try:
+            response = await self._client.get("/v1/models")
+            if response.status_code != 200:
+                return []
+            data = response.json()
+            data_list = data.get("data", [])
+            if not isinstance(data_list, list):
+                return []
+            result: list[str] = []
+            for m in data_list:
+                if isinstance(m, dict):
+                    model_id = m.get("id", "")
+                    if isinstance(model_id, str):
+                        result.append(model_id)
+            return result
+        except (httpx.ConnectError, httpx.TimeoutException):
+            return []
+
+    async def close(self) -> None:
+        if not self._client.is_closed:
+            await self._client.aclose()
+
+
+# ---------------------------------------------------------------------------
+# OtherProvider -- generic OpenAI-compatible endpoint (user-supplied URL)
+# ---------------------------------------------------------------------------
+
+
+class OtherProvider(BaseProvider):
+    """Generic provider for any OpenAI-compatible API endpoint.
+
+    Users supply a base URL and an optional API key.  This allows connecting
+    to self-hosted servers, third-party inference APIs, or any endpoint that
+    speaks the OpenAI ``/v1/chat/completions`` protocol.
+
+    Environment variables
+    ---------------------
+    OTHER_PROVIDER_HOST : str
+        Server URL (required -- no sensible default).
+    OTHER_PROVIDER_API_KEY : str
+        Optional Bearer token.  Leave empty when the endpoint needs no auth.
+    OTHER_PROVIDER_MODEL : str
+        Default model identifier to send in requests.
+    """
+
+    name = "other"
+
+    def __init__(self, host: str | None = None, api_key: str | None = None) -> None:
+        self._host = host or os.environ.get("OTHER_PROVIDER_HOST", "")
+        if not self._host:
+            raise ProviderUnavailableError(
+                "OTHER_PROVIDER_HOST is not set.  Set it to the base URL of your OpenAI-compatible server."
+            )
+        self._api_key = api_key or os.environ.get("OTHER_PROVIDER_API_KEY", "")
+        self._default_model = os.environ.get("OTHER_PROVIDER_MODEL", _DEFAULT_MODELS["other"])
+        headers: dict[str, str] = {"Content-Type": "application/json"}
+        if self._api_key:
+            headers["Authorization"] = f"Bearer {self._api_key}"
+        self._client = httpx.AsyncClient(
+            base_url=self._host,
+            timeout=httpx.Timeout(_DEFAULT_TIMEOUT),
+            headers=headers,
+        )
+
+    # -- internal helpers ---------------------------------------------------
+
+    async def _stream_openai(self, response: httpx.Response) -> AsyncIterator[dict[str, Any]]:
+        """Parse OpenAI SSE stream into dicts."""
+        try:
+            async for line in response.aiter_lines():
+                line = line.strip()
+                if not line or not line.startswith("data: "):
+                    continue
+                data_str = line[6:]
+                if data_str == "[DONE]":
+                    break
+                try:
+                    yield json.loads(data_str)
+                except json.JSONDecodeError:
+                    continue
+        finally:
+            await response.aclose()
+
+    # -- BaseProvider implementation ----------------------------------------
+
+    async def chat(
+        self,
+        messages: list[dict[str, str]],
+        model: str | None = None,
+        stream: bool = False,
+        **kwargs: Any,
+    ) -> dict[str, Any] | AsyncIterator[dict[str, Any]]:
+        payload: dict[str, Any] = {
+            "model": model or self._default_model,
+            "messages": messages,
+            "stream": stream,
+        }
+        if "max_tokens" in kwargs:
+            payload["max_tokens"] = kwargs.pop("max_tokens")
+        if "temperature" in kwargs:
+            payload["temperature"] = kwargs.pop("temperature")
+        payload.update(kwargs)
+
+        if stream:
+            req = self._client.build_request("POST", "/v1/chat/completions", json=payload)
+            response = await self._client.send(req, stream=True)
+            if response.status_code >= 400:
+                body = await response.aread()
+                await response.aclose()
+                raise ProviderError(f"Other provider API error {response.status_code}: {body.decode()}")
+            return self._stream_openai(response)
+
+        response = await self._client.post("/v1/chat/completions", json=payload)
+        if response.status_code >= 400:
+            raise ProviderError(f"Other provider API error {response.status_code}: {response.text}")
+        return response.json()
+
+    async def complete(self, prompt: str, model: str | None = None, **kwargs: Any) -> str:
+        messages = [{"role": "user", "content": prompt}]
+        raw = await self.chat(messages, model=model, stream=False, **kwargs)
+        result = cast(dict[str, Any], raw)
+        choices = result.get("choices", [])
+        if isinstance(choices, list) and choices:
+            first = choices[0]
+            if isinstance(first, dict):
+                message = first.get("message", {})
+                if isinstance(message, dict):
+                    return str(message.get("content", ""))
+        return ""
+
+    async def health_check(self) -> bool:
+        try:
+            # Try /health first (common), fall back to /v1/models
+            response = await self._client.get("/health")
+            if response.status_code == 200:
+                return True
+            response = await self._client.get("/v1/models")
+            return response.status_code == 200
+        except (httpx.ConnectError, httpx.TimeoutException):
+            return False
+
+    async def list_models(self) -> list[str]:
+        try:
+            response = await self._client.get("/v1/models")
+            if response.status_code != 200:
+                return []
+            data = response.json()
+            data_list = data.get("data", [])
+            if not isinstance(data_list, list):
+                return []
+            result: list[str] = []
+            for m in data_list:
+                if isinstance(m, dict):
+                    model_id = m.get("id", "")
+                    if isinstance(model_id, str):
+                        result.append(model_id)
+            return result
+        except (httpx.ConnectError, httpx.TimeoutException):
+            return []
+
+    async def close(self) -> None:
+        if not self._client.is_closed:
+            await self._client.aclose()
+
+
+# ---------------------------------------------------------------------------
 # Task routing configuration
 # ---------------------------------------------------------------------------
 
@@ -924,6 +1345,12 @@ class ProviderRouter:
         name = name.lower()
         if name == "ollama":
             return OllamaProvider()
+        if name == "llamacpp":
+            return LlamaCppProvider()
+        if name == "vllm":
+            return VllmProvider()
+        if name == "other":
+            return OtherProvider()
         if name == "claude":
             return ClaudeProvider()
         if name == "gemini":
@@ -1083,9 +1510,15 @@ class ProviderRouter:
     def list_available_providers(self) -> list[str]:
         """List provider names for which valid API keys are configured.
 
-        Ollama is always considered available (no key required).
+        Ollama, llama.cpp, and vLLM are always considered available (no key required,
+        they run locally).  The ``other`` provider is listed when
+        ``OTHER_PROVIDER_HOST`` is set.
         """
-        available: list[str] = ["ollama"]  # Ollama needs no key
+        available: list[str] = ["ollama", "llamacpp", "vllm"]
+
+        # "other" is available when the user has configured a host
+        if os.environ.get("OTHER_PROVIDER_HOST", ""):
+            available.append("other")
 
         key_map: dict[str, str] = {
             "claude": "ANTHROPIC_API_KEY",

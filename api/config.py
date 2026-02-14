@@ -42,6 +42,16 @@ class OllamaCliConfig:
     openai_api_key: str = ""
     hf_token: str = ""
     gh_token: str = ""
+    llamacpp_host: str = "http://localhost:8080"
+    llamacpp_api_key: str = ""
+    llamacpp_model: str = "default"
+    vllm_host: str = "http://localhost:8000"
+    vllm_api_key: str = ""
+    vllm_model: str = "default"
+    vllm_tensor_parallel_size: int = 1
+    other_provider_host: str = ""
+    other_provider_api_key: str = ""
+    other_provider_model: str = "default"
     search_api_key: str = ""
     search_api_provider: str = "tavily"
     hooks_enabled: bool = True
@@ -140,6 +150,18 @@ def load_config(env_path: str | Path | None = None, config_json_path: str | Path
         openai_api_key=os.getenv("OPENAI_API_KEY", OllamaCliConfig.openai_api_key),
         hf_token=os.getenv("HF_TOKEN", OllamaCliConfig.hf_token),
         gh_token=os.getenv("GH_TOKEN", OllamaCliConfig.gh_token),
+        llamacpp_host=os.getenv("LLAMACPP_HOST", OllamaCliConfig.llamacpp_host),
+        llamacpp_api_key=os.getenv("LLAMACPP_API_KEY", OllamaCliConfig.llamacpp_api_key),
+        llamacpp_model=os.getenv("LLAMACPP_MODEL", OllamaCliConfig.llamacpp_model),
+        vllm_host=os.getenv("VLLM_HOST", OllamaCliConfig.vllm_host),
+        vllm_api_key=os.getenv("VLLM_API_KEY", OllamaCliConfig.vllm_api_key),
+        vllm_model=os.getenv("VLLM_MODEL", OllamaCliConfig.vllm_model),
+        vllm_tensor_parallel_size=_int_from_env(
+            os.getenv("VLLM_TENSOR_PARALLEL_SIZE"), OllamaCliConfig.vllm_tensor_parallel_size
+        ),
+        other_provider_host=os.getenv("OTHER_PROVIDER_HOST", OllamaCliConfig.other_provider_host),
+        other_provider_api_key=os.getenv("OTHER_PROVIDER_API_KEY", OllamaCliConfig.other_provider_api_key),
+        other_provider_model=os.getenv("OTHER_PROVIDER_MODEL", OllamaCliConfig.other_provider_model),
         search_api_key=os.getenv("SEARCH_API_KEY", OllamaCliConfig.search_api_key),
         search_api_provider=os.getenv("SEARCH_API_PROVIDER", OllamaCliConfig.search_api_provider),
         hooks_enabled=_bool_from_env(os.getenv("HOOKS_ENABLED"), OllamaCliConfig.hooks_enabled),

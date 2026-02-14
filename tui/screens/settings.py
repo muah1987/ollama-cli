@@ -64,6 +64,42 @@ class SettingsScreen(Screen):
             )
             yield Static("")
 
+            # Backends
+            yield Label("Available Backends", classes="setting-title")
+            yield Label(
+                "  ollama      — Local Ollama server (default)",
+                classes="setting-label",
+            )
+            yield Label(
+                "  llamacpp    — llama.cpp server (CPU/CUDA/Metal/Vulkan, all platforms)",
+                classes="setting-label",
+            )
+            yield Label(
+                "  vllm        — vLLM server (tensor parallelism for multi-GPU)",
+                classes="setting-label",
+            )
+            yield Label(
+                "  other       — Any OpenAI-compatible endpoint (custom URL)",
+                classes="setting-label",
+            )
+            yield Label(
+                "  claude      — Anthropic Claude API",
+                classes="setting-label",
+            )
+            yield Label(
+                "  gemini      — Google Gemini API",
+                classes="setting-label",
+            )
+            yield Label(
+                "  codex       — OpenAI API",
+                classes="setting-label",
+            )
+            yield Label(
+                "  hf          — Hugging Face Router API",
+                classes="setting-label",
+            )
+            yield Static("")
+
             # Intent Classifier
             yield Label("Intent Classifier", classes="setting-title")
             yield Label(
