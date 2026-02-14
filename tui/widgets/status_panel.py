@@ -44,6 +44,7 @@ class StatusPanel(Widget):
     StatusPanel #status-separator {
         color: #30363d;
         height: 1;
+        border-top: solid #30363d;
     }
 
     StatusPanel #status-hint {
@@ -65,16 +66,20 @@ class StatusPanel(Widget):
     }
     """
 
+    # Default context window size (tokens) -- overridden by session data
+    _DEFAULT_CONTEXT_SIZE = 200_000
+
     model_name: reactive[str] = reactive("llama3.2")
     provider_name: reactive[str] = reactive("ollama")
     context_pct: reactive[float] = reactive(0.0)
     token_count: reactive[int] = reactive(0)
     cost: reactive[float] = reactive(0.0)
     job_status: reactive[str] = reactive("idle")
+    context_max: reactive[int] = reactive(_DEFAULT_CONTEXT_SIZE)
 
     def compose(self) -> ComposeResult:
         with Vertical():
-            yield Static("─" * 90, id="status-separator")
+            yield Static("", id="status-separator")
             yield Label(
                 '› Try "ollama run ' + self.model_name + '"',
                 id="status-hint",
@@ -91,7 +96,7 @@ class StatusPanel(Widget):
     def _build_metrics_text(self) -> str:
         """Build the metrics line: [model] | X.X% used | ~Nk left | ..."""
         pct = f"{self.context_pct:.1%}"
-        remaining = max(0, 200_000 - self.token_count)
+        remaining = max(0, self.context_max - self.token_count)
         if remaining >= 1000:
             remaining_str = f"~{remaining / 1000:.1f}k"
         else:
@@ -124,6 +129,9 @@ class StatusPanel(Widget):
     def watch_job_status(self, _value: str) -> None:
         self._update_metrics()
 
+    def watch_context_max(self, _value: int) -> None:
+        self._update_metrics()
+
     def _update_hint(self, model: str) -> None:
         try:
             self.query_one("#status-hint", Label).update(
@@ -149,6 +157,8 @@ class StatusPanel(Widget):
             cm = session.context_manager
             if hasattr(cm, "usage_ratio"):
                 self.context_pct = cm.usage_ratio
+            if hasattr(cm, "max_tokens"):
+                self.context_max = cm.max_tokens
 
         if hasattr(session, "token_counter"):
             tc = session.token_counter
