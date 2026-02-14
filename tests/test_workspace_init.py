@@ -224,7 +224,9 @@ class TestWorkspaceTrustPrompt:
 
         assert _WORKSPACE_TRUST_FILE.exists()
 
-    def test_should_prompt_workspace_trust_respects_marker(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_should_prompt_workspace_trust_respects_marker(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Trust prompt is skipped once the marker exists in .ollama."""
         monkeypatch.chdir(tmp_path)
         assert InteractiveMode._should_prompt_workspace_trust() is True

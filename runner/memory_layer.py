@@ -218,9 +218,7 @@ class MemoryLayer:
         """
         before_count = len(self._entries)
         keys_to_remove = [
-            key
-            for key, entry in self._entries.items()
-            if self._priority_score(entry) < self._compact_threshold
+            key for key, entry in self._entries.items() if self._priority_score(entry) < self._compact_threshold
         ]
         for key in keys_to_remove:
             del self._entries[key]
@@ -298,16 +296,18 @@ class MemoryLayer:
         """
         data: list[dict[str, Any]] = []
         for entry in self._entries.values():
-            data.append({
-                "key": entry.key,
-                "content": entry.content,
-                "category": entry.category,
-                "importance": entry.importance,
-                "token_cost": entry.token_cost,
-                "created_at": entry.created_at.isoformat(),
-                "last_accessed": entry.last_accessed.isoformat(),
-                "access_count": entry.access_count,
-            })
+            data.append(
+                {
+                    "key": entry.key,
+                    "content": entry.content,
+                    "category": entry.category,
+                    "importance": entry.importance,
+                    "token_cost": entry.token_cost,
+                    "created_at": entry.created_at.isoformat(),
+                    "last_accessed": entry.last_accessed.isoformat(),
+                    "access_count": entry.access_count,
+                }
+            )
 
         try:
             file_path = Path(path)

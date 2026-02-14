@@ -74,20 +74,23 @@ python_functions = ["test_*"]
 addopts = ["--import-mode=importlib"]
 
 [tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+version_variables = []
 branch = "main"
-version_toml = "pyproject.toml:project.version"
-version_source = "commit"
 changelog_file = "CHANGELOG.md"
-tag_format = "v{version}"
-tag_commit = true
-commit_parser = "angular"
-commit_author_token = "${GH_TOKEN}"
-commit_message = "chore(release): {version}\n\nAutomatically generated release notes."
 build_command = "uv build"
-upload_to_pypi = false
+dist_path = "dist/"
 upload_to_release = true
+upload_to_pypi = false
 remove_dist = false
-assets = []
+patch_without_tag = false
+commit_parser = "conventional"
+major_on_zero = true
+tag_format = "v{version}"
+
+[tool.semantic_release.commit_author]
+env = "GH_TOKEN"
+default = "github-actions <github-actions@github.com>"
 
 [dependency-groups]
 dev = [

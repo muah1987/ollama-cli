@@ -191,9 +191,7 @@ def _make_mock_session() -> MagicMock:
     session.create_sub_context = MagicMock()
     session.agent_comm = MagicMock()
     session.agent_comm.send = MagicMock()
-    session.agent_comm.get_token_savings = MagicMock(
-        return_value={"total_messages": 0, "context_tokens_saved": 0}
-    )
+    session.agent_comm.get_token_savings = MagicMock(return_value={"total_messages": 0, "context_tokens_saved": 0})
     session.memory_layer = MagicMock()
     session.memory_layer.get_context_block = MagicMock(return_value="")
     session.memory_layer.store = MagicMock()

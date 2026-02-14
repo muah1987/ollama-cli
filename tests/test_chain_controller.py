@@ -40,8 +40,16 @@ class TestChainControllerModule:
 
         assert len(AGENT_CONTRACTS) >= 10
         expected_keys = [
-            "analyzer_a", "analyzer_b", "planner", "validator", "optimizer",
-            "executor_1", "executor_2", "monitor", "reporter", "cleaner",
+            "analyzer_a",
+            "analyzer_b",
+            "planner",
+            "validator",
+            "optimizer",
+            "executor_1",
+            "executor_2",
+            "monitor",
+            "reporter",
+            "cleaner",
         ]
         for key in expected_keys:
             assert key in AGENT_CONTRACTS
@@ -97,8 +105,15 @@ class TestChainControllerModule:
         assert isinstance(d, dict)
         assert d["run_id"] == "x"
         assert d["problem_statement"] == "test"
-        for key in ("success_criteria", "constraints", "assumptions", "risks",
-                     "plan", "artifacts", "final_answer_outline"):
+        for key in (
+            "success_criteria",
+            "constraints",
+            "assumptions",
+            "risks",
+            "plan",
+            "artifacts",
+            "final_answer_outline",
+        ):
             assert key in d
 
     def test_parse_chain_config(self) -> None:

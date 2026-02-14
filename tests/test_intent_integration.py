@@ -96,7 +96,9 @@ class TestCommandTableRegistration:
 class TestCmdIntentHandler:
     """Exercise every _cmd_intent subcommand and verify return values."""
 
-    def test_status_no_arg(self, repl: InteractiveMode, cfg: OllamaCliConfig, capsys: pytest.CaptureFixture[str]) -> None:
+    def test_status_no_arg(
+        self, repl: InteractiveMode, cfg: OllamaCliConfig, capsys: pytest.CaptureFixture[str]
+    ) -> None:
         """Calling /intent with no argument prints current status."""
         with patch("api.config.get_config", return_value=cfg):
             result = repl._cmd_intent("")
@@ -132,7 +134,9 @@ class TestCmdIntentHandler:
         out = capsys.readouterr().out
         assert "toggled" in out.lower()
 
-    def test_threshold_set(self, repl: InteractiveMode, cfg: OllamaCliConfig, capsys: pytest.CaptureFixture[str]) -> None:
+    def test_threshold_set(
+        self, repl: InteractiveMode, cfg: OllamaCliConfig, capsys: pytest.CaptureFixture[str]
+    ) -> None:
         with patch("api.config.get_config", return_value=cfg):
             result = repl._cmd_intent("threshold 0.5")
         assert result is False
@@ -140,28 +144,36 @@ class TestCmdIntentHandler:
         out = capsys.readouterr().out
         assert "0.50" in out
 
-    def test_threshold_no_value(self, repl: InteractiveMode, cfg: OllamaCliConfig, capsys: pytest.CaptureFixture[str]) -> None:
+    def test_threshold_no_value(
+        self, repl: InteractiveMode, cfg: OllamaCliConfig, capsys: pytest.CaptureFixture[str]
+    ) -> None:
         with patch("api.config.get_config", return_value=cfg):
             result = repl._cmd_intent("threshold")
         assert result is False
         out = capsys.readouterr().out
         assert "threshold" in out.lower()
 
-    def test_threshold_out_of_range(self, repl: InteractiveMode, cfg: OllamaCliConfig, capsys: pytest.CaptureFixture[str]) -> None:
+    def test_threshold_out_of_range(
+        self, repl: InteractiveMode, cfg: OllamaCliConfig, capsys: pytest.CaptureFixture[str]
+    ) -> None:
         with patch("api.config.get_config", return_value=cfg):
             result = repl._cmd_intent("threshold 1.5")
         assert result is False
         out = capsys.readouterr().out
         assert "between" in out.lower() or "0.0" in out
 
-    def test_threshold_invalid(self, repl: InteractiveMode, cfg: OllamaCliConfig, capsys: pytest.CaptureFixture[str]) -> None:
+    def test_threshold_invalid(
+        self, repl: InteractiveMode, cfg: OllamaCliConfig, capsys: pytest.CaptureFixture[str]
+    ) -> None:
         with patch("api.config.get_config", return_value=cfg):
             result = repl._cmd_intent("threshold abc")
         assert result is False
         out = capsys.readouterr().out
         assert "invalid" in out.lower()
 
-    def test_test_subcommand(self, repl: InteractiveMode, cfg: OllamaCliConfig, capsys: pytest.CaptureFixture[str]) -> None:
+    def test_test_subcommand(
+        self, repl: InteractiveMode, cfg: OllamaCliConfig, capsys: pytest.CaptureFixture[str]
+    ) -> None:
         """``/intent test <prompt>`` should classify and print results."""
         with patch("api.config.get_config", return_value=cfg):
             result = repl._cmd_intent("test write a function to reverse a string")
@@ -171,14 +183,18 @@ class TestCmdIntentHandler:
         assert "Intent" in out or "intent" in out
         assert "Reasoning" in out or "reasoning" in out
 
-    def test_test_no_prompt(self, repl: InteractiveMode, cfg: OllamaCliConfig, capsys: pytest.CaptureFixture[str]) -> None:
+    def test_test_no_prompt(
+        self, repl: InteractiveMode, cfg: OllamaCliConfig, capsys: pytest.CaptureFixture[str]
+    ) -> None:
         with patch("api.config.get_config", return_value=cfg):
             result = repl._cmd_intent("test")
         assert result is False
         out = capsys.readouterr().out
         assert "usage" in out.lower()
 
-    def test_invalid_subcommand(self, repl: InteractiveMode, cfg: OllamaCliConfig, capsys: pytest.CaptureFixture[str]) -> None:
+    def test_invalid_subcommand(
+        self, repl: InteractiveMode, cfg: OllamaCliConfig, capsys: pytest.CaptureFixture[str]
+    ) -> None:
         with patch("api.config.get_config", return_value=cfg):
             result = repl._cmd_intent("invalid")
         assert result is False

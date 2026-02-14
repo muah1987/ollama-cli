@@ -532,8 +532,13 @@ class TestCLIFlags:
         from ollama_cmd.root import _apply_global_flags
 
         args = argparse.Namespace(
-            model=None, provider=None, api="http://custom:9999",
-            no_hooks=False, output_format=None, json=False, allowed_tools=None,
+            model=None,
+            provider=None,
+            api="http://custom:9999",
+            no_hooks=False,
+            output_format=None,
+            json=False,
+            allowed_tools=None,
         )
         _apply_global_flags(args)
 

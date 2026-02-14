@@ -56,12 +56,15 @@ class TestMCPClient:
         from api.mcp_client import MCPClient
 
         client = MCPClient()
-        client.add_server("custom", {
-            "command": "node",
-            "args": ["server.js"],
-            "description": "Custom MCP test server",
-            "enabled": True,
-        })
+        client.add_server(
+            "custom",
+            {
+                "command": "node",
+                "args": ["server.js"],
+                "description": "Custom MCP test server",
+                "enabled": True,
+            },
+        )
         names = {s["name"] for s in client.list_servers()}
         assert "custom" in names
 
@@ -166,10 +169,7 @@ class TestMCPCommandRegistered:
             [
                 sys.executable,
                 "-c",
-                (
-                    "from ollama_cmd.interactive import InteractiveMode; "
-                    "print('/mcp' in InteractiveMode._COMMAND_TABLE)"
-                ),
+                ("from ollama_cmd.interactive import InteractiveMode; print('/mcp' in InteractiveMode._COMMAND_TABLE)"),
             ],
             capture_output=True,
             text=True,

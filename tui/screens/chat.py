@@ -78,8 +78,7 @@ def _build_banner(session=None, warnings: list[str] | None = None) -> str:
             limit = 40_000
             if chars > limit:
                 warning_line = (
-                    f"⚠ large OLLAMA.md may impact performance "
-                    f"({chars / 1000:.1f}k chars > {limit / 1000:.1f}k)"
+                    f"⚠ large OLLAMA.md may impact performance ({chars / 1000:.1f}k chars > {limit / 1000:.1f}k)"
                 )
                 memory_line = "• /memory to edit"
         except OSError:
@@ -102,9 +101,7 @@ def _build_banner(session=None, warnings: list[str] | None = None) -> str:
         lines.append(f"{padded}{info}")
 
     # Extra line for tip below banner
-    lines.append(
-        " " * _BANNER_WIDTH + "   Tip: /model to switch  •  /help for commands"
-    )
+    lines.append(" " * _BANNER_WIDTH + "   Tip: /model to switch  •  /help for commands")
 
     return "\n".join(lines)
 
@@ -131,10 +128,7 @@ def _build_notification_boxes() -> list[str]:
     # Home directory warning
     home = os.path.expanduser("~")
     if os.getcwd() == home:
-        boxes.append(
-            "Warning: running in your home directory.\n"
-            "This warning can be disabled in /settings"
-        )
+        boxes.append("Warning: running in your home directory.\nThis warning can be disabled in /settings")
 
     return boxes
 
@@ -328,17 +322,12 @@ class ChatScreen(Screen):
                 "prompt": prompt,
                 "session_id": self._session.session_id if self._session else "",
                 "model": self._session.model if self._session else "",
-                "timestamp": datetime.datetime.now(
-                    tz=datetime.timezone.utc
-                ).isoformat(),
+                "timestamp": datetime.datetime.now(tz=datetime.timezone.utc).isoformat(),
             },
         )
         # Check if denied by hook
         for pr in prompt_results:
-            if (
-                hasattr(pr, "permission_decision")
-                and pr.permission_decision == "deny"
-            ):
+            if hasattr(pr, "permission_decision") and pr.permission_decision == "deny":
                 self._add_system_message("Prompt blocked by UserPromptSubmit hook.")
                 return
 
@@ -351,9 +340,7 @@ class ChatScreen(Screen):
                 if cfg.intent_enabled:
                     from runner.intent_classifier import classify_intent
 
-                    result = classify_intent(
-                        prompt, threshold=cfg.intent_confidence_threshold
-                    )
+                    result = classify_intent(prompt, threshold=cfg.intent_confidence_threshold)
                     if result.agent_type is not None:
                         agent_type = result.agent_type
                         if cfg.intent_show_detection:
@@ -416,9 +403,7 @@ class ChatScreen(Screen):
 
         try:
             result = await self._session.send(prompt, agent_type=agent_type)
-            content = (
-                result.get("content", "") if isinstance(result, dict) else str(result)
-            )
+            content = result.get("content", "") if isinstance(result, dict) else str(result)
             self._add_assistant_message(content, agent_type)
 
             # Fire Stop hook after successful response
@@ -442,14 +427,9 @@ class ChatScreen(Screen):
                     },
                 )
         except ConnectionError as exc:
-            self._add_system_message(
-                f"Connection error: {exc}. Check if the model server is running."
-            )
+            self._add_system_message(f"Connection error: {exc}. Check if the model server is running.")
         except TimeoutError:
-            self._add_system_message(
-                "Request timed out. Try again or switch to a different model"
-                " with /model."
-            )
+            self._add_system_message("Request timed out. Try again or switch to a different model with /model.")
         except Exception as exc:
             self._add_system_message(f"Error: {exc}")
             logger.exception("Failed to send message")
@@ -480,9 +460,7 @@ class ChatScreen(Screen):
         container.mount(msg)
         container.scroll_end(animate=False)
 
-    def _add_assistant_message(
-        self, content: str, agent_type: str | None = None
-    ) -> None:
+    def _add_assistant_message(self, content: str, agent_type: str | None = None) -> None:
         """Add an assistant message to the chat area."""
         self._message_count += 1
         timestamp = datetime.datetime.now().strftime("%H:%M")

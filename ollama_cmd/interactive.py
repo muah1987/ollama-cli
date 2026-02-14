@@ -36,6 +36,7 @@ from model.session import Session  # noqa: E402
 # Import bypass permissions if available
 try:
     from permissions.bypass import should_bypass_permissions
+
     HAS_BYPASS = True
 except ImportError:
     HAS_BYPASS = False
@@ -101,6 +102,7 @@ def _parse_tool_args(tool_name: str, tool_arg: str) -> tuple[tuple[Any, ...], di
 
     # Default: pass the whole argument string as a single positional arg
     return (tool_arg,), {}, None
+
 
 # ---------------------------------------------------------------------------
 # ANSI escape helpers
@@ -977,7 +979,9 @@ class InteractiveMode:
                     return False
             elif bypass_validation and local_models and arg not in local_models:
                 # Permissive bypass mode - warn but allow model switching
-                self._print_system(f"Model '{arg}' not found on local Ollama server (continuing anyway due to bypass mode).")
+                self._print_system(
+                    f"Model '{arg}' not found on local Ollama server (continuing anyway due to bypass mode)."
+                )
                 self._print_system(f"  Available models: {', '.join(local_models[:8])}")
                 if len(local_models) > 8:
                     self._print_system(f"  ... and {len(local_models) - 8} more")
@@ -2561,9 +2565,7 @@ class InteractiveMode:
         self._print_system(f"  Waves: {wave_count} | Duration: {total_duration:.1f}s")
 
         for wr in result.get("wave_results", []):
-            self._print_system(
-                f"  • {wr.get('wave', '?')}: {wr.get('agents', 0)} agents, {wr.get('duration', 0):.1f}s"
-            )
+            self._print_system(f"  • {wr.get('wave', '?')}: {wr.get('agents', 0)} agents, {wr.get('duration', 0):.1f}s")
 
         # Display final output
         final_output = result.get("final_output", "")
@@ -2737,9 +2739,7 @@ class InteractiveMode:
                 "prompt": stripped,
                 "session_id": self.session.session_id,
                 "model": self.session.model,
-                "timestamp": __import__("datetime")
-                .datetime.now(tz=__import__("datetime").timezone.utc)
-                .isoformat(),
+                "timestamp": __import__("datetime").datetime.now(tz=__import__("datetime").timezone.utc).isoformat(),
             },
         )
         for pr in prompt_results:

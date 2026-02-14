@@ -64,13 +64,40 @@ class TestCommandRegistry:
     def test_no_unexpected_commands(self):
         """The registry does not contain commands outside the expected set."""
         expected = {
-            "/help", "/quit", "/exit", "/status", "/clear", "/model",
-            "/provider", "/save", "/load", "/history", "/compact",
-            "/memory", "/remember", "/recall", "/tools", "/tool",
-            "/pull", "/diff", "/mcp", "/agents", "/set-agent-model",
-            "/list-agent-models", "/chain", "/team_planning", "/build",
-            "/resume", "/intent", "/init", "/config", "/settings",
-            "/bug", "/plan", "/complete_w_team", "/update_status_line",
+            "/help",
+            "/quit",
+            "/exit",
+            "/status",
+            "/clear",
+            "/model",
+            "/provider",
+            "/save",
+            "/load",
+            "/history",
+            "/compact",
+            "/memory",
+            "/remember",
+            "/recall",
+            "/tools",
+            "/tool",
+            "/pull",
+            "/diff",
+            "/mcp",
+            "/agents",
+            "/set-agent-model",
+            "/list-agent-models",
+            "/chain",
+            "/team_planning",
+            "/build",
+            "/resume",
+            "/intent",
+            "/init",
+            "/config",
+            "/settings",
+            "/bug",
+            "/plan",
+            "/complete_w_team",
+            "/update_status_line",
         }
         actual = set(COMMAND_REGISTRY.keys())
         unexpected = actual - expected
@@ -89,9 +116,7 @@ class TestCommandRegistry:
     def test_handler_names_start_with_underscore_cmd(self):
         """Every handler method name starts with _cmd_."""
         for cmd, (handler, _desc, _cat) in COMMAND_REGISTRY.items():
-            assert handler.startswith("_cmd_"), (
-                f"{cmd} handler '{handler}' does not start with _cmd_"
-            )
+            assert handler.startswith("_cmd_"), f"{cmd} handler '{handler}' does not start with _cmd_"
 
     def test_descriptions_non_empty(self):
         """Every command has a non-empty description."""
@@ -663,27 +688,29 @@ def _make_rich_processor() -> CommandProcessor:
     session.token_counter = tc
 
     # get_status
-    session.get_status = MagicMock(return_value={
-        "model": "llama3.2",
-        "provider": "ollama",
-        "session_id": "test-rich-1234",
-        "uptime_str": "10m",
-        "messages": 2,
-        "hooks_enabled": False,
-        "token_metrics": {
-            "prompt_tokens": 100,
-            "completion_tokens": 100,
-            "total_tokens": 200,
-            "tokens_per_second": 30.0,
-            "cost_estimate": 0.002,
-        },
-        "context_usage": {
-            "used": 500,
-            "max": 4096,
-            "percentage": 12,
-            "remaining": 3596,
-        },
-    })
+    session.get_status = MagicMock(
+        return_value={
+            "model": "llama3.2",
+            "provider": "ollama",
+            "session_id": "test-rich-1234",
+            "uptime_str": "10m",
+            "messages": 2,
+            "hooks_enabled": False,
+            "token_metrics": {
+                "prompt_tokens": 100,
+                "completion_tokens": 100,
+                "total_tokens": 200,
+                "tokens_per_second": 30.0,
+                "cost_estimate": 0.002,
+            },
+            "context_usage": {
+                "used": 500,
+                "max": 4096,
+                "percentage": 12,
+                "remaining": 3596,
+            },
+        }
+    )
 
     # agent_comm
     agent_comm = MagicMock()
@@ -775,6 +802,7 @@ class TestCommandHandlerLoad:
     async def test_load_file_not_found(self):
         proc = _make_rich_processor()
         from unittest.mock import patch
+
         with patch("tui.command_processor.CommandProcessor._cmd_load") as mock_load:
             mock_load.return_value = CommandResult(errors=["not found"])
             result = await proc.dispatch("/load nonexistent")
@@ -1047,6 +1075,7 @@ class TestCommandHandlerResume:
     @pytest.mark.asyncio
     async def test_resume_with_tasks(self, tmp_path, monkeypatch):
         import json
+
         monkeypatch.chdir(tmp_path)
         tasks_dir = tmp_path / ".ollama" / "tasks"
         tasks_dir.mkdir(parents=True)
@@ -1116,7 +1145,6 @@ class TestCommandHandlerConfig:
         result = await proc.dispatch("/settings")
         assert not result.errors
         assert any("ollama_host" in line for line in result.output)
-
 
     @pytest.mark.asyncio
     async def test_config_rejects_none_typed_key(self):
@@ -1198,14 +1226,15 @@ class TestCompactDeepPaths:
     @pytest.mark.asyncio
     async def test_compact_fires_when_enough_messages(self):
         from unittest.mock import AsyncMock
+
         proc = _make_rich_processor()
         cm = proc.session.context_manager
         cm.messages = [{"role": "user", "content": f"msg {i}"} for i in range(20)]
         cm.keep_last_n = 4
-        cm.get_context_usage = MagicMock(return_value={
-            "used": 2000, "max": 4096, "percentage": 48, "remaining": 2096
-        })
-        proc.session.compact = AsyncMock(return_value={"messages_removed": 16, "before_tokens": 2000, "after_tokens": 500})
+        cm.get_context_usage = MagicMock(return_value={"used": 2000, "max": 4096, "percentage": 48, "remaining": 2096})
+        proc.session.compact = AsyncMock(
+            return_value={"messages_removed": 16, "before_tokens": 2000, "after_tokens": 500}
+        )
         result = await proc.dispatch("/compact")
         assert not result.errors
         assert any("Removed" in line for line in result.output)
@@ -1213,13 +1242,12 @@ class TestCompactDeepPaths:
     @pytest.mark.asyncio
     async def test_compact_uses_cm_compact(self):
         from unittest.mock import AsyncMock
+
         proc = _make_rich_processor()
         cm = proc.session.context_manager
         cm.messages = [f"m{i}" for i in range(10)]
         cm.keep_last_n = 2
-        cm.get_context_usage = MagicMock(return_value={
-            "used": 1000, "max": 4096, "percentage": 24, "remaining": 3096
-        })
+        cm.get_context_usage = MagicMock(return_value={"used": 1000, "max": 4096, "percentage": 24, "remaining": 3096})
         del proc.session.compact
         cm.compact = AsyncMock(return_value={"messages_removed": 8})
         result = await proc.dispatch("/compact")
@@ -1254,6 +1282,7 @@ class TestLoadDeepPaths:
         mock_loaded.start_time = 0.0
         mock_loaded._message_count = 10
         from unittest.mock import patch
+
         with patch("model.session.Session.load", return_value=mock_loaded):
             result = await proc.dispatch("/load test-session")
         assert not result.errors
@@ -1263,6 +1292,7 @@ class TestLoadDeepPaths:
     async def test_load_file_not_found_real(self):
         proc = _make_rich_processor()
         from unittest.mock import patch
+
         with patch("model.session.Session.load", side_effect=FileNotFoundError("nope")):
             result = await proc.dispatch("/load nonexistent")
         assert result.errors
@@ -1271,6 +1301,7 @@ class TestLoadDeepPaths:
     async def test_load_generic_error(self):
         proc = _make_rich_processor()
         from unittest.mock import patch
+
         with patch("model.session.Session.load", side_effect=RuntimeError("corrupt")):
             result = await proc.dispatch("/load broken-session")
         assert result.errors

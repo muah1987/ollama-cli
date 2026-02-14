@@ -144,9 +144,7 @@ def _resolve_model(cfg_model: str, host: str) -> str:
 
     # Configured model not found – appoint the first available model
     chosen = local_models[0]
-    console.print(
-        f"[yellow]Warning:[/yellow] Configured model [bold]{cfg_model}[/bold] not found locally."
-    )
+    console.print(f"[yellow]Warning:[/yellow] Configured model [bold]{cfg_model}[/bold] not found locally.")
     console.print(f"  Available models: {', '.join(local_models[:5])}")
     if len(local_models) > 5:
         console.print(f"  ... and {len(local_models) - 5} more")
@@ -285,9 +283,7 @@ def cmd_interactive(args: argparse.Namespace) -> None:
 
     # Warn if a cloud model is selected but no API key is configured
     if cfg.provider == "ollama" and ":cloud" in model.lower() and not cfg.ollama_api_key:
-        console.print(
-            f"[yellow]Warning:[/yellow] Cloud model [bold]{model}[/bold] requires an API key."
-        )
+        console.print(f"[yellow]Warning:[/yellow] Cloud model [bold]{model}[/bold] requires an API key.")
         console.print("  Run [green]ollama signin[/green] or set [green]OLLAMA_API_KEY[/green] in your .env file.")
         console.print()
 
@@ -309,6 +305,7 @@ def cmd_interactive(args: argparse.Namespace) -> None:
     if cfg.planning_mode:
         try:
             from .planning import initialize_planning_mode
+
             initialize_planning_mode(session)
             console.print("[blue]Planning mode activated.[/blue]")
         except ImportError as e:
@@ -317,6 +314,7 @@ def cmd_interactive(args: argparse.Namespace) -> None:
     if cfg.work_mode:
         try:
             from .work import initialize_work_mode
+
             initialize_work_mode(session)
             console.print("[green]Work mode activated.[/green]")
         except ImportError as e:
@@ -355,9 +353,7 @@ def cmd_run_prompt(args: argparse.Namespace) -> None:
 
     # Warn if a cloud model is selected but no API key is configured
     if cfg.provider == "ollama" and ":cloud" in model.lower() and not cfg.ollama_api_key:
-        console.print(
-            f"[yellow]Warning:[/yellow] Cloud model [bold]{model}[/bold] requires an API key."
-        )
+        console.print(f"[yellow]Warning:[/yellow] Cloud model [bold]{model}[/bold] requires an API key.")
         console.print("  Run [green]ollama signin[/green] or set [green]OLLAMA_API_KEY[/green] in your .env file.")
         console.print()
 

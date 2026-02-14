@@ -42,12 +42,9 @@ def test_pyproject_only_has_cli_ollama_entry_point() -> None:
         data = tomllib.load(f)
 
     scripts = data.get("project", {}).get("scripts", {})
-    assert "cli-ollama" in scripts, (
-        "pyproject.toml [project.scripts] must contain 'cli-ollama'"
-    )
+    assert "cli-ollama" in scripts, "pyproject.toml [project.scripts] must contain 'cli-ollama'"
     assert "ollama" not in scripts, (
-        "pyproject.toml [project.scripts] must NOT contain a bare 'ollama' entry "
-        "(only 'cli-ollama' should exist)"
+        "pyproject.toml [project.scripts] must NOT contain a bare 'ollama' entry (only 'cli-ollama' should exist)"
     )
 
 
@@ -57,9 +54,7 @@ def test_install_sh_wrapper_is_cli_ollama() -> None:
     content = install_script.read_text()
 
     # The WRAPPER variable must point to cli-ollama
-    assert 'WRAPPER="$BIN_DIR/cli-ollama"' in content, (
-        "install.sh WRAPPER variable should reference 'cli-ollama'"
-    )
+    assert 'WRAPPER="$BIN_DIR/cli-ollama"' in content, "install.sh WRAPPER variable should reference 'cli-ollama'"
 
     # There should be no line creating a bare 'ollama' wrapper
     for line in content.splitlines():
@@ -81,8 +76,7 @@ def test_install_sh_ollama_version_is_current() -> None:
     content = install_script.read_text()
 
     assert 'OLLAMA_VERSION="0.5.7"' in content, (
-        "install.sh should set OLLAMA_VERSION to '0.5.7', "
-        "not the old '0.3.5' or any other value"
+        "install.sh should set OLLAMA_VERSION to '0.5.7', not the old '0.3.5' or any other value"
     )
 
 

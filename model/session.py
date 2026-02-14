@@ -661,17 +661,19 @@ class Session:
                         arguments = {}
 
                 tool_result = self._execute_tool(tool_name, arguments)
-                result_str = json.dumps(tool_result, default=str)[:self._MAX_TOOL_RESULT_LENGTH]
+                result_str = json.dumps(tool_result, default=str)[: self._MAX_TOOL_RESULT_LENGTH]
 
                 logger.info("Tool %s executed: %s", tool_name, result_str[:200])
 
                 # Append tool result following the Ollama API tool-call
                 # response format: {"role": "tool", "content": "<json_result>"}
                 # See https://docs.ollama.com/api/chat for the expected schema.
-                messages.append({
-                    "role": "tool",
-                    "content": result_str,
-                })
+                messages.append(
+                    {
+                        "role": "tool",
+                        "content": result_str,
+                    }
+                )
 
         # Max rounds reached – return what we have
         if accumulated_content:

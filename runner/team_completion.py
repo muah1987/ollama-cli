@@ -110,11 +110,7 @@ def extract_command_requests(text: str) -> list[str]:
     pattern = r"\[CMD:\s*(/[^\]]+)\]"
     matches = re.findall(pattern, text)
     # Filter out blocked commands
-    return [
-        m.strip()
-        for m in matches
-        if m.strip() and m.strip().split()[0] not in _BLOCKED_COMMANDS
-    ]
+    return [m.strip() for m in matches if m.strip() and m.strip().split()[0] not in _BLOCKED_COMMANDS]
 
 
 # ---------------------------------------------------------------------------

@@ -59,8 +59,7 @@ class SettingsScreen(Screen):
             # Model
             yield Label("Model Configuration", classes="setting-title")
             yield Label(
-                "  Current model and provider settings are configured "
-                "via /model and /provider commands.",
+                "  Current model and provider settings are configured via /model and /provider commands.",
                 classes="setting-label",
             )
             yield Static("")
@@ -68,8 +67,7 @@ class SettingsScreen(Screen):
             # Intent Classifier
             yield Label("Intent Classifier", classes="setting-title")
             yield Label(
-                "  Configure via /intent command: "
-                "/intent on|off|threshold <val>",
+                "  Configure via /intent command: /intent on|off|threshold <val>",
                 classes="setting-label",
             )
             yield Static("")
