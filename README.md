@@ -1,6 +1,6 @@
 # Ollama CLI
 
-[![PyPI version](https://img.shields.io/pypi/v/ollama_cli.svg)](https://pypi.org/project/ollama_cli/)
+[![PyPI version](https://img.shields.io/pypi/v/cli-ollama.svg)](https://pypi.org/project/cli-ollama/)
 [![Build & Test](https://github.com/muah1987/ollama-cli/actions/workflows/build-test.yml/badge.svg)](https://github.com/muah1987/ollama-cli/actions/workflows/build-test.yml)
 [![codecov](https://codecov.io/gh/muah1987/ollama-cli/branch/main/graph/badge.svg)](https://codecov.io/gh/muah1987/ollama-cli)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
@@ -29,9 +29,9 @@ This installs `ollama-cli` to `~/.local/bin/`, sets up dependencies, and install
 **Via PyPI:**
 
 ```bash
-pip install ollama_cli
+pip install cli-ollama
 # or
-pipx install ollama_cli
+pipx install cli-ollama
 ```
 
 This installs the `ollama-cli` command globally.

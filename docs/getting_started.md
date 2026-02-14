@@ -25,10 +25,10 @@ curl -fsSL https://raw.githubusercontent.com/muah1987/ollama-cli/main/install.sh
 
 ```bash
 # Install from PyPI
-pip install ollama_cli
+pip install cli-ollama
 
 # Or with pipx for isolated installation
-pipx install ollama_cli
+pipx install cli-ollama
 ```
 
 This installs the `ollama-cli` command globally.
