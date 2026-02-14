@@ -63,5 +63,5 @@ class ChatApp(App):
 
                 status = self.query_one(StatusPanel)
                 status.job_status = "idle"
-        except Exception:
-            pass
+        except Exception:  # noqa: BLE001
+            pass  # Widget may not exist if no screen is active
