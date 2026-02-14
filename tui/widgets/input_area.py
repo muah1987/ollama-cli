@@ -1,6 +1,6 @@
 """Input area widget -- bordered input box with › prompt indicator.
 
-Part of the MIDDLE zone in the 3-zone layout.
+Part of the BOTTOM zone (#bottom-zone) in the 3-zone layout.
 """
 
 from __future__ import annotations
@@ -20,7 +20,6 @@ class InputArea(Widget):
 
     DEFAULT_CSS = """
     InputArea {
-        dock: bottom;
         height: auto;
         max-height: 8;
         padding: 0 1;

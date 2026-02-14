@@ -2,8 +2,8 @@
 
 Layout follows the documented 3-zone structure:
   TOP:    ASCII banner with side info (scrolls away after first interaction)
-  MIDDLE: Conversation area + bordered input box (the ONLY interactive zone)
-  BOTTOM: Persistent status bar with hints and model metrics
+  MIDDLE: Conversation/message area (scrollable #message-area) plus intent badge and spinner (non-scrollable)
+  BOTTOM: Bordered input box + persistent status bar (docked via #bottom-zone)
 """
 
 from __future__ import annotations
@@ -183,6 +183,13 @@ class ChatScreen(Screen):
         padding: 1 2;
         text-align: center;
     }
+
+    #bottom-zone {
+        dock: bottom;
+        height: auto;
+        /* InputArea max-height (8) + StatusPanel max-height (5) = 13 */
+        max-height: 13;
+    }
     """
 
     def __init__(self, session=None, **kwargs) -> None:
@@ -219,13 +226,16 @@ class ChatScreen(Screen):
             id="message-area",
         )
 
-        # ── MIDDLE zone: intent badge + spinner + input box ──
+        # ── MIDDLE zone: intent badge + spinner ──
         yield IntentBadge()
         yield LlamaSpinner()
-        yield InputArea()
 
-        # ── BOTTOM zone: persistent status bar ──
-        yield StatusPanel()
+        # ── BOTTOM zone: input box + persistent status bar ──
+        yield Vertical(
+            InputArea(),
+            StatusPanel(),
+            id="bottom-zone",
+        )
 
     def on_mount(self) -> None:
         """Initialize the screen after mounting."""

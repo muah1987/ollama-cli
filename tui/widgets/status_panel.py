@@ -35,7 +35,6 @@ class StatusPanel(Widget):
 
     DEFAULT_CSS = """
     StatusPanel {
-        dock: bottom;
         height: auto;
         max-height: 5;
         background: #0d1117;
