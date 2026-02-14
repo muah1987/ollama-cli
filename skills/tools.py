@@ -446,14 +446,15 @@ def tool_meta_crawler(
     """Run search then crawl top results with the same provider API."""
     if (api_key or "").strip():
         return {"error": "api_key argument is not supported; use SEARCH_API_KEY environment variable"}
-    search_result = tool_web_search(query, provider=provider, api_key="", max_results=max_results)
+    search_result = tool_web_search(query, provider=provider, max_results=max_results)
     if "error" in search_result:
         return search_result
     resolved_provider = str(search_result.get("provider", provider)).strip().lower()
     if resolved_provider != "tavily":
         return {"error": f"Unsupported meta crawler provider: {resolved_provider}"}
     crawled: list[dict[str, Any]] = []
-    for item in search_result.get("results", []):
+    crawl_limit = max(1, min(max_results, 10))
+    for item in search_result.get("results", [])[:crawl_limit]:
         target_url = str(item.get("url", "")).strip()
         if not target_url:
             continue
