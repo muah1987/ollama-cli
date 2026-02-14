@@ -642,3 +642,212 @@ class TestInteractiveModeAdditional:
     def test_fire_notification(self):
         mode = self._make_mode()
         mode._fire_notification("info", "Something happened")
+
+
+# ---------------------------------------------------------------------------
+# _parse_tool_args tests
+# ---------------------------------------------------------------------------
+
+
+class TestParseToolArgs:
+    def test_file_read_single_arg(self):
+        from ollama_cmd.interactive import _parse_tool_args
+
+        args, kwargs, error = _parse_tool_args("file_read", "README.md")
+        assert args == ("README.md",)
+        assert kwargs == {}
+        assert error is None
+
+    def test_file_write_valid(self):
+        from ollama_cmd.interactive import _parse_tool_args
+
+        args, kwargs, error = _parse_tool_args("file_write", "test.txt hello world")
+        assert args == ("test.txt", "hello world")
+        assert kwargs == {}
+        assert error is None
+
+    def test_file_write_missing_content(self):
+        from ollama_cmd.interactive import _parse_tool_args
+
+        args, kwargs, error = _parse_tool_args("file_write", "test.txt")
+        assert error is not None
+        assert "Usage" in error
+
+    def test_file_edit_valid(self):
+        from ollama_cmd.interactive import _parse_tool_args
+
+        args, kwargs, error = _parse_tool_args("file_edit", "f.py|||old|||new")
+        assert args == ("f.py", "old", "new")
+        assert error is None
+
+    def test_file_edit_invalid_parts(self):
+        from ollama_cmd.interactive import _parse_tool_args
+
+        _, _, error = _parse_tool_args("file_edit", "f.py|||old")
+        assert error is not None
+        assert "Usage" in error
+
+    def test_grep_search_with_path(self):
+        from ollama_cmd.interactive import _parse_tool_args
+
+        args, kwargs, error = _parse_tool_args("grep_search", "pattern src/")
+        assert args == ("pattern", "src/")
+        assert error is None
+
+    def test_grep_search_default_path(self):
+        from ollama_cmd.interactive import _parse_tool_args
+
+        args, kwargs, error = _parse_tool_args("grep_search", "pattern")
+        assert args == ("pattern", ".")
+        assert error is None
+
+    def test_shell_exec_single_arg(self):
+        from ollama_cmd.interactive import _parse_tool_args
+
+        args, kwargs, error = _parse_tool_args("shell_exec", "echo hello")
+        assert args == ("echo hello",)
+        assert kwargs == {}
+        assert error is None
+
+    def test_web_fetch_single_arg(self):
+        from ollama_cmd.interactive import _parse_tool_args
+
+        args, kwargs, error = _parse_tool_args("web_fetch", "https://example.com")
+        assert args == ("https://example.com",)
+        assert error is None
+
+    def test_model_pull_no_force(self):
+        from ollama_cmd.interactive import _parse_tool_args
+
+        args, kwargs, error = _parse_tool_args("model_pull", "llama3.2")
+        assert args == ("llama3.2",)
+        assert kwargs == {"force": False}
+        assert error is None
+
+    def test_model_pull_with_force(self):
+        from ollama_cmd.interactive import _parse_tool_args
+
+        args, kwargs, error = _parse_tool_args("model_pull", "--force llama3.2")
+        assert args == ("llama3.2",)
+        assert kwargs == {"force": True}
+        assert error is None
+
+    def test_unknown_tool_defaults_to_single_arg(self):
+        from ollama_cmd.interactive import _parse_tool_args
+
+        args, kwargs, error = _parse_tool_args("future_tool", "some args")
+        assert args == ("some args",)
+        assert kwargs == {}
+        assert error is None
+
+
+# ---------------------------------------------------------------------------
+# Extracted REPL helper methods
+# ---------------------------------------------------------------------------
+
+
+class TestReplHelpers:
+    def _make_mode(self) -> object:
+        """Create a minimal InteractiveMode with mocked session."""
+        from ollama_cmd.interactive import InteractiveMode
+
+        session = _make_interactive_session()
+        mode = InteractiveMode.__new__(InteractiveMode)
+        mode.session = session
+        mode._intent_enabled = False
+        mode._intent_threshold = 0.7
+        mode._current_job = "idle"
+        mode._status_lines = {}
+        mode._running = True
+        return mode
+
+    def test_resolve_agent_type_no_prefix(self):
+        mode = self._make_mode()
+        with patch.object(mode, "_fire_hook") as mock_hook:
+            agent_type, text = mode._resolve_agent_type("hello world")
+            assert agent_type is None
+            assert text == "hello world"
+            mock_hook.assert_not_called()
+
+    def test_resolve_agent_type_with_prefix(self):
+        mode = self._make_mode()
+        with patch.object(mode, "_fire_hook") as mock_hook:
+            agent_type, text = mode._resolve_agent_type("@code write a function")
+            assert agent_type == "code"
+            assert text == "write a function"
+            mock_hook.assert_called_once()
+            call_args = mock_hook.call_args
+            assert call_args[0][0] == "SubagentStart"
+            payload = call_args[0][1]
+            assert payload["agent_type"] == "code"
+            assert "agent_id" in payload
+            assert "session_id" in payload
+            assert "model" in payload
+            assert "prompt_preview" in payload
+
+    def test_resolve_agent_type_at_only(self):
+        mode = self._make_mode()
+        agent_type, text = mode._resolve_agent_type("@code")
+        assert agent_type is None
+        assert text == "@code"
+
+    def test_check_prompt_hooks_no_denial(self):
+        mode = self._make_mode()
+        # Hooks not available, so returns False (not denied)
+        denied = mode._check_prompt_hooks("test prompt")
+        assert denied is False
+
+    def test_check_prompt_hooks_denied(self):
+        mode = self._make_mode()
+        mock_result = MagicMock()
+        mock_result.permission_decision = "deny"
+        with patch.object(mode, "_fire_hook", return_value=[mock_result]):
+            denied = mode._check_prompt_hooks("test prompt")
+            assert denied is True
+
+    def test_check_prompt_hooks_allowed(self):
+        mode = self._make_mode()
+        mock_result = MagicMock()
+        mock_result.permission_decision = "allow"
+        with patch.object(mode, "_fire_hook", return_value=[mock_result]):
+            denied = mode._check_prompt_hooks("test prompt")
+            assert denied is False
+
+    def test_display_response_metrics(self, capsys):
+        mode = self._make_mode()
+        result = {
+            "metrics": {"total_tokens": 150, "cost_estimate": 0.0012},
+            "compacted": False,
+        }
+        mode._display_response_metrics(result)
+        out = capsys.readouterr().out
+        assert "150" in out
+        assert "$0.0012" in out
+
+    def test_display_response_metrics_with_compaction(self, capsys):
+        mode = self._make_mode()
+        result = {
+            "metrics": {"total_tokens": 500, "cost_estimate": 0.005},
+            "compacted": True,
+        }
+        mode._display_response_metrics(result)
+        out = capsys.readouterr().out
+        assert "auto-compacted" in out
+
+    def test_fire_session_lifecycle_hooks(self):
+        mode = self._make_mode()
+        with patch.object(mode, "_fire_hook") as mock_hook:
+            mode._fire_session_lifecycle_hooks()
+            assert mock_hook.call_count == 2
+            hook_names = [call[0][0] for call in mock_hook.call_args_list]
+            assert hook_names == ["Setup", "SessionStart"]
+            # Verify Setup payload has required fields
+            setup_payload = mock_hook.call_args_list[0][0][1]
+            assert "trigger" in setup_payload
+            assert "session_id" in setup_payload
+            assert "cwd" in setup_payload
+            # Verify SessionStart payload has required fields
+            start_payload = mock_hook.call_args_list[1][0][1]
+            assert "session_id" in start_payload
+            assert "source" in start_payload
+            assert start_payload["source"] == "interactive"
