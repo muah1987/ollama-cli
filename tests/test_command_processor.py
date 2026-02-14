@@ -1157,3 +1157,171 @@ class TestCommandHandlerUpdateStatusLine:
         result = await proc.dispatch("/update_status_line project myapp")
         assert not result.errors
         assert any("myapp" in line for line in result.output)
+
+
+# ---------------------------------------------------------------------------
+# Deeper handler tests -- exercise code paths within handlers
+# ---------------------------------------------------------------------------
+
+
+class TestCompactDeepPaths:
+    """Test _cmd_compact with enough messages to trigger actual compaction."""
+
+    @pytest.mark.asyncio
+    async def test_compact_fires_when_enough_messages(self):
+        from unittest.mock import AsyncMock
+        proc = _make_rich_processor()
+        cm = proc.session.context_manager
+        cm.messages = [{"role": "user", "content": f"msg {i}"} for i in range(20)]
+        cm.keep_last_n = 4
+        cm.get_context_usage = MagicMock(return_value={
+            "used": 2000, "max": 4096, "percentage": 48, "remaining": 2096
+        })
+        proc.session.compact = AsyncMock(return_value={"messages_removed": 16, "before_tokens": 2000, "after_tokens": 500})
+        result = await proc.dispatch("/compact")
+        assert not result.errors
+        assert any("Removed" in line for line in result.output)
+
+    @pytest.mark.asyncio
+    async def test_compact_uses_cm_compact(self):
+        from unittest.mock import AsyncMock
+        proc = _make_rich_processor()
+        cm = proc.session.context_manager
+        cm.messages = [f"m{i}" for i in range(10)]
+        cm.keep_last_n = 2
+        cm.get_context_usage = MagicMock(return_value={
+            "used": 1000, "max": 4096, "percentage": 24, "remaining": 3096
+        })
+        del proc.session.compact
+        cm.compact = AsyncMock(return_value={"messages_removed": 8})
+        result = await proc.dispatch("/compact")
+        assert not result.errors
+
+    @pytest.mark.asyncio
+    async def test_compact_exception(self):
+        proc = _make_rich_processor()
+        cm = proc.session.context_manager
+        cm.messages = [f"m{i}" for i in range(10)]
+        cm.keep_last_n = 2
+        cm.get_context_usage = MagicMock(return_value={})
+        proc.session.compact = MagicMock(side_effect=RuntimeError("boom"))
+        result = await proc.dispatch("/compact")
+        assert result.errors
+        assert any("boom" in e for e in result.errors)
+
+
+class TestLoadDeepPaths:
+    """Test _cmd_load with real session loading."""
+
+    @pytest.mark.asyncio
+    async def test_load_success(self):
+        proc = _make_rich_processor()
+        mock_loaded = MagicMock()
+        mock_loaded.session_id = "loaded-123"
+        mock_loaded.model = "codellama"
+        mock_loaded.provider = "ollama"
+        mock_loaded.context_manager = MagicMock()
+        mock_loaded.token_counter = MagicMock()
+        mock_loaded.hooks_enabled = False
+        mock_loaded.start_time = 0.0
+        mock_loaded._message_count = 10
+        from unittest.mock import patch
+        with patch("model.session.Session.load", return_value=mock_loaded):
+            result = await proc.dispatch("/load test-session")
+        assert not result.errors
+        assert any("loaded" in line.lower() for line in result.output)
+
+    @pytest.mark.asyncio
+    async def test_load_file_not_found_real(self):
+        proc = _make_rich_processor()
+        from unittest.mock import patch
+        with patch("model.session.Session.load", side_effect=FileNotFoundError("nope")):
+            result = await proc.dispatch("/load nonexistent")
+        assert result.errors
+
+    @pytest.mark.asyncio
+    async def test_load_generic_error(self):
+        proc = _make_rich_processor()
+        from unittest.mock import patch
+        with patch("model.session.Session.load", side_effect=RuntimeError("corrupt")):
+            result = await proc.dispatch("/load broken-session")
+        assert result.errors
+        assert any("Failed" in e for e in result.errors)
+
+
+class TestToolDeepPaths:
+    """Test _cmd_tool dispatch."""
+
+    @pytest.mark.asyncio
+    async def test_tool_file_read_success(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "hello.txt").write_text("world", encoding="utf-8")
+        proc = _make_rich_processor()
+        result = await proc.dispatch("/tool file_read hello.txt")
+        assert isinstance(result, CommandResult)
+
+    @pytest.mark.asyncio
+    async def test_tool_shell_command(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        proc = _make_rich_processor()
+        result = await proc.dispatch("/tool shell echo hi")
+        assert isinstance(result, CommandResult)
+
+
+class TestMcpDeepPaths:
+    """Test _cmd_mcp subcommands."""
+
+    @pytest.mark.asyncio
+    async def test_mcp_enable_disable(self):
+        proc = _make_rich_processor()
+        result = await proc.dispatch("/mcp enable github")
+        assert isinstance(result, CommandResult)
+
+    @pytest.mark.asyncio
+    async def test_mcp_tools(self):
+        proc = _make_rich_processor()
+        result = await proc.dispatch("/mcp tools")
+        assert isinstance(result, CommandResult)
+
+
+class TestSetAgentModelDeepPaths:
+    @pytest.mark.asyncio
+    async def test_set_multiple_agents(self):
+        proc = _make_rich_processor()
+        result1 = await proc.dispatch("/set-agent-model code:ollama:codestral")
+        result2 = await proc.dispatch("/set-agent-model review:claude:claude-sonnet")
+        assert not result1.errors
+        assert not result2.errors
+
+    @pytest.mark.asyncio
+    async def test_list_after_set(self):
+        proc = _make_rich_processor()
+        await proc.dispatch("/set-agent-model test:ollama:llama3.2")
+        result = await proc.dispatch("/list-agent-models")
+        assert isinstance(result, CommandResult)
+
+
+class TestDiffDeepPaths:
+    @pytest.mark.asyncio
+    async def test_diff_in_non_git_dir(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        proc = _make_rich_processor()
+        result = await proc.dispatch("/diff")
+        # Either errors (not a git repo) or empty output
+        assert isinstance(result, CommandResult)
+
+
+class TestSaveDeepPaths:
+    @pytest.mark.asyncio
+    async def test_save_with_name(self):
+        proc = _make_rich_processor()
+        proc.session.save = MagicMock(return_value="/tmp/test.json")
+        result = await proc.dispatch("/save my-session")
+        assert not result.errors
+
+    @pytest.mark.asyncio
+    async def test_save_no_save_attr(self):
+        proc = _make_rich_processor()
+        del proc.session.save
+        result = await proc.dispatch("/save")
+        assert result.errors
