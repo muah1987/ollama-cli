@@ -948,7 +948,11 @@ class TestCLIEntrypoint:
 
     def test_cli_version(self) -> None:
         result = subprocess.run(
-            [sys.executable, "-c", "from ollama_cmd.root import build_parser; build_parser().parse_args(['--version'])"],
+            [
+                sys.executable,
+                "-c",
+                "from ollama_cmd.root import build_parser; build_parser().parse_args(['--version'])",
+            ],
             capture_output=True,
             text=True,
             cwd=_PROJECT_DIR,

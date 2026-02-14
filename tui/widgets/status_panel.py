@@ -123,7 +123,7 @@ class StatusPanel(Widget):
         # The progress bar already has pipe delimiters, so assemble manually
         line = f"[{self.model_name}] | {pct_str} used {progress} {remaining_str} left"
         if self.session_id:
-            line += f" | {self.session_id[:self._SESSION_ID_DISPLAY_LEN]}"
+            line += f" | {self.session_id[: self._SESSION_ID_DISPLAY_LEN]}"
         line += f" | cwd: {cwd_short}"
         if self.job_status and self.job_status != "idle":
             line += f" | \u25cf {self.job_status}"
@@ -156,17 +156,13 @@ class StatusPanel(Widget):
 
     def _update_hint(self, model: str) -> None:
         try:
-            self.query_one("#status-hint", Label).update(
-                f'› Try "ollama run {model}"'
-            )
+            self.query_one("#status-hint", Label).update(f'› Try "ollama run {model}"')
         except Exception:
             pass
 
     def _update_metrics(self) -> None:
         try:
-            self.query_one("#status-metrics", Label).update(
-                self._build_metrics_text()
-            )
+            self.query_one("#status-metrics", Label).update(self._build_metrics_text())
         except Exception:
             pass
 

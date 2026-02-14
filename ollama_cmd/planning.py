@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from model.session import Session
 
+
 def initialize_planning_mode(session: Session) -> None:
     """Initialize planning mode with appropriate settings.
 
@@ -46,6 +47,7 @@ def initialize_planning_mode(session: Session) -> None:
     session.timeout = 300  # 5 minutes for planning tasks
 
     print("Planning mode activated. Configured for research-focused tasks.")
+
 
 def plan_task(session: Session, task_description: str) -> dict:
     """Generate a plan for a given task.
@@ -82,6 +84,7 @@ def plan_task(session: Session, task_description: str) -> dict:
 
     return result
 
+
 def execute_planning_workflow(session: Session, task_description: str) -> None:
     """Execute the full planning workflow.
 
@@ -103,6 +106,7 @@ def execute_planning_workflow(session: Session, task_description: str) -> None:
     # Display the plan
     print("Generated Plan:")
     print(plan_result.get("content", "No plan content received."))
+
 
 # Example usage when run directly
 if __name__ == "__main__":

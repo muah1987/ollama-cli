@@ -240,11 +240,7 @@ class AgentCommBus:
                 self._messages.clear()
                 logger.debug("Cleared all agent messages")
             else:
-                self._messages = [
-                    msg
-                    for msg in self._messages
-                    if msg.sender != agent_id and msg.recipient != agent_id
-                ]
+                self._messages = [msg for msg in self._messages if msg.sender != agent_id and msg.recipient != agent_id]
                 logger.debug("Cleared messages for agent %s", agent_id)
 
     # -- private helpers -----------------------------------------------------

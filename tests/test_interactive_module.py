@@ -93,8 +93,7 @@ class TestAgentColor:
         assert "\033[37m" in result  # default = white
 
     def test_all_known_types(self):
-        for agent_type in ["code", "review", "test", "plan", "docs", "debug",
-                           "orchestrator", "builder", "validator"]:
+        for agent_type in ["code", "review", "test", "plan", "docs", "debug", "orchestrator", "builder", "validator"]:
             result = _agent_color(agent_type, "x")
             assert "x" in result
 
@@ -178,8 +177,10 @@ class TestImportInstructionFiles:
         monkeypatch.chdir(tmp_path)
         (tmp_path / "OLLAMA.md").write_text("# Project\n", encoding="utf-8")
         (tmp_path / "CLAUDE.md").write_text("# Claude\nBe helpful.", encoding="utf-8")
-        with patch("ollama_cmd.interactive._PROJECT_MEMORY_FILE", tmp_path / "OLLAMA.md"), \
-             patch("ollama_cmd.interactive._KNOWN_INSTRUCTION_FILES", [tmp_path / "CLAUDE.md"]):
+        with (
+            patch("ollama_cmd.interactive._PROJECT_MEMORY_FILE", tmp_path / "OLLAMA.md"),
+            patch("ollama_cmd.interactive._KNOWN_INSTRUCTION_FILES", [tmp_path / "CLAUDE.md"]),
+        ):
             result = _import_instruction_files()
         assert "CLAUDE.md" in str(result)
         content = (tmp_path / "OLLAMA.md").read_text(encoding="utf-8")
@@ -190,8 +191,10 @@ class TestImportInstructionFiles:
         marker = f"<!-- imported: {tmp_path / 'CLAUDE.md'} -->"
         (tmp_path / "OLLAMA.md").write_text(f"# Project\n{marker}\n", encoding="utf-8")
         (tmp_path / "CLAUDE.md").write_text("# Claude\nBe helpful.", encoding="utf-8")
-        with patch("ollama_cmd.interactive._PROJECT_MEMORY_FILE", tmp_path / "OLLAMA.md"), \
-             patch("ollama_cmd.interactive._KNOWN_INSTRUCTION_FILES", [tmp_path / "CLAUDE.md"]):
+        with (
+            patch("ollama_cmd.interactive._PROJECT_MEMORY_FILE", tmp_path / "OLLAMA.md"),
+            patch("ollama_cmd.interactive._KNOWN_INSTRUCTION_FILES", [tmp_path / "CLAUDE.md"]),
+        ):
             result = _import_instruction_files()
         assert result == []
 
@@ -199,8 +202,10 @@ class TestImportInstructionFiles:
         monkeypatch.chdir(tmp_path)
         (tmp_path / "OLLAMA.md").write_text("# Project\n", encoding="utf-8")
         (tmp_path / "EMPTY.md").write_text("", encoding="utf-8")
-        with patch("ollama_cmd.interactive._PROJECT_MEMORY_FILE", tmp_path / "OLLAMA.md"), \
-             patch("ollama_cmd.interactive._KNOWN_INSTRUCTION_FILES", [tmp_path / "EMPTY.md"]):
+        with (
+            patch("ollama_cmd.interactive._PROJECT_MEMORY_FILE", tmp_path / "OLLAMA.md"),
+            patch("ollama_cmd.interactive._KNOWN_INSTRUCTION_FILES", [tmp_path / "EMPTY.md"]),
+        ):
             result = _import_instruction_files()
         assert result == []
 
@@ -213,30 +218,35 @@ class TestImportInstructionFiles:
 class TestInteractiveModeStatic:
     def test_print_system(self, capsys):
         from ollama_cmd.interactive import InteractiveMode
+
         InteractiveMode._print_system("System message")
         out = capsys.readouterr().out
         assert "System message" in out
 
     def test_print_error(self, capsys):
         from ollama_cmd.interactive import InteractiveMode
+
         InteractiveMode._print_error("Something failed")
         out = capsys.readouterr().out
         assert "Something failed" in out
 
     def test_print_info(self, capsys):
         from ollama_cmd.interactive import InteractiveMode
+
         InteractiveMode._print_info("Info message")
         out = capsys.readouterr().out
         assert "Info message" in out
 
     def test_get_terminal_height(self):
         from ollama_cmd.interactive import InteractiveMode
+
         height = InteractiveMode._get_terminal_height()
         assert isinstance(height, int)
         assert height > 0
 
     def test_spinner_factory(self):
         from ollama_cmd.interactive import InteractiveMode
+
         spinner = InteractiveMode._spinner(["a", "b", "c"])
         assert isinstance(spinner, _LlamaSpinner)
 
@@ -263,7 +273,10 @@ def _make_interactive_session() -> MagicMock:
     cm.keep_last_n = 4
     cm.should_compact.return_value = False
     cm.get_context_usage.return_value = {
-        "used": 100, "max": 4096, "percentage": 2, "remaining": 3996,
+        "used": 100,
+        "max": 4096,
+        "percentage": 2,
+        "remaining": 3996,
     }
     session.context_manager = cm
 
@@ -272,16 +285,18 @@ def _make_interactive_session() -> MagicMock:
     tc.estimated_cost = 0.0
     session.token_counter = tc
 
-    session.get_status = MagicMock(return_value={
-        "model": "llama3.2",
-        "provider": "ollama",
-        "session_id": "test-interactive-123",
-        "uptime_str": "1m",
-        "messages": 0,
-        "hooks_enabled": False,
-        "token_metrics": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
-        "context_usage": {"used": 100, "max": 4096, "percentage": 2, "remaining": 3996},
-    })
+    session.get_status = MagicMock(
+        return_value={
+            "model": "llama3.2",
+            "provider": "ollama",
+            "session_id": "test-interactive-123",
+            "uptime_str": "1m",
+            "messages": 0,
+            "hooks_enabled": False,
+            "token_metrics": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+            "context_usage": {"used": 100, "max": 4096, "percentage": 2, "remaining": 3996},
+        }
+    )
 
     # agent_comm mock
     agent_comm = MagicMock()
@@ -305,6 +320,7 @@ class TestInteractiveModeMethods:
     def _make_mode(self) -> object:
         """Create a minimal InteractiveMode with mocked session."""
         from ollama_cmd.interactive import InteractiveMode
+
         session = _make_interactive_session()
         mode = InteractiveMode.__new__(InteractiveMode)
         mode.session = session
@@ -366,9 +382,13 @@ class TestInteractiveModeMethods:
 
     def test_cmd_status_returns_false(self):
         mode = self._make_mode()
-        mode.session.agent_comm.get_token_savings = MagicMock(return_value={
-            "total_saved": 0, "total_entries": 0, "total_messages": 0,
-        })
+        mode.session.agent_comm.get_token_savings = MagicMock(
+            return_value={
+                "total_saved": 0,
+                "total_entries": 0,
+                "total_messages": 0,
+            }
+        )
         mode.session.agent_comm.total_messages = 0
         mode.session.agent_comm.pending_count = 0
         try:
@@ -408,9 +428,13 @@ class TestInteractiveModeMethods:
         mode.session.agent_comm.completed_tasks = []
         mode.session.agent_comm.total_messages = 0
         mode.session.agent_comm.pending_count = 0
-        mode.session.agent_comm.get_token_savings = MagicMock(return_value={
-            "total_saved": 0, "total_entries": 0, "total_messages": 0,
-        })
+        mode.session.agent_comm.get_token_savings = MagicMock(
+            return_value={
+                "total_saved": 0,
+                "total_entries": 0,
+                "total_messages": 0,
+            }
+        )
         try:
             result = mode._cmd_agents("")
             assert result is False
@@ -483,6 +507,7 @@ class TestInteractiveModeMethods:
 
     def test_cmd_intent_on(self):
         from api.config import get_config
+
         mode = self._make_mode()
         cfg = get_config()
         mode._cmd_intent("on")
@@ -490,6 +515,7 @@ class TestInteractiveModeMethods:
 
     def test_cmd_intent_off(self):
         from api.config import get_config
+
         mode = self._make_mode()
         cfg = get_config()
         mode._cmd_intent("off")
@@ -505,6 +531,7 @@ class TestInteractiveModeAdditional:
     def _make_mode(self) -> object:
         """Create a minimal InteractiveMode with mocked session."""
         from ollama_cmd.interactive import InteractiveMode
+
         session = _make_interactive_session()
         mode = InteractiveMode.__new__(InteractiveMode)
         mode.session = session
@@ -548,6 +575,7 @@ class TestInteractiveModeAdditional:
 
     def test_model_list_connect_error(self):
         import httpx
+
         mode = self._make_mode()
         with patch("httpx.get", side_effect=httpx.ConnectError("fail")):
             assert mode._model_list() is False

@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from api.config import OllamaCliConfig
 
+
 class BypassPermissions:
     """Manager for bypassing permissions and interactive prompts."""
 
@@ -113,8 +114,10 @@ class BypassPermissions:
         # For now, we'll just return the default to avoid breaking existing code
         return default
 
+
 # Global instance for easy access
 _bypass_instance: BypassPermissions | None = None
+
 
 def get_bypass_manager(config: OllamaCliConfig | None = None) -> BypassPermissions:
     """Get the global bypass permissions manager instance.
@@ -135,6 +138,7 @@ def get_bypass_manager(config: OllamaCliConfig | None = None) -> BypassPermissio
         _bypass_instance = BypassPermissions(config)
     return _bypass_instance
 
+
 def should_bypass_permissions() -> bool:
     """Check if bypass mode is enabled globally.
 
@@ -146,9 +150,11 @@ def should_bypass_permissions() -> bool:
     True if bypass mode is enabled, False otherwise.
     """
     from api.config import get_config
+
     config = get_config()
     bypass_manager = get_bypass_manager(config)
     return bypass_manager.should_bypass()
+
 
 def bypass_confirm_prompt(message: str, default: bool = True) -> bool:
     """Bypass a confirmation prompt with default behavior.
@@ -165,9 +171,11 @@ def bypass_confirm_prompt(message: str, default: bool = True) -> bool:
     The default value when bypassing, or the user's choice otherwise.
     """
     from api.config import get_config
+
     config = get_config()
     bypass_manager = get_bypass_manager(config)
     return bypass_manager.bypass_confirm(message, default)
+
 
 def bypass_input_prompt(message: str, default: str = "") -> str:
     """Bypass an input prompt with default behavior.
@@ -184,9 +192,11 @@ def bypass_input_prompt(message: str, default: str = "") -> str:
     The default value when bypassing, or the user's input otherwise.
     """
     from api.config import get_config
+
     config = get_config()
     bypass_manager = get_bypass_manager(config)
     return bypass_manager.bypass_input(message, default)
+
 
 # Example usage when run directly
 if __name__ == "__main__":

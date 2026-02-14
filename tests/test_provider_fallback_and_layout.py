@@ -229,10 +229,7 @@ class TestStatusBarLayout:
             [
                 sys.executable,
                 "-c",
-                (
-                    "from ollama_cmd.interactive import InteractiveMode; "
-                    "print(InteractiveMode._get_terminal_height())"
-                ),
+                ("from ollama_cmd.interactive import InteractiveMode; print(InteractiveMode._get_terminal_height())"),
             ],
             capture_output=True,
             text=True,

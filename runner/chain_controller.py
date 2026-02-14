@@ -103,18 +103,9 @@ AGENT_CONTRACTS: dict[str, str] = {
         "- integration_steps (how to plug into existing flow)\n"
         "- tests_or_checks"
     ),
-    "monitor": (
-        "ROLE: Monitor\n"
-        "Verify against success criteria; list remaining risks (if any)."
-    ),
-    "reporter": (
-        "ROLE: Reporter\n"
-        "Produce the user-facing output. Clear, structured, actionable."
-    ),
-    "cleaner": (
-        "ROLE: Cleaner\n"
-        "Polish formatting, remove noise, ensure consistency, remove duplicates."
-    ),
+    "monitor": ("ROLE: Monitor\nVerify against success criteria; list remaining risks (if any)."),
+    "reporter": ("ROLE: Reporter\nProduce the user-facing output. Clear, structured, actionable."),
+    "cleaner": ("ROLE: Cleaner\nPolish formatting, remove noise, ensure consistency, remove duplicates."),
 }
 
 # ---------------------------------------------------------------------------
@@ -500,10 +491,12 @@ class ChainController:
                 logger.warning("Chain %s: agent %s failed: %s", self._state.run_id, agent_role, exc)
                 content = f"[Agent {agent_role} failed: {exc}]"
 
-            agent_outputs.append({
-                "agent": agent_role,
-                "content": content,
-            })
+            agent_outputs.append(
+                {
+                    "agent": agent_role,
+                    "content": content,
+                }
+            )
 
             # Report via agent comm bus
             self.session.agent_comm.send(
@@ -530,7 +523,10 @@ class ChainController:
 
         logger.info(
             "Chain %s: wave '%s' complete (%d agents, %.1fs)",
-            self._state.run_id, wave.name, len(agent_outputs), wave_result.duration_seconds,
+            self._state.run_id,
+            wave.name,
+            len(agent_outputs),
+            wave_result.duration_seconds,
         )
 
         return wave_result
@@ -676,11 +672,13 @@ def parse_chain_config(config: dict[str, Any]) -> list[WaveConfig]:
     """
     waves: list[WaveConfig] = []
     for wave_data in config.get("waves", []):
-        waves.append(WaveConfig(
-            name=wave_data.get("name", "unnamed"),
-            agents=wave_data.get("agents", []),
-            description=wave_data.get("description", ""),
-        ))
+        waves.append(
+            WaveConfig(
+                name=wave_data.get("name", "unnamed"),
+                agents=wave_data.get("agents", []),
+                description=wave_data.get("description", ""),
+            )
+        )
     return waves
 
 

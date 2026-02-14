@@ -235,9 +235,7 @@ class IntentClassifier:
                     compiled_patterns.append((pattern, pattern.lower()))
                 else:
                     # Single word -> word-boundary regex
-                    compiled_patterns.append(
-                        (pattern, re.compile(rf"\b{re.escape(pattern)}\b", re.IGNORECASE))
-                    )
+                    compiled_patterns.append((pattern, re.compile(rf"\b{re.escape(pattern)}\b", re.IGNORECASE)))
             self._compiled[agent_type] = compiled_patterns
 
     # -- public API ----------------------------------------------------------

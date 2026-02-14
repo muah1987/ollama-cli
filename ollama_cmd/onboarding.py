@@ -18,6 +18,7 @@ from rich.prompt import Prompt
 # Import bypass permissions if available
 try:
     from permissions.bypass import should_bypass_permissions
+
     HAS_BYPASS = True
 except ImportError:
     HAS_BYPASS = False
@@ -163,9 +164,9 @@ def run_onboarding() -> OllamaCliConfig:
             else:
                 api_key = Prompt.ask(
                     key_label,
-                password=True,
-                default="",
-            )
+                    password=True,
+                    default="",
+                )
             if api_key:
                 setattr(cfg, key_field, api_key)
                 os.environ[env_name] = api_key

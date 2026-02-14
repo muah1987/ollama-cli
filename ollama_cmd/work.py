@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from model.session import Session
 
+
 def initialize_work_mode(session: Session) -> None:
     """Initialize work mode with appropriate settings.
 
@@ -46,6 +47,7 @@ def initialize_work_mode(session: Session) -> None:
     session.timeout = 60  # 1 minute for execution tasks
 
     print("Work mode activated. Configured for execution-focused tasks.")
+
 
 def execute_task(session: Session, task_description: str) -> dict:
     """Execute a given task efficiently.
@@ -81,6 +83,7 @@ def execute_task(session: Session, task_description: str) -> dict:
 
     return result
 
+
 def execute_work_workflow(session: Session, task_description: str) -> None:
     """Execute the full work workflow.
 
@@ -102,6 +105,7 @@ def execute_work_workflow(session: Session, task_description: str) -> None:
     # Display the result
     print("Task Execution Result:")
     print(work_result.get("content", "No result content received."))
+
 
 # Example usage when run directly
 if __name__ == "__main__":

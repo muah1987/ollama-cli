@@ -278,13 +278,18 @@ class TestInteractiveCommands:
         import subprocess
 
         result = subprocess.run(
-            [sys.executable, "-c",
-             "import sys; sys.path.insert(0, '.');\n"
-             "from ollama_cmd.interactive import InteractiveMode\n"
-             "assert '/agents' in InteractiveMode._COMMAND_TABLE\n"
-             "assert InteractiveMode._COMMAND_TABLE['/agents'] == '_cmd_agents'\n"
-             "print('OK')"],
-            capture_output=True, text=True, cwd=_PROJECT_DIR,
+            [
+                sys.executable,
+                "-c",
+                "import sys; sys.path.insert(0, '.');\n"
+                "from ollama_cmd.interactive import InteractiveMode\n"
+                "assert '/agents' in InteractiveMode._COMMAND_TABLE\n"
+                "assert InteractiveMode._COMMAND_TABLE['/agents'] == '_cmd_agents'\n"
+                "print('OK')",
+            ],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_DIR,
         )
         assert result.returncode == 0
         assert "OK" in result.stdout
@@ -294,13 +299,18 @@ class TestInteractiveCommands:
         import subprocess
 
         result = subprocess.run(
-            [sys.executable, "-c",
-             "import sys; sys.path.insert(0, '.');\n"
-             "from ollama_cmd.interactive import InteractiveMode\n"
-             "assert '/remember' in InteractiveMode._COMMAND_TABLE\n"
-             "assert InteractiveMode._COMMAND_TABLE['/remember'] == '_cmd_remember'\n"
-             "print('OK')"],
-            capture_output=True, text=True, cwd=_PROJECT_DIR,
+            [
+                sys.executable,
+                "-c",
+                "import sys; sys.path.insert(0, '.');\n"
+                "from ollama_cmd.interactive import InteractiveMode\n"
+                "assert '/remember' in InteractiveMode._COMMAND_TABLE\n"
+                "assert InteractiveMode._COMMAND_TABLE['/remember'] == '_cmd_remember'\n"
+                "print('OK')",
+            ],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_DIR,
         )
         assert result.returncode == 0
         assert "OK" in result.stdout
@@ -310,13 +320,18 @@ class TestInteractiveCommands:
         import subprocess
 
         result = subprocess.run(
-            [sys.executable, "-c",
-             "import sys; sys.path.insert(0, '.');\n"
-             "from ollama_cmd.interactive import InteractiveMode\n"
-             "assert '/recall' in InteractiveMode._COMMAND_TABLE\n"
-             "assert InteractiveMode._COMMAND_TABLE['/recall'] == '_cmd_recall'\n"
-             "print('OK')"],
-            capture_output=True, text=True, cwd=_PROJECT_DIR,
+            [
+                sys.executable,
+                "-c",
+                "import sys; sys.path.insert(0, '.');\n"
+                "from ollama_cmd.interactive import InteractiveMode\n"
+                "assert '/recall' in InteractiveMode._COMMAND_TABLE\n"
+                "assert InteractiveMode._COMMAND_TABLE['/recall'] == '_cmd_recall'\n"
+                "print('OK')",
+            ],
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_DIR,
         )
         assert result.returncode == 0
         assert "OK" in result.stdout

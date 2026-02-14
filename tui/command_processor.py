@@ -168,20 +168,12 @@ class CommandProcessor:
 
         entry = COMMAND_REGISTRY.get(cmd)
         if entry is None:
-            return CommandResult(
-                errors=[
-                    f"Unknown command: {cmd}. Type /help to see available commands."
-                ]
-            )
+            return CommandResult(errors=[f"Unknown command: {cmd}. Type /help to see available commands."])
 
         handler_name = entry[0]
         handler = getattr(self, handler_name, None)
         if handler is None:
-            return CommandResult(
-                errors=[
-                    f"Command {cmd} is not yet implemented in CommandProcessor."
-                ]
-            )
+            return CommandResult(errors=[f"Command {cmd} is not yet implemented in CommandProcessor."])
 
         result = handler(arg)
         if asyncio.iscoroutine(result):
@@ -191,9 +183,7 @@ class CommandProcessor:
             return result
 
         # Legacy bool return: True = exit, False = continue
-        return CommandResult(
-            should_exit=bool(result) if result is not None else False
-        )
+        return CommandResult(should_exit=bool(result) if result is not None else False)
 
     # -- menu ----------------------------------------------------------------
 
@@ -269,38 +259,19 @@ class CommandProcessor:
             lines.append(f"  Messages:   {status.get('messages', 0)}")
             hooks = status.get("hooks_enabled")
             if hooks is not None:
-                lines.append(
-                    f"  Hooks:      {'enabled' if hooks else 'disabled'}"
-                )
+                lines.append(f"  Hooks:      {'enabled' if hooks else 'disabled'}")
 
             lines.append("Tokens")
-            lines.append(
-                f"  Prompt:     {token_info.get('prompt_tokens', 0):,}"
-            )
-            lines.append(
-                f"  Completion: {token_info.get('completion_tokens', 0):,}"
-            )
-            lines.append(
-                f"  Total:      {token_info.get('total_tokens', 0):,}"
-            )
-            lines.append(
-                f"  Speed:      {token_info.get('tokens_per_second', 0):.1f} tok/s"
-            )
-            lines.append(
-                f"  Cost:       ${token_info.get('cost_estimate', 0):.4f}"
-            )
+            lines.append(f"  Prompt:     {token_info.get('prompt_tokens', 0):,}")
+            lines.append(f"  Completion: {token_info.get('completion_tokens', 0):,}")
+            lines.append(f"  Total:      {token_info.get('total_tokens', 0):,}")
+            lines.append(f"  Speed:      {token_info.get('tokens_per_second', 0):.1f} tok/s")
+            lines.append(f"  Cost:       ${token_info.get('cost_estimate', 0):.4f}")
 
             lines.append("Context")
-            lines.append(
-                f"  Used:       {context_info.get('used', 0):,}"
-                f" / {context_info.get('max', 0):,} tokens"
-            )
-            lines.append(
-                f"  Usage:      {context_info.get('percentage', 0)}%"
-            )
-            lines.append(
-                f"  Remaining:  {context_info.get('remaining', 0):,}"
-            )
+            lines.append(f"  Used:       {context_info.get('used', 0):,} / {context_info.get('max', 0):,} tokens")
+            lines.append(f"  Usage:      {context_info.get('percentage', 0)}%")
+            lines.append(f"  Remaining:  {context_info.get('remaining', 0):,}")
 
             # Auto-compact info
             if hasattr(self.session, "context_manager"):
@@ -312,47 +283,28 @@ class CommandProcessor:
                     f" keep last {cm.keep_last_n})"
                 )
                 if cm.should_compact():
-                    lines.append(
-                        "  Warning: Context above threshold"
-                        " -- run /compact to free space"
-                    )
+                    lines.append("  Warning: Context above threshold -- run /compact to free space")
 
             # Agent Communication
             if hasattr(self.session, "agent_comm"):
                 comm_stats = self.session.agent_comm.get_token_savings()
                 lines.append("Agent Communication")
-                lines.append(
-                    f"  Messages:     {comm_stats['total_messages']}"
-                )
-                lines.append(
-                    f"  Token savings: ~{comm_stats['context_tokens_saved']:,}"
-                )
+                lines.append(f"  Messages:     {comm_stats['total_messages']}")
+                lines.append(f"  Token savings: ~{comm_stats['context_tokens_saved']:,}")
 
             # Memory Layer
             if hasattr(self.session, "memory_layer"):
                 mem_stats = self.session.memory_layer.get_token_savings()
                 lines.append("Memory")
-                lines.append(
-                    f"  Entries:      {mem_stats['total_entries']}"
-                )
-                lines.append(
-                    f"  Raw tokens:   {mem_stats['total_raw_tokens']:,}"
-                )
-                lines.append(
-                    f"  Context used: {mem_stats['context_tokens_used']:,}"
-                )
-                lines.append(
-                    f"  Saved:        ~{mem_stats['tokens_saved']:,}"
-                )
+                lines.append(f"  Entries:      {mem_stats['total_entries']}")
+                lines.append(f"  Raw tokens:   {mem_stats['total_raw_tokens']:,}")
+                lines.append(f"  Context used: {mem_stats['context_tokens_used']:,}")
+                lines.append(f"  Saved:        ~{mem_stats['tokens_saved']:,}")
         else:
             # Minimal fallback for lightweight session objects
             lines.append(f"  Model: {getattr(self.session, 'model', 'n/a')}")
-            lines.append(
-                f"  Provider: {getattr(self.session, 'provider', 'n/a')}"
-            )
-            lines.append(
-                f"  Session ID: {getattr(self.session, 'session_id', 'n/a')}"
-            )
+            lines.append(f"  Provider: {getattr(self.session, 'provider', 'n/a')}")
+            lines.append(f"  Session ID: {getattr(self.session, 'session_id', 'n/a')}")
 
         return CommandResult(output=lines)
 
@@ -382,9 +334,7 @@ class CommandProcessor:
                 f"  LLM fallback: {cfg.intent_llm_fallback}",
             ]
             if cfg.intent_default_agent_type:
-                lines.append(
-                    f"  Default agent type: {cfg.intent_default_agent_type}"
-                )
+                lines.append(f"  Default agent type: {cfg.intent_default_agent_type}")
             return CommandResult(output=lines)
 
         parts = arg.split(maxsplit=1)
@@ -415,43 +365,27 @@ class CommandProcessor:
             try:
                 val = float(val_str)
                 if not 0.0 <= val <= 1.0:
-                    return CommandResult(
-                        errors=["Threshold must be between 0.0 and 1.0."]
-                    )
+                    return CommandResult(errors=["Threshold must be between 0.0 and 1.0."])
                 cfg.intent_confidence_threshold = val
-                return CommandResult(
-                    output=[f"Confidence threshold set to {val:.2f}"]
-                )
+                return CommandResult(output=[f"Confidence threshold set to {val:.2f}"])
             except ValueError:
                 return CommandResult(errors=[f"Invalid number: {val_str}"])
 
         if sub == "test":
             test_prompt = parts[1].strip() if len(parts) > 1 else ""
             if not test_prompt:
-                return CommandResult(
-                    errors=["Usage: /intent test <prompt>"]
-                )
+                return CommandResult(errors=["Usage: /intent test <prompt>"])
             from runner.intent_classifier import classify_intent
 
-            result = classify_intent(
-                test_prompt, threshold=cfg.intent_confidence_threshold
-            )
+            result = classify_intent(test_prompt, threshold=cfg.intent_confidence_threshold)
             lines: list[str] = []
             if result.agent_type:
-                lines.append(
-                    f"  Intent: {result.agent_type}"
-                    f" (confidence: {result.confidence:.0%})"
-                )
+                lines.append(f"  Intent: {result.agent_type} (confidence: {result.confidence:.0%})")
             else:
-                lines.append(
-                    f"  Intent: none"
-                    f" (confidence: {result.confidence:.0%})"
-                )
+                lines.append(f"  Intent: none (confidence: {result.confidence:.0%})")
             lines.append(f"  Reasoning: {result.reasoning}")
             if result.matched_patterns:
-                lines.append(
-                    f"  Patterns: {', '.join(result.matched_patterns)}"
-                )
+                lines.append(f"  Patterns: {', '.join(result.matched_patterns)}")
             return CommandResult(output=lines)
 
         return CommandResult(
@@ -475,9 +409,7 @@ class CommandProcessor:
 
         old_model = getattr(self.session, "model", "unknown")
         self.session.model = arg
-        return CommandResult(
-            output=[f"Model switched: {old_model} → {arg}"]
-        )
+        return CommandResult(output=[f"Model switched: {old_model} → {arg}"])
 
     def _cmd_provider(self, arg: str) -> CommandResult:
         """Switch the active provider."""
@@ -542,10 +474,7 @@ class CommandProcessor:
 
             msg_count = getattr(loaded, "_message_count", 0)
             return CommandResult(
-                output=[
-                    f"Session loaded: {loaded.session_id}"
-                    f" ({msg_count} messages, model={loaded.model})"
-                ]
+                output=[f"Session loaded: {loaded.session_id} ({msg_count} messages, model={loaded.model})"]
             )
         except FileNotFoundError as exc:
             return CommandResult(errors=[str(exc)])
@@ -658,9 +587,7 @@ class CommandProcessor:
                     return CommandResult(output=lines)
                 except OSError as exc:
                     return CommandResult(errors=[f"Cannot read OLLAMA.md: {exc}"])
-            return CommandResult(
-                output=["No OLLAMA.md found. Use /memory <note> to create one, or /init to set up."]
-            )
+            return CommandResult(output=["No OLLAMA.md found. Use /memory <note> to create one, or /init to set up."])
 
         try:
             with open(memory_file, "a", encoding="utf-8") as f:
@@ -689,9 +616,7 @@ class CommandProcessor:
         if not arg:
             stats = self.session.memory_layer.get_token_savings()
             if stats["total_entries"] == 0:
-                return CommandResult(
-                    output=["No memories stored. Use /remember <key> <content> to add."]
-                )
+                return CommandResult(output=["No memories stored. Use /remember <key> <content> to add."])
             lines = [f"Stored Memories ({stats['total_entries']} entries):"]
             for entry in self.session.memory_layer.get_all_entries():
                 lines.append(f"  [{entry.category}] {entry.key}: {entry.content}")
@@ -726,9 +651,7 @@ class CommandProcessor:
     def _cmd_tool(self, arg: str) -> CommandResult:
         """Invoke a tool by name with hook integration."""
         if not arg:
-            return CommandResult(
-                errors=["Usage: /tool <name> [args...]", "  Example: /tool file_read README.md"]
-            )
+            return CommandResult(errors=["Usage: /tool <name> [args...]", "  Example: /tool file_read README.md"])
 
         try:
             from skills.tools import get_tool
@@ -747,9 +670,7 @@ class CommandProcessor:
             cfg = _get_cfg()
             allowed = getattr(cfg, "allowed_tools", None)
             if allowed and tool_name not in allowed:
-                return CommandResult(
-                    errors=[f"Tool '{tool_name}' is not in --allowed-tools list."]
-                )
+                return CommandResult(errors=[f"Tool '{tool_name}' is not in --allowed-tools list."])
 
             # Fire PreToolUse hook for approval
             hook_payload = {
@@ -763,9 +684,7 @@ class CommandProcessor:
                     for r in results:
                         decision = getattr(r, "permission_decision", None)
                         if decision == "deny":
-                            return CommandResult(
-                                errors=[f"Tool '{tool_name}' blocked by PreToolUse hook."]
-                            )
+                            return CommandResult(errors=[f"Tool '{tool_name}' blocked by PreToolUse hook."])
             except Exception:
                 logger.debug("PreToolUse hook check failed, proceeding", exc_info=True)
 
@@ -780,16 +699,12 @@ class CommandProcessor:
                 elif tool_name == "file_write":
                     write_parts = tool_arg.split(maxsplit=1)
                     if len(write_parts) < 2:
-                        return CommandResult(
-                            errors=["Usage: /tool file_write <path> <content>"]
-                        )
+                        return CommandResult(errors=["Usage: /tool file_write <path> <content>"])
                     result = fn(write_parts[0], write_parts[1])
                 elif tool_name == "file_edit":
                     edit_parts = tool_arg.split("|||")
                     if len(edit_parts) != 3:
-                        return CommandResult(
-                            errors=["Usage: /tool file_edit <path>|||<old_text>|||<new_text>"]
-                        )
+                        return CommandResult(errors=["Usage: /tool file_edit <path>|||<old_text>|||<new_text>"])
                     result = fn(edit_parts[0].strip(), edit_parts[1], edit_parts[2])
                 elif tool_name == "grep_search":
                     search_parts = tool_arg.split(maxsplit=1)
@@ -980,18 +895,14 @@ class CommandProcessor:
                         for t in tools:
                             lines.append(f"  {t.name:30s} {t.description}")
                         return CommandResult(output=lines)
-                    return CommandResult(
-                        output=[f"No tools discovered from {name} (is it enabled and accessible?)."]
-                    )
+                    return CommandResult(output=[f"No tools discovered from {name} (is it enabled and accessible?)."])
                 all_tools = client.list_discovered_tools()
                 if all_tools:
                     lines = ["Discovered MCP tools:"]
                     for t in all_tools:
                         lines.append(f"  {t['name']:40s} {t['description']}")
                     return CommandResult(output=lines)
-                return CommandResult(
-                    output=["No MCP tools discovered yet. Use /mcp tools <server> to discover."]
-                )
+                return CommandResult(output=["No MCP tools discovered yet. Use /mcp tools <server> to discover."])
 
             if action == "invoke" and len(parts) >= 2:
                 invoke_parts = parts[1].split(maxsplit=1)
@@ -1001,9 +912,7 @@ class CommandProcessor:
                 elif len(parts) >= 3:
                     rest = parts[2]
                 else:
-                    return CommandResult(
-                        errors=["Usage: /mcp invoke <server> <tool> [args_json]"]
-                    )
+                    return CommandResult(errors=["Usage: /mcp invoke <server> <tool> [args_json]"])
                 tool_parts = rest.split(maxsplit=1)
                 tool_name = tool_parts[0]
                 args_json = tool_parts[1] if len(tool_parts) > 1 else "{}"
@@ -1015,13 +924,9 @@ class CommandProcessor:
                 if "error" in result:
                     return CommandResult(errors=[f"MCP error: {result['error']}"])
                 output_text = _json.dumps(result, indent=2, default=str)[:3000]
-                return CommandResult(
-                    output=[f"[mcp:{server_name}:{tool_name}] result:", output_text]
-                )
+                return CommandResult(output=[f"[mcp:{server_name}:{tool_name}] result:", output_text])
 
-            return CommandResult(
-                errors=["Usage: /mcp [enable|disable|tools|invoke] <name>"]
-            )
+            return CommandResult(errors=["Usage: /mcp [enable|disable|tools|invoke] <name>"])
         except ImportError:
             return CommandResult(errors=["MCP client not available."])
 
@@ -1037,9 +942,7 @@ class CommandProcessor:
                 lines.append("Active Sub-Agents:")
                 for cid, sub in sub_contexts.items():
                     usage = sub.get_context_usage()
-                    lines.append(
-                        f"  ● {cid}: {usage['used']:,}/{usage['max']:,} tokens ({usage['percentage']}%)"
-                    )
+                    lines.append(f"  ● {cid}: {usage['used']:,}/{usage['max']:,} tokens ({usage['percentage']}%)")
             else:
                 lines.append("No active sub-agents.")
         else:
@@ -1071,9 +974,7 @@ class CommandProcessor:
         agent_type, provider, model = parts
         if hasattr(self.session, "provider_router"):
             self.session.provider_router.set_agent_model(agent_type, provider, model)
-        return CommandResult(
-            output=[f"Agent '{agent_type}' assigned to {provider}:{model}"]
-        )
+        return CommandResult(output=[f"Agent '{agent_type}' assigned to {provider}:{model}"])
 
     def _cmd_list_agent_models(self, arg: str) -> CommandResult:
         """List agent model assignments."""
@@ -1119,10 +1020,7 @@ class CommandProcessor:
             ]
 
             for wr in result.get("wave_results", []):
-                lines.append(
-                    f"  • {wr.get('wave', '?')}: "
-                    f"{wr.get('agents', 0)} agents, {wr.get('duration', 0):.1f}s"
-                )
+                lines.append(f"  • {wr.get('wave', '?')}: {wr.get('agents', 0)} agents, {wr.get('duration', 0):.1f}s")
 
             final_output = result.get("final_output", "")
             if final_output:
@@ -1210,9 +1108,7 @@ class CommandProcessor:
                 )
                 plan_content = result.get("content", "")
             else:
-                return CommandResult(
-                    errors=["Session does not support send(). Cannot generate plan."]
-                )
+                return CommandResult(errors=["Session does not support send(). Cannot generate plan."])
         except Exception as exc:
             return CommandResult(errors=[f"Failed to generate plan: {exc}"])
 
@@ -1293,9 +1189,7 @@ class CommandProcessor:
         from pathlib import Path
 
         if not arg:
-            return CommandResult(
-                errors=["Usage: /build <plan_file>", "  Example: /build specs/plan_20240101.md"]
-            )
+            return CommandResult(errors=["Usage: /build <plan_file>", "  Example: /build specs/plan_20240101.md"])
 
         plan_path = Path(arg.strip())
         if not plan_path.is_file():
@@ -1363,9 +1257,7 @@ class CommandProcessor:
                     context_id=builder_ctx_id,
                 )
             else:
-                return CommandResult(
-                    errors=["Session does not support send(). Cannot execute build."]
-                )
+                return CommandResult(errors=["Session does not support send(). Cannot execute build."])
         except Exception as exc:
             return CommandResult(errors=[f"Build failed: {exc}"])
 
@@ -1460,8 +1352,7 @@ class CommandProcessor:
             for phase in result.phases:
                 cmds_label = f", {len(phase.commands_executed)} cmds" if phase.commands_executed else ""
                 lines.append(
-                    f"  • {phase.phase_name}: {len(phase.content)} chars, "
-                    f"{phase.duration_seconds:.1f}s{cmds_label}"
+                    f"  • {phase.phase_name}: {len(phase.content)} chars, {phase.duration_seconds:.1f}s{cmds_label}"
                 )
 
             if hasattr(self.session, "agent_comm"):
@@ -1593,9 +1484,7 @@ class CommandProcessor:
                         continue
                     if not content:
                         continue
-                    sections.append(
-                        f"\n{marker}\n## Imported from {filepath}\n\n{content}\n"
-                    )
+                    sections.append(f"\n{marker}\n## Imported from {filepath}\n\n{content}\n")
                     imported.append(str(filepath))
                 if sections:
                     with open(project_memory, "a", encoding="utf-8") as f:
@@ -1660,10 +1549,7 @@ class CommandProcessor:
             )
         if current is None:
             return CommandResult(
-                errors=[
-                    f"Config key '{key}' is unset (None). "
-                    "Edit .ollama/settings.json directly to set it."
-                ]
+                errors=[f"Config key '{key}' is unset (None). Edit .ollama/settings.json directly to set it."]
             )
 
         try:
@@ -1713,9 +1599,7 @@ class CommandProcessor:
             report["context_usage"] = status.get("context_usage", {})
 
         try:
-            bug_file.write_text(
-                _json.dumps(report, indent=2, default=str), encoding="utf-8"
-            )
+            bug_file.write_text(_json.dumps(report, indent=2, default=str), encoding="utf-8")
             return CommandResult(output=[f"Bug report saved: {bug_file}"])
         except OSError as exc:
             return CommandResult(errors=[f"Failed to save bug report: {exc}"])
@@ -1757,14 +1641,10 @@ class CommandProcessor:
         try:
             data: Any = _json.loads(session_file.read_text(encoding="utf-8"))
         except Exception as exc:
-            return CommandResult(
-                errors=[f"Failed to read session file: {exc}"]
-            )
+            return CommandResult(errors=[f"Failed to read session file: {exc}"])
 
         if not isinstance(data, dict):
-            return CommandResult(
-                errors=["Session file is malformed (expected JSON object)."]
-            )
+            return CommandResult(errors=["Session file is malformed (expected JSON object)."])
 
         extras = data.get("extras") or {}
         if not isinstance(extras, dict):

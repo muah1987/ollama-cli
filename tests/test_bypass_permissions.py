@@ -10,6 +10,7 @@ import pytest
 class TestBypassPermissions:
     def test_init_enabled(self):
         from permissions.bypass import BypassPermissions
+
         cfg = MagicMock(bypass_permissions=True)
         bp = BypassPermissions(cfg)
         assert bp.enabled is True
@@ -17,6 +18,7 @@ class TestBypassPermissions:
 
     def test_init_disabled(self):
         from permissions.bypass import BypassPermissions
+
         cfg = MagicMock(bypass_permissions=False)
         bp = BypassPermissions(cfg)
         assert bp.enabled is False
@@ -24,6 +26,7 @@ class TestBypassPermissions:
 
     def test_bypass_confirm_when_enabled(self, capsys):
         from permissions.bypass import BypassPermissions
+
         cfg = MagicMock(bypass_permissions=True)
         bp = BypassPermissions(cfg)
         result = bp.bypass_confirm("Delete all?", default=True)
@@ -33,6 +36,7 @@ class TestBypassPermissions:
 
     def test_bypass_confirm_when_disabled(self):
         from permissions.bypass import BypassPermissions
+
         cfg = MagicMock(bypass_permissions=False)
         bp = BypassPermissions(cfg)
         result = bp.bypass_confirm("Delete all?", default=False)
@@ -40,6 +44,7 @@ class TestBypassPermissions:
 
     def test_bypass_input_when_enabled(self, capsys):
         from permissions.bypass import BypassPermissions
+
         cfg = MagicMock(bypass_permissions=True)
         bp = BypassPermissions(cfg)
         result = bp.bypass_input("Enter name:", default="auto")
@@ -49,6 +54,7 @@ class TestBypassPermissions:
 
     def test_bypass_input_when_disabled(self):
         from permissions.bypass import BypassPermissions
+
         cfg = MagicMock(bypass_permissions=False)
         bp = BypassPermissions(cfg)
         result = bp.bypass_input("Enter name:", default="auto")
@@ -56,6 +62,7 @@ class TestBypassPermissions:
 
     def test_bypass_choice_when_enabled(self, capsys):
         from permissions.bypass import BypassPermissions
+
         cfg = MagicMock(bypass_permissions=True)
         bp = BypassPermissions(cfg)
         result = bp.bypass_choice("Pick one:", choices=["a", "b", "c"], default="b")
@@ -65,6 +72,7 @@ class TestBypassPermissions:
 
     def test_bypass_choice_when_disabled(self):
         from permissions.bypass import BypassPermissions
+
         cfg = MagicMock(bypass_permissions=False)
         bp = BypassPermissions(cfg)
         result = bp.bypass_choice("Pick one:", choices=["a", "b"], default="a")
@@ -74,6 +82,7 @@ class TestBypassPermissions:
 class TestGetBypassManager:
     def test_get_bypass_manager_first_init(self):
         import permissions.bypass as mod
+
         mod._bypass_instance = None  # Reset singleton
         cfg = MagicMock(bypass_permissions=False)
         manager = mod.get_bypass_manager(cfg)
@@ -83,6 +92,7 @@ class TestGetBypassManager:
 
     def test_get_bypass_manager_no_config_raises(self):
         import permissions.bypass as mod
+
         mod._bypass_instance = None
         with pytest.raises(ValueError, match="Configuration required"):
             mod.get_bypass_manager(None)
@@ -90,6 +100,7 @@ class TestGetBypassManager:
 
     def test_get_bypass_manager_reuses_instance(self):
         import permissions.bypass as mod
+
         mod._bypass_instance = None
         cfg = MagicMock(bypass_permissions=True)
         m1 = mod.get_bypass_manager(cfg)
@@ -102,6 +113,7 @@ class TestShouldBypassPermissions:
     @patch("api.config.get_config")
     def test_should_bypass_permissions(self, mock_cfg):
         import permissions.bypass as mod
+
         mod._bypass_instance = None
         mock_cfg.return_value = MagicMock(bypass_permissions=True)
         result = mod.should_bypass_permissions()
@@ -111,6 +123,7 @@ class TestShouldBypassPermissions:
     @patch("api.config.get_config")
     def test_should_not_bypass(self, mock_cfg):
         import permissions.bypass as mod
+
         mod._bypass_instance = None
         mock_cfg.return_value = MagicMock(bypass_permissions=False)
         result = mod.should_bypass_permissions()
@@ -122,6 +135,7 @@ class TestBypassConfirmPrompt:
     @patch("api.config.get_config")
     def test_bypass_confirm_prompt(self, mock_cfg):
         import permissions.bypass as mod
+
         mod._bypass_instance = None
         mock_cfg.return_value = MagicMock(bypass_permissions=True)
         result = mod.bypass_confirm_prompt("OK?", default=True)
@@ -133,6 +147,7 @@ class TestBypassInputPrompt:
     @patch("api.config.get_config")
     def test_bypass_input_prompt(self, mock_cfg):
         import permissions.bypass as mod
+
         mod._bypass_instance = None
         mock_cfg.return_value = MagicMock(bypass_permissions=True)
         result = mod.bypass_input_prompt("Name?", default="test")

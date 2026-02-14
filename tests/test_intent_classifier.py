@@ -17,6 +17,7 @@ from runner.intent_classifier import IntentClassifier, IntentResult, classify_in
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _classify(prompt: str, threshold: float = 0.7) -> IntentResult:
     """Shorthand for creating a classifier and classifying a prompt."""
     return IntentClassifier(confidence_threshold=threshold).classify(prompt)
@@ -216,9 +217,7 @@ class TestSingleKeywordPatternMatching:
             ("add a docstring to the utils function", "docs"),
         ],
     )
-    def test_single_keyword_with_low_threshold(
-        self, prompt: str, expected: str
-    ) -> None:
+    def test_single_keyword_with_low_threshold(self, prompt: str, expected: str) -> None:
         """With threshold=0.5 a single early keyword should be enough."""
         result = _classify(prompt, threshold=0.5)
         assert result.agent_type == expected, (
@@ -255,16 +254,12 @@ class TestConfidenceScoring:
 
     def test_confidence_clamped_to_one(self) -> None:
         """Confidence should never exceed 1.0 even with many matches."""
-        result = _classify(
-            "write implement build code refactor generate scaffold function method class"
-        )
+        result = _classify("write implement build code refactor generate scaffold function method class")
         assert result.confidence <= 1.0
 
     def test_confidence_exactly_one_with_enough_matches(self) -> None:
         """A prompt with 3+ raw score should have confidence exactly 1.0."""
-        result = _classify(
-            "write implement build code refactor generate scaffold function method class"
-        )
+        result = _classify("write implement build code refactor generate scaffold function method class")
         assert result.confidence == 1.0
 
     def test_confidence_zero_for_empty(self) -> None:
@@ -277,9 +272,7 @@ class TestConfidenceScoring:
         # "write" is the very first word -> 2x bonus -> raw 2.0
         early = _classify("write something for me please")
         # "write" appears after 7 words -> no bonus -> raw 1.0
-        late = _classify(
-            "I would really appreciate it if you could write something"
-        )
+        late = _classify("I would really appreciate it if you could write something")
         assert early.confidence > late.confidence, (
             f"Early ({early.confidence:.2f}) should beat late ({late.confidence:.2f})"
         )
@@ -289,9 +282,7 @@ class TestConfidenceScoring:
         # "fix bug" appears in first five words' substring
         early = _classify("fix bug in the login handler")
         # "fix bug" is pushed past the first five words
-        late = _classify(
-            "I have a problem and I need you to fix bug in the handler"
-        )
+        late = _classify("I have a problem and I need you to fix bug in the handler")
         assert early.confidence >= late.confidence
 
     def test_normalization_formula(self) -> None:
@@ -300,15 +291,11 @@ class TestConfidenceScoring:
         # No other debug patterns match -> raw_score = 2.0
         # Normalised: 2.0 / 3.0 ~ 0.6667
         result = _classify("debug something for me")
-        assert abs(result.confidence - 2.0 / 3.0) < 0.01, (
-            f"Expected ~0.667, got {result.confidence:.4f}"
-        )
+        assert abs(result.confidence - 2.0 / 3.0) < 0.01, f"Expected ~0.667, got {result.confidence:.4f}"
 
     def test_late_keyword_no_bonus(self) -> None:
         """A keyword outside the first 5 words gets weight 1.0, not 2.0."""
-        result = _classify(
-            "I was thinking about maybe discussing debug later"
-        )
+        result = _classify("I was thinking about maybe discussing debug later")
         # "debug" is word index 6+ -> weight 1.0 -> raw 1.0 -> conf 0.333
         assert abs(result.confidence - 1.0 / 3.0) < 0.01
 
@@ -467,9 +454,7 @@ class TestEdgeCases:
 
     def test_multiword_pattern_not_working(self) -> None:
         """The multi-word pattern 'not working' should match."""
-        result = _classify(
-            "the server is not working at all, please investigate"
-        )
+        result = _classify("the server is not working at all, please investigate")
         assert result.agent_type == "debug"
 
     def test_multiword_pattern_fix_error(self) -> None:

@@ -50,9 +50,7 @@ def get_git_status() -> dict | None:
             timeout=5,
         )
         if branch_result.returncode == 0:
-            dirty_files = [
-                line.strip() for line in status_result.stdout.strip().splitlines() if line.strip()
-            ]
+            dirty_files = [line.strip() for line in status_result.stdout.strip().splitlines() if line.strip()]
             return {
                 "branch": branch_result.stdout.strip(),
                 "dirty_file_count": len(dirty_files),

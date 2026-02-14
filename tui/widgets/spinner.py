@@ -80,11 +80,7 @@ class LlamaSpinner(Widget):
             return
         try:
             label = self.query_one("#spinner-label", Label)
-            label.update(
-                _LLAMA_SPINNER_FRAMES[
-                    self.frame_index % len(_LLAMA_SPINNER_FRAMES)
-                ]
-            )
+            label.update(_LLAMA_SPINNER_FRAMES[self.frame_index % len(_LLAMA_SPINNER_FRAMES)])
             self.frame_index += 1
         except Exception:
             pass

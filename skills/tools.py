@@ -722,7 +722,10 @@ def get_tools_schema() -> list[dict[str, Any]]:
                     "required": ["pattern"],
                     "properties": {
                         "pattern": {"type": "string", "description": "Text or regex pattern to search for"},
-                        "path": {"type": "string", "description": "Directory or file to search in (default: current dir)"},
+                        "path": {
+                            "type": "string",
+                            "description": "Directory or file to search in (default: current dir)",
+                        },
                     },
                 },
             },

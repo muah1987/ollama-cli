@@ -59,11 +59,7 @@ class TestHookRunnerInit:
 
     def test_init_with_valid_settings(self, tmp_path):
         settings = {
-            "hooks": {
-                "SessionStart": [
-                    {"matcher": "", "hooks": [{"type": "command", "command": "echo hello"}]}
-                ]
-            }
+            "hooks": {"SessionStart": [{"matcher": "", "hooks": [{"type": "command", "command": "echo hello"}]}]}
         }
         settings_file = tmp_path / "settings.json"
         settings_file.write_text(json.dumps(settings), encoding="utf-8")
@@ -117,13 +113,7 @@ class TestHookRunnerRunHook:
         assert results == []
 
     def test_run_hook_echo(self, tmp_path):
-        settings = {
-            "hooks": {
-                "TestEvent": [
-                    {"matcher": "", "hooks": [{"type": "command", "command": "echo OK"}]}
-                ]
-            }
-        }
+        settings = {"hooks": {"TestEvent": [{"matcher": "", "hooks": [{"type": "command", "command": "echo OK"}]}]}}
         settings_file = tmp_path / "settings.json"
         settings_file.write_text(json.dumps(settings), encoding="utf-8")
         runner = HookRunner(settings_path=settings_file)
@@ -134,13 +124,7 @@ class TestHookRunnerRunHook:
 
     def test_run_hook_json_output(self, tmp_path):
         cmd = """echo '{"permissionDecision": "allow"}'"""
-        settings = {
-            "hooks": {
-                "PreToolUse": [
-                    {"matcher": "", "hooks": [{"type": "command", "command": cmd}]}
-                ]
-            }
-        }
+        settings = {"hooks": {"PreToolUse": [{"matcher": "", "hooks": [{"type": "command", "command": cmd}]}]}}
         settings_file = tmp_path / "settings.json"
         settings_file.write_text(json.dumps(settings), encoding="utf-8")
         runner = HookRunner(settings_path=settings_file)
@@ -149,13 +133,7 @@ class TestHookRunnerRunHook:
         assert results[0].permission_decision == "allow"
 
     def test_run_hook_timeout(self, tmp_path):
-        settings = {
-            "hooks": {
-                "Slow": [
-                    {"matcher": "", "hooks": [{"type": "command", "command": "sleep 60"}]}
-                ]
-            }
-        }
+        settings = {"hooks": {"Slow": [{"matcher": "", "hooks": [{"type": "command", "command": "sleep 60"}]}]}}
         settings_file = tmp_path / "settings.json"
         settings_file.write_text(json.dumps(settings), encoding="utf-8")
         runner = HookRunner(settings_path=settings_file)
@@ -165,13 +143,7 @@ class TestHookRunnerRunHook:
         assert "timed out" in results[0].error
 
     def test_run_hook_failing_command(self, tmp_path):
-        settings = {
-            "hooks": {
-                "Fail": [
-                    {"matcher": "", "hooks": [{"type": "command", "command": "exit 1"}]}
-                ]
-            }
-        }
+        settings = {"hooks": {"Fail": [{"matcher": "", "hooks": [{"type": "command", "command": "exit 1"}]}]}}
         settings_file = tmp_path / "settings.json"
         settings_file.write_text(json.dumps(settings), encoding="utf-8")
         runner = HookRunner(settings_path=settings_file)
@@ -181,13 +153,7 @@ class TestHookRunnerRunHook:
         assert results[0].return_code == 1
 
     def test_run_hook_skips_non_command_type(self, tmp_path):
-        settings = {
-            "hooks": {
-                "Skip": [
-                    {"matcher": "", "hooks": [{"type": "webhook", "url": "http://test"}]}
-                ]
-            }
-        }
+        settings = {"hooks": {"Skip": [{"matcher": "", "hooks": [{"type": "webhook", "url": "http://test"}]}]}}
         settings_file = tmp_path / "settings.json"
         settings_file.write_text(json.dumps(settings), encoding="utf-8")
         runner = HookRunner(settings_path=settings_file)

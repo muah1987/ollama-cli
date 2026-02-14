@@ -88,8 +88,16 @@ def _load_agent_model_config() -> dict[str, tuple[str, str]]:
 
     # Load from environment variables
     agent_types = [
-        "code", "research", "writer", "analysis", "planning",
-        "review", "test", "debug", "docs", "orchestrator",
+        "code",
+        "research",
+        "writer",
+        "analysis",
+        "planning",
+        "review",
+        "test",
+        "debug",
+        "docs",
+        "orchestrator",
     ]
     for agent_type in agent_types:
         provider_var = f"OLLAMA_CLI_AGENT_{agent_type.upper()}_PROVIDER"
@@ -977,7 +985,9 @@ class ProviderRouter:
         if provider:
             primary_provider = provider.lower()
             if task_type not in self._task_config:
-                raise ProviderError(f"Unknown task type: {task_type!r}. Expected one of: {', '.join(self._task_config)}")
+                raise ProviderError(
+                    f"Unknown task type: {task_type!r}. Expected one of: {', '.join(self._task_config)}"
+                )
             _, resolved_model = self._task_config[task_type]
         elif agent_type and agent_type in _AGENT_MODEL_MAP:
             primary_provider, resolved_model = _AGENT_MODEL_MAP[agent_type]
@@ -1005,7 +1015,8 @@ class ProviderRouter:
             # providers, switch to their own default model so we don't send
             # a model name that only exists on another provider.
             effective_model = (
-                resolved_model if provider_name == primary_provider
+                resolved_model
+                if provider_name == primary_provider
                 else _DEFAULT_MODELS.get(provider_name, resolved_model)
             )
 

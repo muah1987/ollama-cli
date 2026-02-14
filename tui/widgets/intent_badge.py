@@ -53,9 +53,7 @@ class IntentBadge(Widget):
             label = self.query_one("#badge-label", Label)
             if self.agent_type:
                 color = _AGENT_BADGE_COLORS.get(self.agent_type, "#565f89")
-                label.update(
-                    f"[{color}][auto: {self.agent_type} {self.confidence:.0%}][/]"
-                )
+                label.update(f"[{color}][auto: {self.agent_type} {self.confidence:.0%}][/]")
             else:
                 label.update("")
         except Exception:

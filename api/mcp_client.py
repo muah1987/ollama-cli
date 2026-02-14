@@ -260,13 +260,15 @@ class MCPClient:
             has_credentials = True
             if server.name == "github":
                 has_credentials = bool(server.env.get("GITHUB_PERSONAL_ACCESS_TOKEN", ""))
-            result.append({
-                "name": name,
-                "description": server.description,
-                "enabled": server.enabled,
-                "command": server.command,
-                "has_credentials": has_credentials,
-            })
+            result.append(
+                {
+                    "name": name,
+                    "description": server.description,
+                    "enabled": server.enabled,
+                    "command": server.command,
+                    "has_credentials": has_credentials,
+                }
+            )
         return result
 
     def add_server(self, name: str, config: dict[str, Any]) -> None:
@@ -345,11 +347,13 @@ class MCPClient:
 
         try:
             # Build the JSON-RPC request for tools/list
-            request = json.dumps({
-                "jsonrpc": "2.0",
-                "id": 1,
-                "method": "tools/list",
-            })
+            request = json.dumps(
+                {
+                    "jsonrpc": "2.0",
+                    "id": 1,
+                    "method": "tools/list",
+                }
+            )
 
             env = {**os.environ, **server.env}
             proc = subprocess.run(
@@ -375,12 +379,14 @@ class MCPClient:
 
             tools: list[MCPTool] = []
             for tool_data in tools_data:
-                tools.append(MCPTool(
-                    name=tool_data.get("name", ""),
-                    description=tool_data.get("description", ""),
-                    server=server_name,
-                    input_schema=tool_data.get("inputSchema", {}),
-                ))
+                tools.append(
+                    MCPTool(
+                        name=tool_data.get("name", ""),
+                        description=tool_data.get("description", ""),
+                        server=server_name,
+                        input_schema=tool_data.get("inputSchema", {}),
+                    )
+                )
 
             self._discovered_tools.extend(tools)
             return tools
@@ -437,15 +443,17 @@ class MCPClient:
             return {"error": f"MCP server is disabled: {server_name}"}
 
         try:
-            request = json.dumps({
-                "jsonrpc": "2.0",
-                "id": 1,
-                "method": "tools/call",
-                "params": {
-                    "name": tool_name,
-                    "arguments": arguments or {},
-                },
-            })
+            request = json.dumps(
+                {
+                    "jsonrpc": "2.0",
+                    "id": 1,
+                    "method": "tools/call",
+                    "params": {
+                        "name": tool_name,
+                        "arguments": arguments or {},
+                    },
+                }
+            )
 
             env = {**os.environ, **server.env}
             proc = subprocess.run(

@@ -150,17 +150,19 @@ def load_config(env_path: str | Path | None = None, config_json_path: str | Path
         intent_llm_fallback=_bool_from_env(
             os.getenv("OLLAMA_CLI_INTENT_LLM_FALLBACK"), OllamaCliConfig.intent_llm_fallback
         ),
-        intent_show_detection=_bool_from_env(os.getenv("OLLAMA_CLI_INTENT_SHOW"), OllamaCliConfig.intent_show_detection),
+        intent_show_detection=_bool_from_env(
+            os.getenv("OLLAMA_CLI_INTENT_SHOW"), OllamaCliConfig.intent_show_detection
+        ),
         intent_default_agent_type=os.getenv("OLLAMA_CLI_INTENT_DEFAULT_AGENT"),
         tui_theme=os.getenv("OLLAMA_CLI_TUI_THEME", OllamaCliConfig.tui_theme),
         tui_sidebar_visible=_bool_from_env(os.getenv("OLLAMA_CLI_TUI_SIDEBAR"), OllamaCliConfig.tui_sidebar_visible),
-        tui_show_timestamps=_bool_from_env(
-            os.getenv("OLLAMA_CLI_TUI_TIMESTAMPS"), OllamaCliConfig.tui_show_timestamps
-        ),
+        tui_show_timestamps=_bool_from_env(os.getenv("OLLAMA_CLI_TUI_TIMESTAMPS"), OllamaCliConfig.tui_show_timestamps),
         tui_auto_scroll=_bool_from_env(os.getenv("OLLAMA_CLI_TUI_AUTOSCROLL"), OllamaCliConfig.tui_auto_scroll),
         planning_mode=_bool_from_env(os.getenv("OLLAMA_CLI_PLANNING_MODE"), OllamaCliConfig.planning_mode),
         work_mode=_bool_from_env(os.getenv("OLLAMA_CLI_WORK_MODE"), OllamaCliConfig.work_mode),
-        bypass_permissions=_bool_from_env(os.getenv("OLLAMA_CLI_BYPASS_PERMISSIONS"), OllamaCliConfig.bypass_permissions),
+        bypass_permissions=_bool_from_env(
+            os.getenv("OLLAMA_CLI_BYPASS_PERMISSIONS"), OllamaCliConfig.bypass_permissions
+        ),
     )
 
     # Overlay from JSON config file if it exists
