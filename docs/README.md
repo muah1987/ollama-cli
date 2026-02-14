@@ -22,7 +22,7 @@ Ollama CLI is a local-first AI coding assistant that runs on your machine with O
 ### One-Line Install (Recommended)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/muah1987/ollama-cli/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/muah1987/cli-ollama/main/install.sh | bash
 ```
 
 This script will:
@@ -35,8 +35,8 @@ This script will:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/muah1987/ollama-cli.git
-cd ollama-cli
+git clone https://github.com/muah1987/cli-ollama.git
+cd cli-ollama
 
 # 2. Install dependencies with uv
 uv sync
@@ -101,7 +101,7 @@ For detailed documentation on all features, configuration, and advanced usage, s
 ## Getting Help
 
 - Check the [Documentation Index](README.md)
-- File an issue on [GitHub](https://github.com/muah1987/ollama-cli/issues)
+- File an issue on [GitHub](https://github.com/muah1987/cli-ollama/issues)
 - Visit the [Ollama documentation](https://ollama.ai/docs)
 
 ---

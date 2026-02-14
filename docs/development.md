@@ -193,8 +193,8 @@ Status lines are in `.ollama/status_lines/` and can be customized.
 
 ## Got in Touch
 
-- GitHub: [https://github.com/muah1987/ollama-cli](https://github.com/muah1987/ollama-cli)
-- Issues: [https://github.com/muah1987/ollama-cli/issues](https://github.com/muah1987/ollama-cli/issues)
+- GitHub: [https://github.com/muah1987/cli-ollama](https://github.com/muah1987/cli-ollama)
+- Issues: [https://github.com/muah1987/cli-ollama/issues](https://github.com/muah1987/cli-ollama/issues)
 
 ---
 

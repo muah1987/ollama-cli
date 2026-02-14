@@ -231,7 +231,7 @@ Please follow the existing code style and include tests for new functionality.
 ## Getting Help
 
 - Check the [Documentation Index](README.md)
-- File an issue on [GitHub](https://github.com/muah1987/ollama-cli/issues)
+- File an issue on [GitHub](https://github.com/muah1987/cli-ollama/issues)
 - Visit the [Ollama documentation](https://ollama.ai/docs)
 
 ---

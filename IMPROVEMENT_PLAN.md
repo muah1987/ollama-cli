@@ -243,7 +243,7 @@ This plan outlines improvements across **6 priority tiers**.
 
 1. **~~Add coverage badge to README~~** ✅ Done
    ```markdown
-   [![codecov](https://codecov.io/gh/muah1987/ollama-cli/branch/main/graph/badge.svg)](https://codecov.io/gh/muah1987/ollama-cli)
+   [![codecov](https://codecov.io/gh/muah1987/cli-ollama/branch/main/graph/badge.svg)](https://codecov.io/gh/muah1987/cli-ollama)
    ```
 
 2. **~~Add pre-commit config~~** ✅ Done (`.pre-commit-config.yaml` with ruff, black, mypy, bandit)

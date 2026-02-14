@@ -10,7 +10,7 @@ Thank you for your interest in contributing to Ollama CLI!
 
 If you find a bug or have a feature request:
 
-1. Check existing [issues](https://github.com/muah1987/ollama-cli/issues) first
+1. Check existing [issues](https://github.com/muah1987/cli-ollama/issues) first
 2. Create a new issue with a clear title and description
 3. Include steps to reproduce for bugs
 
@@ -85,8 +85,8 @@ pytest tests/test_api.py
 
 ```bash
 # Clone the repository
-git clone https://github.com/muah1987/ollama-cli.git
-cd ollama-cli
+git clone https://github.com/muah1987/cli-ollama.git
+cd cli-ollama
 
 # Install development dependencies
 uv sync --dev

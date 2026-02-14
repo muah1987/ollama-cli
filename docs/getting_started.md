@@ -18,7 +18,7 @@ A complete guide to get up and running with Ollama CLI.
 This script automatically installs Ollama if missing:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/muah1987/ollama-cli/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/muah1987/cli-ollama/main/install.sh | bash
 ```
 
 ### Option 2: PyPI Installation
@@ -37,8 +37,8 @@ This installs the `ollama-cli` command globally.
 
 ```bash
 # Clone the repository
-git clone https://github.com/muah1987/ollama-cli.git
-cd ollama-cli
+git clone https://github.com/muah1987/cli-ollama.git
+cd cli-ollama
 
 # Install with uv (recommended)
 uv sync
@@ -187,5 +187,5 @@ ollama list
 ## Getting Help
 
 - Check the [Documentation Index](README.md)
-- File an issue on [GitHub](https://github.com/muah1987/ollama-cli/issues)
+- File an issue on [GitHub](https://github.com/muah1987/cli-ollama/issues)
 - Visit the [Ollama documentation](https://ollama.ai/docs)

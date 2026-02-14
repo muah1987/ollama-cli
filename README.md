@@ -1,8 +1,8 @@
 # Ollama CLI
 
 [![PyPI version](https://img.shields.io/pypi/v/cli-ollama.svg)](https://pypi.org/project/cli-ollama/)
-[![Build & Test](https://github.com/muah1987/ollama-cli/actions/workflows/build-test.yml/badge.svg)](https://github.com/muah1987/ollama-cli/actions/workflows/build-test.yml)
-[![codecov](https://codecov.io/gh/muah1987/ollama-cli/branch/main/graph/badge.svg)](https://codecov.io/gh/muah1987/ollama-cli)
+[![Build & Test](https://github.com/muah1987/cli-ollama/actions/workflows/build-test.yml/badge.svg)](https://github.com/muah1987/cli-ollama/actions/workflows/build-test.yml)
+[![codecov](https://codecov.io/gh/muah1987/cli-ollama/branch/main/graph/badge.svg)](https://codecov.io/gh/muah1987/cli-ollama)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
@@ -21,7 +21,7 @@ An open-source AI coding assistant with Textual TUI interface that runs in your 
 **Via installer script (recommended):**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/muah1987/ollama-cli/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/muah1987/cli-ollama/main/install.sh | bash
 ```
 
 This installs `ollama-cli` to `~/.local/bin/`, sets up dependencies, and installs Ollama if needed.
@@ -417,8 +417,8 @@ The following [Ollama Cloud](https://ollama.com) models have been tested and ver
 
 ```bash
 # Clone
-git clone https://github.com/muah1987/ollama-cli.git
-cd ollama-cli
+git clone https://github.com/muah1987/cli-ollama.git
+cd cli-ollama
 
 # Install dependencies
 uv sync --dev
@@ -440,7 +440,7 @@ uv run ruff format .
 
 ## Support
 
-- **GitHub Issues:** [Report bugs or request features](https://github.com/muah1987/ollama-cli/issues)
+- **GitHub Issues:** [Report bugs or request features](https://github.com/muah1987/cli-ollama/issues)
 - **Ollama:** [Official Ollama website](https://ollama.ai)
 
 ## Migration Notice

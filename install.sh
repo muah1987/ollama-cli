@@ -1,10 +1,10 @@
 #!/bin/bash
 set -euo pipefail
-# One-line installer for ollama-cli
-# Usage: curl -fsSL https://raw.githubusercontent.com/muah1987/ollama-cli/main/install.sh | bash
+# One-line installer for cli-ollama
+# Usage: curl -fsSL https://raw.githubusercontent.com/muah1987/cli-ollama/main/install.sh | bash
 
-REPO_URL="https://github.com/muah1987/ollama-cli.git"
-INSTALL_DIR="${HOME}/.ollama-cli"
+REPO_URL="https://github.com/muah1987/cli-ollama.git"
+INSTALL_DIR="${HOME}/.cli-ollama"
 OLLAMA_VERSION="0.5.7"
 
 echo "=== Ollama CLI Installer ==="
@@ -58,7 +58,7 @@ mkdir -p "$BIN_DIR"
 WRAPPER="$BIN_DIR/ollama-cli"
 cat > "$WRAPPER" << 'WRAPPER_EOF'
 #!/bin/bash
-exec uv run --project "${HOME}/.ollama-cli" ollama-cli "$@"
+exec uv run --project "${HOME}/.cli-ollama" ollama-cli "$@"
 WRAPPER_EOF
 chmod +x "$WRAPPER"
 echo "Installed ollama-cli command to $WRAPPER"

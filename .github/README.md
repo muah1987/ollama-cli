@@ -1,4 +1,4 @@
-[![Auto Release](https://github.com/muah1987/ollama-cli/actions/workflows/autorelease.yml/badge.svg?branch=main)](https://github.com/muah1987/ollama-cli/actions/workflows/autorelease.yml) [![Release](https://github.com/muah1987/ollama-cli/actions/workflows/release.yml/badge.svg)](https://github.com/muah1987/ollama-cli/actions/workflows/release.yml) [![Deploy to PyPI](https://github.com/muah1987/ollama-cli/actions/workflows/pypi-publish.yml/badge.svg)](https://github.com/muah1987/ollama-cli/actions/workflows/pypi-publish.yml) [![Dependabot Updates](https://github.com/muah1987/ollama-cli/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/muah1987/ollama-cli/actions/workflows/dependabot/dependabot-updates) [![Build and Test](https://github.com/muah1987/ollama-cli/actions/workflows/build-test.yml/badge.svg)](https://github.com/muah1987/ollama-cli/actions/workflows/build-test.yml)
+[![Auto Release](https://github.com/muah1987/cli-ollama/actions/workflows/autorelease.yml/badge.svg?branch=main)](https://github.com/muah1987/cli-ollama/actions/workflows/autorelease.yml) [![Release](https://github.com/muah1987/cli-ollama/actions/workflows/release.yml/badge.svg)](https://github.com/muah1987/cli-ollama/actions/workflows/release.yml) [![Deploy to PyPI](https://github.com/muah1987/cli-ollama/actions/workflows/pypi-publish.yml/badge.svg)](https://github.com/muah1987/cli-ollama/actions/workflows/pypi-publish.yml) [![Dependabot Updates](https://github.com/muah1987/cli-ollama/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/muah1987/cli-ollama/actions/workflows/dependabot/dependabot-updates) [![Build and Test](https://github.com/muah1987/cli-ollama/actions/workflows/build-test.yml/badge.svg)](https://github.com/muah1987/cli-ollama/actions/workflows/build-test.yml)
 
 # Ollama CLI
 
@@ -15,7 +15,7 @@ An open-source AI coding assistant with Textual TUI interface that runs in your 
 ### Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/muah1987/ollama-cli/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/muah1987/cli-ollama/main/install.sh | bash
 ```
 
 This installs `ollama-cli` to `~/.local/bin/`, sets up dependencies, and installs Ollama if needed.
@@ -401,8 +401,8 @@ The following [Ollama Cloud](https://ollama.com) models have been tested and ver
 
 ```bash
 # Clone
-git clone https://github.com/muah1987/ollama-cli.git
-cd ollama-cli
+git clone https://github.com/muah1987/cli-ollama.git
+cd cli-ollama
 
 # Install dependencies
 uv sync --dev
@@ -424,7 +424,7 @@ uv run ruff format .
 
 ## Support
 
-- **GitHub Issues:** [Report bugs or request features](https://github.com/muah1987/ollama-cli/issues)
+- **GitHub Issues:** [Report bugs or request features](https://github.com/muah1987/cli-ollama/issues)
 - **Ollama:** [Official Ollama website](https://ollama.ai)
 
 ## License
