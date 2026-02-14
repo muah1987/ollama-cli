@@ -76,6 +76,7 @@ class StatusPanel(Widget):
     cost: reactive[float] = reactive(0.0)
     job_status: reactive[str] = reactive("idle")
     context_max: reactive[int] = reactive(_DEFAULT_CONTEXT_SIZE)
+    session_id: reactive[str] = reactive("")
 
     def compose(self) -> ComposeResult:
         with Vertical():
@@ -85,7 +86,7 @@ class StatusPanel(Widget):
                 id="status-hint",
             )
             yield Label(
-                "» shift+tab to cycle  •  /model to switch  •  /settings to configure",
+                "» shift+tab to cycle  •  /settings to configure",
                 id="status-shortcuts",
             )
             yield Label(
@@ -94,7 +95,7 @@ class StatusPanel(Widget):
             )
 
     def _build_metrics_text(self) -> str:
-        """Build the metrics line: [model] | X.X% used | ~Nk left | ..."""
+        """Build the metrics line: [model] | X.X% used | ~Nk left | session_id."""
         pct = f"{self.context_pct:.1%}"
         remaining = max(0, self.context_max - self.token_count)
         if remaining >= 1000:
@@ -106,6 +107,8 @@ class StatusPanel(Widget):
             f"{pct} used",
             f"{remaining_str} left",
         ]
+        if self.session_id:
+            parts.append(self.session_id[:13])
         if self.job_status and self.job_status != "idle":
             parts.append(f"● {self.job_status}")
         return " | ".join(parts)
@@ -132,6 +135,9 @@ class StatusPanel(Widget):
     def watch_context_max(self, _value: int) -> None:
         self._update_metrics()
 
+    def watch_session_id(self, _value: str) -> None:
+        self._update_metrics()
+
     def _update_hint(self, model: str) -> None:
         try:
             self.query_one("#status-hint", Label).update(
@@ -152,6 +158,7 @@ class StatusPanel(Widget):
         """Bulk update from a Session object."""
         self.model_name = getattr(session, "model", "unknown")
         self.provider_name = getattr(session, "provider", "unknown")
+        self.session_id = getattr(session, "session_id", "")
 
         if hasattr(session, "context_manager"):
             cm = session.context_manager

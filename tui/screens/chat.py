@@ -1,7 +1,7 @@
 """Chat screen -- primary view for the ollama-cli TUI.
 
 Layout follows the documented 3-zone structure:
-  TOP:    ASCII banner (scrolls away after first interaction)
+  TOP:    ASCII banner with side info (scrolls away after first interaction)
   MIDDLE: Conversation area + bordered input box (the ONLY interactive zone)
   BOTTOM: Persistent status bar with hints and model metrics
 """
@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import datetime
 import logging
+import os
 
 from textual.app import ComposeResult
 from textual.containers import ScrollableContainer, Vertical
@@ -26,15 +27,64 @@ from tui.widgets.status_panel import StatusPanel
 
 logger = logging.getLogger(__name__)
 
-# ── TOP zone: ASCII banner ──────────────────────────────────────────────
-_BANNER = """\
- ██████╗ ██╗     ██╗      █████╗ ███╗   ███╗ █████╗      ██████╗██╗     ██╗
-██╔═══██╗██║     ██║     ██╔══██╗████╗ ████║██╔══██╗    ██╔════╝██║     ██║
-██║   ██║██║     ██║     ███████║██╔████╔██║███████║    ██║     ██║     ██║
-██║   ██║██║     ██║     ██╔══██║██║╚██╔╝██║██╔══██║    ██║     ██║     ██║
-╚██████╔╝███████╗███████╗██║  ██║██║ ╚═╝ ██║██║  ██║██╗╚██████╗███████╗██║
- ╚═════╝ ╚══════╝╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝ ╚═════╝╚══════╝╚═╝\
-"""
+# ── TOP zone: ASCII banner lines (without side info) ────────────────────
+_BANNER_LINES = [
+    " ██████╗ ██╗     ██╗      █████╗ ███╗   ███╗ █████╗      ██████╗██╗     ██╗",
+    "██╔═══██╗██║     ██║     ██╔══██╗████╗ ████║██╔══██╗    ██╔════╝██║     ██║",
+    "██║   ██║██║     ██║     ███████║██╔████╔██║███████║    ██║     ██║     ██║",
+    "██║   ██║██║     ██║     ██╔══██║██║╚██╔╝██║██╔══██║    ██║     ██║     ██║",
+    "╚██████╔╝███████╗███████╗██║  ██║██║ ╚═╝ ██║██║  ██║██╗╚██████╗███████╗██║",
+    " ╚═════╝ ╚══════╝╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝ ╚═════╝╚══════╝╚═╝",
+]
+
+# Pad each banner line to equal width for side-info alignment
+_BANNER_WIDTH = max(len(line) for line in _BANNER_LINES)
+
+
+def _build_banner(session=None) -> str:
+    """Build the TOP zone banner with side info next to the ASCII art."""
+    try:
+        from importlib.metadata import version as pkg_version
+
+        ver = pkg_version("ollama-cli")
+    except Exception:
+        ver = "dev"
+
+    model = getattr(session, "model", "llama3.2") if session else "llama3.2"
+    provider = getattr(session, "provider", "ollama") if session else "ollama"
+    host = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
+    now = datetime.datetime.now(tz=datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    cwd = os.path.basename(os.getcwd()) or "~"
+
+    # Context size from session or default
+    ctx = "128k"
+    if session and hasattr(session, "context_manager"):
+        cm = session.context_manager
+        if hasattr(cm, "max_tokens"):
+            ctx = f"{cm.max_tokens // 1000}k"
+
+    side_info = [
+        f"Ollama CLI v{ver}",
+        f"Model: {model}  •  Context: {ctx}",
+        f"Runtime: {provider}  •  API: {host}",
+        f"{now}  •  cwd: {cwd}",
+        "",
+        "",
+    ]
+
+    # Combine banner lines with side info
+    lines = []
+    for i, art_line in enumerate(_BANNER_LINES):
+        padded = art_line.ljust(_BANNER_WIDTH)
+        info = f"   {side_info[i]}" if i < len(side_info) else ""
+        lines.append(f"{padded}{info}")
+
+    # Extra line for tip below banner
+    lines.append(
+        " " * _BANNER_WIDTH + "   Tip: /model to switch  •  /help for commands"
+    )
+
+    return "\n".join(lines)
 
 
 class ChatScreen(Screen):
@@ -53,8 +103,12 @@ class ChatScreen(Screen):
 
     #ascii-banner {
         color: #a78bfa;
-        text-align: center;
         padding: 0;
+    }
+
+    .banner-tips {
+        color: #484f58;
+        padding: 1 2 0 2;
     }
 
     #message-area {
@@ -80,17 +134,21 @@ class ChatScreen(Screen):
     def compose(self) -> ComposeResult:
         yield Sidebar()
 
-        # ── TOP zone: ASCII banner (inside scrollable so it scrolls away) ──
+        banner_text = _build_banner(self._session)
+
+        tips = (
+            "Tips for getting started:\n"
+            "1. Ask questions, edit files, or run commands.\n"
+            "2. Be specific for the best results.\n"
+            "3. /help for more information."
+        )
+
+        # ── TOP zone: ASCII banner with side info (scrolls away) ──
         yield ScrollableContainer(
             Vertical(
-                Static(_BANNER, id="ascii-banner"),
+                Static(banner_text, id="ascii-banner"),
+                Static(tips, classes="banner-tips"),
                 id="top-zone",
-            ),
-            Static(
-                "  Type a message to start a conversation.\n"
-                "  Use /command for slash commands.\n"
-                "  Use @agent to route to a specific agent.",
-                id="welcome-message",
             ),
             id="message-area",
         )
