@@ -753,13 +753,10 @@ class CommandProcessor:
                 "risk": entry.get("risk", "unknown"),
             }
             try:
-                from server.hook_runner import HookRunner
-
-                runner = HookRunner()
-                if runner.is_enabled():
-                    results = runner.run_hook("PreToolUse", hook_payload, timeout=10)
+                results = self._fire_hook("PreToolUse", hook_payload)
+                if results:
                     for r in results:
-                        decision = r.permission_decision
+                        decision = getattr(r, "permission_decision", None)
                         if decision == "deny":
                             return CommandResult(
                                 errors=[f"Tool '{tool_name}' blocked by PreToolUse hook."]
@@ -809,12 +806,8 @@ class CommandProcessor:
 
             # Fire PostToolUse hook
             try:
-                from server.hook_runner import HookRunner as _HR
-
-                hr = _HR()
-                if hr.is_enabled():
-                    post_payload = {"tool_name": tool_name, "result": str(result)[:500]}
-                    hr.run_hook("PostToolUse", post_payload, timeout=10)
+                post_payload = {"tool_name": tool_name, "result": str(result)[:500]}
+                self._fire_hook("PostToolUse", post_payload)
             except Exception:
                 logger.debug("PostToolUse hook failed", exc_info=True)
 
@@ -1246,21 +1239,14 @@ class CommandProcessor:
             return CommandResult(errors=[f"Cannot write plan: {exc}"])
 
         # Fire Stop hook so validators can check
+        hook_payload = {
+            "event": "team_planning",
+            "plan_file": str(plan_file),
+            "directory": "specs",
+            "extension": ".md",
+        }
         try:
-            from server.hook_runner import HookRunner
-
-            runner = HookRunner()
-            if runner.is_enabled():
-                hook_payload = {
-                    "event": "team_planning",
-                    "plan_file": str(plan_file),
-                    "directory": "specs",
-                    "extension": ".md",
-                }
-                hook_results = runner.run_hook("Stop", hook_payload, timeout=15)
-                for r in hook_results:
-                    if not r.success:
-                        logger.warning("Hook warning: %s", r.error or "")
+            self._fire_hook("Stop", hook_payload)
         except Exception:
             logger.debug("Stop hook failed after team_planning", exc_info=True)
 
@@ -1596,6 +1582,26 @@ class CommandProcessor:
             return CommandResult(output=[f"  {key} = {getattr(cfg, key)}"])
 
         current = getattr(cfg, key)
+
+        # Only allow setting primitive types (str, bool, int, float).
+        # None-typed or complex fields (list, dict) must be edited in
+        # settings files directly to avoid silent corruption.
+        _PRIMITIVE_TYPES = (str, bool, int, float)
+        if current is not None and not isinstance(current, _PRIMITIVE_TYPES):
+            return CommandResult(
+                errors=[
+                    f"Config key '{key}' has a complex type ({type(current).__name__}). "
+                    "Edit .ollama/settings.json directly to modify it."
+                ]
+            )
+        if current is None:
+            return CommandResult(
+                errors=[
+                    f"Config key '{key}' is unset (None). "
+                    "Edit .ollama/settings.json directly to set it."
+                ]
+            )
+
         try:
             if isinstance(current, bool):
                 coerced: object = value.lower() in ("1", "true", "yes", "on")

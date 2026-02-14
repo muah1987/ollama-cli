@@ -1117,6 +1117,33 @@ class TestCommandHandlerConfig:
         assert any("ollama_host" in line for line in result.output)
 
 
+    @pytest.mark.asyncio
+    async def test_config_rejects_none_typed_key(self):
+        """Setting a config key that is currently None should be rejected."""
+        proc = _make_rich_processor()
+        from unittest.mock import patch
+
+        fake_cfg = MagicMock()
+        fake_cfg.allowed_tools = None
+        with patch("api.config.get_config", return_value=fake_cfg):
+            result = await proc.dispatch("/config allowed_tools shell_exec")
+        assert result.errors
+        assert "None" in result.errors[0] or "unset" in result.errors[0]
+
+    @pytest.mark.asyncio
+    async def test_config_rejects_complex_typed_key(self):
+        """Setting a config key that is a dict/list should be rejected."""
+        proc = _make_rich_processor()
+        from unittest.mock import patch
+
+        fake_cfg = MagicMock()
+        fake_cfg.agent_models = {"code": {"provider": "ollama", "model": "codestral"}}
+        with patch("api.config.get_config", return_value=fake_cfg):
+            result = await proc.dispatch("/config agent_models something")
+        assert result.errors
+        assert "complex type" in result.errors[0] or "settings.json" in result.errors[0]
+
+
 class TestCommandHandlerBug:
     """Test /bug command handler."""
 
