@@ -113,6 +113,20 @@ def _build_notification_boxes() -> list[str]:
     """Build notification boxes shown between tips and the input area."""
     boxes: list[str] = []
 
+    # Update available notification
+    try:
+        from importlib.metadata import version as pkg_version
+
+        installed = pkg_version("ollama-cli")
+    except Exception:
+        installed = "dev"
+    latest = os.environ.get("OLLAMA_LATEST_VERSION", "")
+    if latest and latest != installed and installed != "dev":
+        boxes.append(
+            f"Update available: ollama {installed} → {latest}\n"
+            "Installed system-wide. Attempting to automatically update now..."
+        )
+
     # Home directory warning
     home = os.path.expanduser("~")
     if os.getcwd() == home:
@@ -149,7 +163,7 @@ class ChatScreen(Screen):
     }
 
     .notification-box {
-        border: round #30363d;
+        border: round #b2a266;
         background: #161b22;
         color: #e6edf3;
         padding: 0 2;
