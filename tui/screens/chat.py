@@ -115,7 +115,8 @@ def _build_notification_boxes() -> list[str]:
 
     # Update available notification
     try:
-        from importlib.metadata import PackageNotFoundError, version as pkg_version
+        from importlib.metadata import PackageNotFoundError
+        from importlib.metadata import version as pkg_version
 
         installed = pkg_version("ollama-cli")
     except (PackageNotFoundError, ModuleNotFoundError):
