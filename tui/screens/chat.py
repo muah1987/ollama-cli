@@ -2,8 +2,8 @@
 
 Layout follows the documented 3-zone structure:
   TOP:    ASCII banner with side info (scrolls away after first interaction)
-  MIDDLE: Conversation area + bordered input box (the ONLY interactive zone)
-  BOTTOM: Persistent status bar with hints and model metrics
+  MIDDLE: Conversation area + intent badge + spinner (the ONLY scrollable zone)
+  BOTTOM: Bordered input box + persistent status bar (docked via #bottom-zone)
 """
 
 from __future__ import annotations
@@ -187,8 +187,8 @@ class ChatScreen(Screen):
     #bottom-zone {
         dock: bottom;
         height: auto;
-        /* InputArea max-height (8) + StatusPanel max-height (5) + 1 padding */
-        max-height: 14;
+        /* InputArea max-height (8) + StatusPanel max-height (5) = 13 */
+        max-height: 13;
     }
     """
 

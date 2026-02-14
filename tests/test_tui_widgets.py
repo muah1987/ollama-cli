@@ -546,6 +546,9 @@ class TestChatScreenBottomZone:
 
         css = ChatScreen.DEFAULT_CSS
         # Find the #bottom-zone block and verify it contains dock: bottom
+        assert "#bottom-zone" in css
         start = css.index("#bottom-zone")
-        block = css[start : css.index("}", start) + 1]
+        end = css.find("}", start)
+        assert end != -1
+        block = css[start : end + 1]
         assert "dock: bottom" in block
