@@ -6,7 +6,6 @@ import argparse
 from unittest.mock import patch
 
 
-
 class TestAccelerateModule:
     def test_cmd_accelerate_check(self):
         from ollama_cmd.accelerate import cmd_accelerate_check

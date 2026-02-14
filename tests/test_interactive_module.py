@@ -5,8 +5,11 @@ from __future__ import annotations
 import time
 from unittest.mock import MagicMock, patch
 
-
 from ollama_cmd.interactive import (
+    _LLAMA_BUILD_SPINNER,
+    _LLAMA_PLAN_SPINNER,
+    _LLAMA_SPINNER_FRAMES,
+    _LLAMA_TEST_SPINNER,
     _agent_color,
     _blue,
     _bold,
@@ -14,17 +17,12 @@ from ollama_cmd.interactive import (
     _dim,
     _green,
     _import_instruction_files,
-    _LLAMA_BUILD_SPINNER,
-    _LLAMA_PLAN_SPINNER,
-    _LLAMA_SPINNER_FRAMES,
-    _LLAMA_TEST_SPINNER,
     _LlamaSpinner,
     _magenta,
     _red,
     _white,
     _yellow,
 )
-
 
 # ---------------------------------------------------------------------------
 # ANSI color functions
