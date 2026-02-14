@@ -66,7 +66,7 @@ sudo yum install rdma-core
 ### Detect RDMA Devices
 
 ```bash
-ollama-cli rdma detect
+cli-ollama rdma detect
 ```
 
 Expected output:
@@ -85,31 +85,31 @@ Found RDMA devices:
 ### 1. Detect RDMA Devices
 
 ```bash
-ollama-cli rdma detect
+cli-ollama rdma detect
 ```
 
 ### 2. Check RDMA Status
 
 ```bash
-ollama-cli rdma status
+cli-ollama rdma status
 ```
 
 ### 3. Connect to RDMA Device
 
 ```bash
-ollama-cli rdma connect mlx5_0
+cli-ollama rdma connect mlx5_0
 ```
 
 ### 4. Check Acceleration Status
 
 ```bash
-ollama-cli accelerate check
+cli-ollama accelerate check
 ```
 
 ### 5. Enable RDMA Acceleration
 
 ```bash
-ollama-cli accelerate enable rdma
+cli-ollama accelerate enable rdma
 ```
 
 ---
@@ -179,24 +179,24 @@ rdma qp add mlx5_0 qp-type rc
 
 ```bash
 # On leader node
-ollama-cli exo discover
+cli-ollama exo discover
 ```
 
 ### 2. Configure Cluster
 
 ```bash
 # Leader node
-ollama-cli exo configure --leader
+cli-ollama exo configure --leader
 
 # Worker nodes
-ollama-cli exo configure --worker --leader <leader-ip>
+cli-ollama exo configure --worker --leader <leader-ip>
 ```
 
 ### 3. Connect Cluster via RDMA
 
 ```bash
 # Enable cluster RDMA
-ollama-cli rdma connect --cluster
+cli-ollama rdma connect --cluster
 ```
 
 ---

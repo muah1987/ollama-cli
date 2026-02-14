@@ -35,7 +35,7 @@ class TestVersionModule:
         args = argparse.Namespace()
         handle_version(args)
         captured = capsys.readouterr()
-        assert "ollama-cli" in captured.out
+        assert "cli-ollama" in captured.out
 
 
 # ---------------------------------------------------------------------------

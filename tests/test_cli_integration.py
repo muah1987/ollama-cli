@@ -1,5 +1,5 @@
 """
-CLI Integration Tests for ollama-cli
+CLI Integration Tests for cli-ollama
 
 Tests cover:
 1. CLI argument parsing

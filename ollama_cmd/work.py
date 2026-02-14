@@ -9,7 +9,7 @@
 # ///
 
 """
-Work mode module for ollama-cli.
+Work mode module for cli-ollama.
 
 This module provides work-specific functionality that focuses on execution efficiency
 and implements work-oriented behaviors.

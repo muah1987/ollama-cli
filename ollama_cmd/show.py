@@ -59,7 +59,7 @@ def handle_show(args: argparse.Namespace) -> None:
 
             if not models:
                 console.print("No models found locally.")
-                console.print("Pull one with: [bold]ollama-cli pull <model>[/bold]")
+                console.print("Pull one with: [bold]cli-ollama pull <model>[/bold]")
                 return
 
             console.print("Available local models:")
@@ -67,7 +67,7 @@ def handle_show(args: argparse.Namespace) -> None:
                 name = m.get("name", "unknown")
                 console.print(f"  - {name}")
 
-            console.print("\nShow details with: ollama-cli show <model-name>")
+            console.print("\nShow details with: cli-ollama show <model-name>")
             return
 
         except httpx.ConnectError:
@@ -89,7 +89,7 @@ def handle_show(args: argparse.Namespace) -> None:
     except httpx.HTTPStatusError as exc:
         if exc.response.status_code == 404:
             console.print(f"[red]Error:[/red] Model '{model_name}' not found.")
-            console.print("List available models with: ollama-cli list")
+            console.print("List available models with: cli-ollama list")
         else:
             console.print(f"[red]Error:[/red] HTTP {exc.response.status_code}: {exc.response.text}")
         sys.exit(1)
@@ -170,14 +170,14 @@ def handle_show(args: argparse.Namespace) -> None:
 def build_parser() -> argparse.ArgumentParser:
     """Build the show command argument parser."""
     parser = argparse.ArgumentParser(
-        prog="ollama-cli show",
+        prog="cli-ollama show",
         description="Show model details",
         epilog="""
 Examples:
-  ollama-cli show llama3.2
-  ollama-cli show                   # List available models
-  ollama-cli show llama3.2 --json
-  ollama-cli show llama3.2 --modelfile
+  cli-ollama show llama3.2
+  cli-ollama show                   # List available models
+  cli-ollama show llama3.2 --json
+  cli-ollama show llama3.2 --modelfile
         """,
     )
     parser.add_argument(

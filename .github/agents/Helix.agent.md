@@ -747,7 +747,7 @@ ITERATION_START:
 Exit when: No issues found OR max iterations reached
 ```
 
-### For ollama-cli Integration
+### For cli-ollama Integration
 ```json
 {
   "model": "deepseek-coder-v2",
@@ -786,7 +786,7 @@ Exit when: No issues found OR max iterations reached
 ## Next Steps
 
 1. **Implement the loop** in your preferred language/framework
-2. **Integrate with your AI system** (ollama-cli, Claude API, etc.)
+2. **Integrate with your AI system** (cli-ollama, Claude API, etc.)
 3. **Configure checks** based on your project needs
 4. **Run initial test** on small codebase
 5. **Iterate and improve** based on results

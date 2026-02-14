@@ -15,7 +15,7 @@ class TestChatAppInstantiation:
     def test_app_creates(self):
         """ChatApp can be instantiated without arguments."""
         app = ChatApp()
-        assert app.TITLE == "ollama-cli"
+        assert app.TITLE == "cli-ollama"
         assert app.session is None
 
     def test_app_sub_title(self):

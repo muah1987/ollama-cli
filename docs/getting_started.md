@@ -31,7 +31,7 @@ pip install cli-ollama
 pipx install cli-ollama
 ```
 
-This installs the `ollama-cli` command globally.
+This installs the `cli-ollama` command globally.
 
 ### Option 3: Manual Installation from Source
 
@@ -62,21 +62,21 @@ ollama serve
 ### 2. List Available Models
 
 ```bash
-ollama-cli list
+cli-ollama list
 ```
 
 ### 3. Start an Interactive Session
 
 ```bash
-ollama-cli interactive
+cli-ollama interactive
 # or
-ollama-cli i
+cli-ollama i
 ```
 
 ### 4. Run a One-Shot Prompt
 
 ```bash
-ollama-cli run "Explain quantum computing in simple terms"
+cli-ollama run "Explain quantum computing in simple terms"
 ```
 
 ---
@@ -86,14 +86,14 @@ ollama-cli run "Explain quantum computing in simple terms"
 ### 1. Check Installation
 
 ```bash
-ollama-cli version
-# Should output: ollama-cli v0.1.0
+cli-ollama version
+# Should output: cli-ollama v0.1.0
 ```
 
 ### 2. Verify Ollama Server
 
 ```bash
-ollama-cli serve
+cli-ollama serve
 # Should show: Ollama is running at http://localhost:11434
 ```
 
@@ -116,11 +116,11 @@ ollama pull llama3.2
 
 | Command | Description |
 |---------|-------------|
-| `ollama-cli interactive` | Start interactive chat session |
-| `ollama-cli run "prompt"` | Run a one-shot prompt |
-| `ollama-cli list` | List available models |
-| `ollama-cli serve` | Check Ollama server status |
-| `ollama-cli version` | Show CLI version |
+| `cli-ollama interactive` | Start interactive chat session |
+| `cli-ollama run "prompt"` | Run a one-shot prompt |
+| `cli-ollama list` | List available models |
+| `cli-ollama serve` | Check Ollama server status |
+| `cli-ollama version` | Show CLI version |
 
 ---
 
@@ -128,7 +128,7 @@ ollama pull llama3.2
 
 ```bash
 # Use a specific model for one command
-ollama-cli --model codellama run "Write a Python function"
+cli-ollama --model codellama run "Write a Python function"
 
 # Pull a model from registry
 ollama pull llama3.2

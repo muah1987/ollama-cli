@@ -1371,10 +1371,10 @@ COMPACT_THRESHOLD=0.9
 
 ```bash
 # Use specific provider
-ollama-cli --provider claude run "prompt"
+cli-ollama --provider claude run "prompt"
 
 # Use specific model
-ollama-cli --provider ollama --model codestral:latest run "prompt"
+cli-ollama --provider ollama --model codestral:latest run "prompt"
 
 # Switch default provider
 export OLLAMA_CLI_PROVIDER=claude

@@ -123,7 +123,7 @@ def cmd_mycommand(args: argparse.Namespace) -> None:
 ## Project Structure
 
 ```
-ollama-cli/
+cli-ollama/
 ├── ollama_cmd/       # CLI entry points per command
 ├── api/              # API client, provider router, MCP client, RDMA client, config
 ├── model/            # Model management and sessions

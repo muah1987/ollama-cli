@@ -1,5 +1,5 @@
 """
-Basic tests for ollama-cli functionality.
+Basic tests for cli-ollama functionality.
 """
 
 import os

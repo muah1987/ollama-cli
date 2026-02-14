@@ -24,7 +24,7 @@ def test_help_flag_shows_usage() -> None:
         cwd=str(Path(__file__).parent.parent),
     )
     assert result.returncode == 0
-    assert "ollama-cli [options] [command] [prompt]" in result.stdout
+    assert "cli-ollama [options] [command] [prompt]" in result.stdout
 
 
 def test_version_flag() -> None:
@@ -36,7 +36,7 @@ def test_version_flag() -> None:
         cwd=str(Path(__file__).parent.parent),
     )
     assert result.returncode == 0
-    assert "ollama-cli v" in result.stdout
+    assert "cli-ollama v" in result.stdout
 
 
 def test_subcommand_list_parsed() -> None:

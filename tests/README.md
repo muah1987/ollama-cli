@@ -1,6 +1,6 @@
-# ollama-cli Unit Tests
+# cli-ollama Unit Tests
 
-This directory contains comprehensive unit tests for the ollama-cli application.
+This directory contains comprehensive unit tests for the cli-ollama application.
 
 ## Test Coverage
 

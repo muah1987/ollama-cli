@@ -964,7 +964,7 @@ class TestCLIEntrypoint:
             text=True,
             cwd=_PROJECT_DIR,
         )
-        assert "ollama-cli" in result.stdout
+        assert "cli-ollama" in result.stdout
 
     def test_cli_parser_all_subcommands(self) -> None:
         result = subprocess.run(

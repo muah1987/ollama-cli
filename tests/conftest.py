@@ -1,4 +1,4 @@
-"""Pytest configuration and fixtures for ollama-cli tests."""
+"""Pytest configuration and fixtures for cli-ollama tests."""
 
 import sys
 from pathlib import Path

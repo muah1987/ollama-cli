@@ -9,7 +9,7 @@
 # ///
 
 """
-Planning mode module for ollama-cli.
+Planning mode module for cli-ollama.
 
 This module provides planning-specific functionality that allocates more resources
 to research tasks and implements planning-oriented behaviors.

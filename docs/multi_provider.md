@@ -43,7 +43,7 @@ export OLLAMA_CLI_PROVIDER=claude
 ### 3. Verify Provider Health
 
 ```bash
-ollama-cli serve
+cli-ollama serve
 ```
 
 ---
@@ -54,23 +54,23 @@ ollama-cli serve
 
 ```bash
 # Use Claude
-ollama-cli --provider claude run "Explain this"
+cli-ollama --provider claude run "Explain this"
 
 # Use Gemini
-ollama-cli --provider gemini run "Summarize this"
+cli-ollama --provider gemini run "Summarize this"
 
 # Use Codex
-ollama-cli --provider codex run "Refactor this"
+cli-ollama --provider codex run "Refactor this"
 
 # Use Hugging Face
-ollama-cli --provider hf run "Answer this question"
+cli-ollama --provider hf run "Answer this question"
 ```
 
 ### Switching Models
 
 ```bash
 # Use a specific model with a provider
-ollama-cli --provider claude --model claude-sonnet-4 run "Hello"
+cli-ollama --provider claude --model claude-sonnet-4 run "Hello"
 ```
 
 ---
@@ -266,5 +266,5 @@ curl -X GET https://api.anthropic.com/v1/models
 
 ```bash
 # Check available models for the provider
-ollama-cli --provider ollama list
+cli-ollama --provider ollama list
 ```

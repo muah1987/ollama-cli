@@ -143,10 +143,10 @@ cfg.provider = "claude"
 
 ```bash
 # Use Claude for one command
-ollama-cli --provider claude run "Explain this"
+cli-ollama --provider claude run "Explain this"
 
 # Use Gemini for one command
-ollama-cli --provider gemini run "Summarize this"
+cli-ollama --provider gemini run "Summarize this"
 ```
 
 ---
@@ -160,7 +160,7 @@ ollama-cli --provider gemini run "Summarize this"
 export OLLAMA_CONTEXT_LENGTH=8192
 
 # Or use a specific model with longer context
-ollama-cli --model llama3.2-8b interactive
+cli-ollama --model llama3.2-8b interactive
 ```
 
 ### Disabling Auto-Compact

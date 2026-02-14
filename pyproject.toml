@@ -52,7 +52,7 @@ Issues = "https://github.com/muah1987/cli-ollama/issues"
 Documentation = "https://github.com/muah1987/cli-ollama/tree/main/docs"
 
 [project.scripts]
-ollama-cli = "ollama_cmd.root:main"
+cli-ollama = "ollama_cmd.root:main"
 
 [build-system]
 requires = ["hatchling"]

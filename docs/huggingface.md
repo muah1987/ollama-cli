@@ -35,7 +35,7 @@ HF_TOKEN=your-huggingface-token
 echo $HF_TOKEN
 
 # Test the provider
-ollama-cli --provider hf run "Say hello"
+cli-ollama --provider hf run "Say hello"
 ```
 
 ## Usage
@@ -44,10 +44,10 @@ ollama-cli --provider hf run "Say hello"
 
 ```bash
 # Use Hugging Face for a single request
-ollama-cli --provider hf run "Explain quantum computing"
+cli-ollama --provider hf run "Explain quantum computing"
 
 # Specify a particular model
-ollama-cli --provider hf --model mistralai/Mistral-7B-Instruct-v0.3 run "Summarize this article"
+cli-ollama --provider hf --model mistralai/Mistral-7B-Instruct-v0.3 run "Summarize this article"
 ```
 
 ### Available Models
@@ -100,7 +100,7 @@ Browse models at [Hugging Face Models](https://huggingface.co/models) or use:
 
 ```bash
 # List available models (when supported by API)
-ollama-cli --provider hf list
+cli-ollama --provider hf list
 ```
 
 ## Pricing

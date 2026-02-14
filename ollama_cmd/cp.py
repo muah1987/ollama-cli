@@ -68,7 +68,7 @@ async def handle_cp_async(args: argparse.Namespace) -> None:
     except httpx.HTTPStatusError as exc:
         if exc.response.status_code == 404:
             console.print(f"[red]Error:[/red] Source model '{source}' not found.")
-            console.print("List available models with: ollama-cli list")
+            console.print("List available models with: cli-ollama list")
         elif exc.response.status_code == 409:
             console.print(f"[red]Error:[/red] Destination model '{destination}' already exists.")
             console.print("Use a different destination name or delete the existing model first.")
@@ -94,12 +94,12 @@ def handle_cp(args: argparse.Namespace) -> None:
 def build_parser() -> argparse.ArgumentParser:
     """Build the cp command argument parser."""
     parser = argparse.ArgumentParser(
-        prog="ollama-cli cp",
+        prog="cli-ollama cp",
         description="Copy a local model",
         epilog="""
 Examples:
-  ollama-cli cp llama3.2 my-llama3.2
-  ollama-cli cp my-model my-model-backup
+  cli-ollama cp llama3.2 my-llama3.2
+  cli-ollama cp my-model my-model-backup
         """,
     )
     parser.add_argument("source", help="Source model name")
