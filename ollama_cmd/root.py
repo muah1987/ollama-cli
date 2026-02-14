@@ -306,6 +306,23 @@ def cmd_interactive(args: argparse.Namespace) -> None:
     if session is None:
         session = Session(model=model, provider=cfg.provider)
 
+    # Check if planning or work mode is enabled
+    if cfg.planning_mode:
+        try:
+            from .planning import initialize_planning_mode
+            initialize_planning_mode(session)
+            console.print("[blue]Planning mode activated.[/blue]")
+        except ImportError as e:
+            console.print(f"[yellow]Warning:[/yellow] Could not initialize planning mode: {e}")
+
+    if cfg.work_mode:
+        try:
+            from .work import initialize_work_mode
+            initialize_work_mode(session)
+            console.print("[green]Work mode activated.[/green]")
+        except ImportError as e:
+            console.print(f"[yellow]Warning:[/yellow] Could not initialize work mode: {e}")
+
     # Use Textual TUI exclusively (no readline fallback)
     try:
         from tui.app import ChatApp
@@ -479,6 +496,24 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--verbose", action="store_true", default=False, help="Verbose output")
     parser.add_argument("--no-hooks", action="store_true", default=False, help="Disable hooks")
     parser.add_argument("--system-prompt", type=str, default=None, help="System prompt to use")
+    parser.add_argument(
+        "--planning",
+        action="store_true",
+        default=False,
+        help="Enable planning mode for research-focused tasks",
+    )
+    parser.add_argument(
+        "--work",
+        action="store_true",
+        default=False,
+        help="Enable work mode for execution-focused tasks",
+    )
+    parser.add_argument(
+        "--bypass",
+        action="store_true",
+        default=False,
+        help="Bypass permissions and skip interactive prompts",
+    )
 
     # TUI is the only interface
     parser.add_argument(
@@ -692,6 +727,12 @@ def _apply_global_flags(args: argparse.Namespace) -> None:
         cfg.output_format = args.output_format
     if getattr(args, "json", False) and not getattr(args, "output_format", None):
         cfg.output_format = "json"
+    if getattr(args, "planning", False):
+        cfg.planning_mode = True
+    if getattr(args, "work", False):
+        cfg.work_mode = True
+    if getattr(args, "bypass", False):
+        cfg.bypass_permissions = True
     allowed = getattr(args, "allowed_tools", None)
     if allowed:
         cfg.allowed_tools = [t.strip() for t in allowed.split(",")]

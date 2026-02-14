@@ -15,6 +15,13 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Prompt
 
+# Import bypass permissions if available
+try:
+    from permissions.bypass import bypass_choice, should_bypass_permissions
+    HAS_BYPASS = True
+except ImportError:
+    HAS_BYPASS = False
+
 from api.config import OllamaCliConfig, get_config, save_config
 
 console = Console()
@@ -101,28 +108,38 @@ def run_onboarding() -> OllamaCliConfig:
     console.print()
 
     choices_display = "/".join(provider_list)
-    while True:
-        raw = Prompt.ask(
-            f"Choose a provider [{choices_display}]",
-            default="ollama",
-        )
-        # Accept a 1-based index as well as the provider name.
-        if raw.isdigit() and 1 <= int(raw) <= len(provider_list):
-            provider_choice = provider_list[int(raw) - 1]
-            break
-        if raw in provider_list:
-            provider_choice = raw
-            break
-        console.print(f"[prompt.invalid]Please enter a provider name or number (1-{len(provider_list)})")
+
+    # Check if bypass is enabled
+    if HAS_BYPASS and should_bypass_permissions():
+        console.print("Bypassing provider selection. Using default provider (ollama).")
+        provider_choice = "ollama"
+    else:
+        while True:
+            raw = Prompt.ask(
+                f"Choose a provider [{choices_display}]",
+                default="ollama",
+            )
+            # Accept a 1-based index as well as the provider name.
+            if raw.isdigit() and 1 <= int(raw) <= len(provider_list):
+                provider_choice = provider_list[int(raw) - 1]
+                break
+            if raw in provider_list:
+                provider_choice = raw
+                break
+            console.print(f"[prompt.invalid]Please enter a provider name or number (1-{len(provider_list)})")
     cfg.provider = provider_choice
 
     # --- 2. Ollama host (for ollama provider, asked first so model fetch
     #        can reach the correct server) -----------------------------------
     if provider_choice == "ollama":
-        host = Prompt.ask(
-            "Ollama host URL",
-            default=cfg.ollama_host or "http://localhost:11434",
-        )
+        if HAS_BYPASS and should_bypass_permissions():
+            console.print("Bypassing Ollama host prompt. Using default host (http://localhost:11434).")
+            host = "http://localhost:11434"
+        else:
+            host = Prompt.ask(
+                "Ollama host URL",
+                default=cfg.ollama_host or "http://localhost:11434",
+            )
         cfg.ollama_host = host
 
     # --- 3. API key (if cloud provider) -------------------------------------
@@ -138,8 +155,14 @@ def run_onboarding() -> OllamaCliConfig:
                 if provider_choice == "ollama"
                 else f"Enter your {provider_choice} API key (env: {env_name})"
             )
-            api_key = Prompt.ask(
-                key_label,
+
+            # Check if bypass is enabled
+            if HAS_BYPASS and should_bypass_permissions():
+                console.print(f"Bypassing API key prompt for {provider_choice}. Skipping API key input.")
+                api_key = ""
+            else:
+                api_key = Prompt.ask(
+                    key_label,
                 password=True,
                 default="",
             )
@@ -158,33 +181,38 @@ def run_onboarding() -> OllamaCliConfig:
             console.print("\n[dim]Fetching available models…[/dim]")
             fetched_models = _fetch_provider_models(provider_choice)
 
-    if fetched_models:
-        console.print(f"\n[bold]Available {provider_choice} models:[/bold]")
-        for i, m in enumerate(fetched_models, 1):
-            marker = " [green](default)[/green]" if m == default_model else ""
-            console.print(f"  {i}. {m}{marker}")
-        console.print()
-
-        while True:
-            raw_model = Prompt.ask("Choose a model (name or number)", default=default_model)
-            if raw_model.isdigit():
-                idx = int(raw_model)
-                if 1 <= idx <= len(fetched_models):
-                    model = fetched_models[idx - 1]
-                    break
-            if raw_model in fetched_models or raw_model == default_model:
-                model = raw_model
-                break
-            # Allow any free-form model name as well
-            if raw_model:
-                model = raw_model
-                break
-            console.print("[prompt.invalid]Please enter a model name or number")
+    # Check if bypass is enabled
+    if HAS_BYPASS and should_bypass_permissions():
+        console.print(f"Bypassing model selection. Using default model ({default_model}).")
+        model = default_model
     else:
-        model = Prompt.ask(
-            "Default model",
-            default=default_model,
-        )
+        if fetched_models:
+            console.print(f"\n[bold]Available {provider_choice} models:[/bold]")
+            for i, m in enumerate(fetched_models, 1):
+                marker = " [green](default)[/green]" if m == default_model else ""
+                console.print(f"  {i}. {m}{marker}")
+            console.print()
+
+            while True:
+                raw_model = Prompt.ask("Choose a model (name or number)", default=default_model)
+                if raw_model.isdigit():
+                    idx = int(raw_model)
+                    if 1 <= idx <= len(fetched_models):
+                        model = fetched_models[idx - 1]
+                        break
+                if raw_model in fetched_models or raw_model == default_model:
+                    model = raw_model
+                    break
+                # Allow any free-form model name as well
+                if raw_model:
+                    model = raw_model
+                    break
+                console.print("[prompt.invalid]Please enter a model name or number")
+        else:
+            model = Prompt.ask(
+                "Default model",
+                default=default_model,
+            )
     cfg.ollama_model = model
 
     # --- 5. Mark complete & save --------------------------------------------

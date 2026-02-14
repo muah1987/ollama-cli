@@ -531,6 +531,9 @@ class TestInteractiveCommands:
 
     def test_cmd_model_switch(self) -> None:
         out = self._run_script(
+            "import os\n"
+            "# Enable bypass mode for autonomous operation\n"
+            "os.environ['OLLAMA_CLI_BYPASS_PERMISSIONS'] = 'true'\n"
             "async def t():\n"
             "  s = Session(model='llama3.2', provider='ollama'); await s.start()\n"
             "  r = InteractiveMode(s); r._cmd_model('codellama')\n"
@@ -952,7 +955,7 @@ class TestCLIEntrypoint:
         )
         # --version causes SystemExit(0)
         assert result.returncode == 0
-        assert "0.1.0" in result.stdout
+        assert "0.2.0" in result.stdout
 
     def test_cli_help(self) -> None:
         result = subprocess.run(

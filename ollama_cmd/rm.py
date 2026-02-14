@@ -31,6 +31,13 @@ if str(api_dir) not in sys.path:
 
 from api.config import get_config  # noqa: E402
 
+# Import bypass permissions
+try:
+    from permissions.bypass import bypass_confirm_prompt, should_bypass_permissions
+    HAS_BYPASS = True
+except ImportError:
+    HAS_BYPASS = False
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
@@ -48,8 +55,15 @@ async def handle_rm_async(args: argparse.Namespace) -> None:
     cfg = get_config()
     model_name = args.model_name
 
-    # Confirm deletion unless --force is set
-    if not args.force:
+    # Confirm deletion unless --force is set or bypass is enabled
+    should_confirm = not args.force
+
+    # Check if bypass is enabled
+    if should_confirm and HAS_BYPASS and should_bypass_permissions():
+        console.print(f"[yellow]Bypassing confirmation for model deletion: {model_name}[/yellow]")
+        should_confirm = False  # Skip confirmation when bypassing
+
+    if should_confirm:
         if not Confirm.ask(f"Delete model [cyan]{model_name}[/cyan]?"):
             console.print("Aborted.")
             return

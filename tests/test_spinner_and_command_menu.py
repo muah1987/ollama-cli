@@ -340,6 +340,9 @@ class TestModelCommand:
         """``/model <name>`` should switch the session model."""
         script = (
             "import asyncio\n"
+            "import os\n"
+            "# Enable bypass mode for autonomous operation\n"
+            "os.environ['OLLAMA_CLI_BYPASS_PERMISSIONS'] = 'true'\n"
             "from model.session import Session\n"
             "from ollama_cmd.interactive import InteractiveMode\n"
             "s = Session(model='old-model', provider='ollama')\n"

@@ -385,6 +385,9 @@ class TestModelNotFoundAutoRecovery:
         """``/model <name>`` should reject a model not found locally."""
         script = (
             "import asyncio\n"
+            "import os\n"
+            "# Explicitly disable bypass for strict validation testing\n"
+            "os.environ.pop('OLLAMA_CLI_BYPASS_PERMISSIONS', None)\n"
             "from unittest.mock import patch\n"
             "from model.session import Session\n"
             "from ollama_cmd.interactive import InteractiveMode\n"

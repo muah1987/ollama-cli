@@ -18,6 +18,13 @@ import os
 import subprocess
 import sys
 
+# Import bypass permissions if available
+try:
+    from permissions.bypass import should_bypass_permissions
+    HAS_BYPASS = True
+except ImportError:
+    HAS_BYPASS = False
+
 
 def check_ollama_installed() -> bool:
     """Check if Ollama is installed and accessible."""
@@ -140,7 +147,14 @@ def main() -> int:
 
     if prompt:
         print("Install Ollama automatically? [y/N]")
-        response = input().strip().lower()
+
+        # Check if bypass is enabled
+        if HAS_BYPASS and should_bypass_permissions():
+            print("Bypassing user prompt. Proceeding with automatic installation.")
+            response = "y"
+        else:
+            response = input().strip().lower()
+
         if response not in ("y", "yes"):
             print("Please install Ollama manually from https://ollama.ai")
             return 1

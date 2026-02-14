@@ -220,17 +220,21 @@ def test_help_includes_resume_flag() -> None:
 
 def test_find_latest_session_no_sessions() -> None:
     """Test _find_latest_session returns None when no sessions exist."""
-    result = subprocess.run(
-        [
-            sys.executable,
-            "-c",
-            "from ollama_cmd.root import _find_latest_session; print(_find_latest_session())",
-        ],
-        capture_output=True,
-        text=True,
-        cwd=str(Path(__file__).parent.parent),
-    )
-    assert "None" in result.stdout
+    import tempfile
+
+    # Create a temporary directory to isolate the test from existing sessions
+    with tempfile.TemporaryDirectory() as temp_dir:
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "from ollama_cmd.root import _find_latest_session; print(_find_latest_session())",
+            ],
+            capture_output=True,
+            text=True,
+            cwd=temp_dir,
+        )
+        assert "None" in result.stdout
 
 
 def test_chat_subcommand_exists() -> None:

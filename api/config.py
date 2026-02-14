@@ -56,6 +56,9 @@ class OllamaCliConfig:
     tui_sidebar_visible: bool = True
     tui_show_timestamps: bool = True
     tui_auto_scroll: bool = True
+    planning_mode: bool = False
+    work_mode: bool = False
+    bypass_permissions: bool = False
 
 
 # ---------------------------------------------------------------------------
@@ -151,6 +154,9 @@ def load_config(env_path: str | Path | None = None, config_json_path: str | Path
             os.getenv("OLLAMA_CLI_TUI_TIMESTAMPS"), OllamaCliConfig.tui_show_timestamps
         ),
         tui_auto_scroll=_bool_from_env(os.getenv("OLLAMA_CLI_TUI_AUTOSCROLL"), OllamaCliConfig.tui_auto_scroll),
+        planning_mode=_bool_from_env(os.getenv("OLLAMA_CLI_PLANNING_MODE"), OllamaCliConfig.planning_mode),
+        work_mode=_bool_from_env(os.getenv("OLLAMA_CLI_WORK_MODE"), OllamaCliConfig.work_mode),
+        bypass_permissions=_bool_from_env(os.getenv("OLLAMA_CLI_BYPASS_PERMISSIONS"), OllamaCliConfig.bypass_permissions),
     )
 
     # Overlay from JSON config file if it exists

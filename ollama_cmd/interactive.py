@@ -33,6 +33,13 @@ if str(_SCRIPT_DIR) not in sys.path:
 
 from model.session import Session  # noqa: E402
 
+# Import bypass permissions if available
+try:
+    from permissions.bypass import bypass_confirm_prompt, bypass_input_prompt, should_bypass_permissions
+    HAS_BYPASS = True
+except ImportError:
+    HAS_BYPASS = False
+
 # ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
@@ -436,7 +443,12 @@ class InteractiveMode:
             self._print_system("Run /init to import them into OLLAMA.md.")
 
         try:
-            answer = input(_dim("Do you trust this folder? [Y/n] ")).strip().lower()
+            # Check if bypass is enabled
+            if HAS_BYPASS and should_bypass_permissions():
+                answer = "y"  # Default to trusting the folder when bypassing
+                self._print_info("Bypassing folder trust prompt. Folder automatically trusted.")
+            else:
+                answer = input(_dim("Do you trust this folder? [Y/n] ")).strip().lower()
         except (EOFError, KeyboardInterrupt):
             print()
             answer = "y"
@@ -452,13 +464,23 @@ class InteractiveMode:
 
     def _prompt_workspace_model_selection(self) -> None:
         """Prompt for provider/model choices once per new workspace."""
-        provider = input(_dim(f"Provider [{self.session.provider}]: ")).strip().lower() or self.session.provider
-        if provider not in _VALID_PROVIDERS:
+        # Check if bypass is enabled
+        if HAS_BYPASS and should_bypass_permissions():
+            self._print_info("Bypassing workspace model selection. Using default values.")
+            # Use default values when bypassing
             provider = self.session.provider
-        primary_model = input(_dim(f"Primary model [{self.session.model}]: ")).strip() or self.session.model
-        fallback_model = input(_dim(f"Fallback model [{primary_model}]: ")).strip() or primary_model
-        background_model = input(_dim("Background model [glm-ocr]: ")).strip() or "glm-ocr"
-        thinking_model = input(_dim(f"Thinking model [{primary_model}]: ")).strip() or primary_model
+            primary_model = self.session.model
+            fallback_model = self.session.model
+            background_model = "glm-ocr"
+            thinking_model = self.session.model
+        else:
+            provider = input(_dim(f"Provider [{self.session.provider}]: ")).strip().lower() or self.session.provider
+            if provider not in _VALID_PROVIDERS:
+                provider = self.session.provider
+            primary_model = input(_dim(f"Primary model [{self.session.model}]: ")).strip() or self.session.model
+            fallback_model = input(_dim(f"Fallback model [{primary_model}]: ")).strip() or primary_model
+            background_model = input(_dim("Background model [glm-ocr]: ")).strip() or "glm-ocr"
+            thinking_model = input(_dim(f"Thinking model [{primary_model}]: ")).strip() or primary_model
 
         self.session.provider = provider
         self.session.token_counter.provider = provider
@@ -867,8 +889,13 @@ class InteractiveMode:
             cfg = get_config()
             local_models = _fetch_local_models(cfg.ollama_host)
 
-            if local_models and arg not in local_models:
-                # Try partial match (e.g. "llama3.2" matches "llama3.2:latest" or "glm-5" matches "glm-5:cloud")
+            # Check if bypass permissions are enabled
+            bypass_validation = False
+            if HAS_BYPASS and should_bypass_permissions():
+                bypass_validation = True
+
+            if local_models and arg not in local_models and not bypass_validation:
+                # Strict validation mode - reject model switches for non-existent models
                 matched = [m for m in local_models if m.startswith(arg + ":")]
                 # Reverse partial match: "glm-5:cloud" → look for "glm-5:cloud" among variants
                 if not matched and ":" in arg:
@@ -886,12 +913,19 @@ class InteractiveMode:
                     # their choice even if the exact tag isn't pulled locally yet.
                     pass
                 else:
+                    # In strict mode, reject invalid model selections
                     self._print_error(f"Model '{arg}' not found on local Ollama server.")
                     self._print_system(f"  Available models: {', '.join(local_models[:8])}")
                     if len(local_models) > 8:
                         self._print_system(f"  ... and {len(local_models) - 8} more")
                     self._print_system(f"  Pull it first with: /pull {arg}")
                     return False
+            elif bypass_validation and local_models and arg not in local_models:
+                # Permissive bypass mode - warn but allow model switching
+                self._print_system(f"Model '{arg}' not found on local Ollama server (continuing anyway due to bypass mode).")
+                self._print_system(f"  Available models: {', '.join(local_models[:8])}")
+                if len(local_models) > 8:
+                    self._print_system(f"  ... and {len(local_models) - 8} more")
 
         self.session.model = arg
         self._print_info(f"🦙 Model switched: {old_model} → {arg}")

@@ -83,6 +83,10 @@ Or in `.ollama/settings.json`:
 | `--allowed-tools <list>` | Comma-separated list of allowed tool names |
 | `-p, --print` | Print response and exit (non-interactive mode) |
 | `-r, --resume` | Resume the most recent conversation |
+| `--planning` | Enable planning mode for research-focused tasks |
+| `--work` | Enable work mode for execution-focused tasks |
+| `--bypass` | Bypass permissions and skip interactive prompts |
+| `--tui` | Launch the Textual TUI (default for interactive mode) |
 
 ---
 
