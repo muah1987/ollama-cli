@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-
-
 from skills.tools import (
     clear_ignore_cache,
     is_path_ignored,
@@ -13,7 +11,6 @@ from skills.tools import (
     tool_grep_search,
     tool_shell_exec,
 )
-
 
 # ---------------------------------------------------------------------------
 # .ollamaignore tests

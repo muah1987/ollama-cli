@@ -4,9 +4,7 @@ from __future__ import annotations
 
 import json
 
-
 from server.hook_runner import HookResult, HookRunner
-
 
 # ---------------------------------------------------------------------------
 # HookResult
