@@ -1,5 +1,5 @@
 """
-Sub-Agent Scenario Tests for ollama-cli
+Sub-Agent Scenario Tests for cli-ollama
 
 Tests cover:
 1. Nested sub-agent token tracking

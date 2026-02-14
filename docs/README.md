@@ -2,7 +2,7 @@
 
 **A full-featured AI coding assistant powered by Ollama with multi-provider support.**
 
-[![PyPI version](https://badge.fury.io/py/ollama-cli.svg)](https://badge.fury.io/py/ollama-cli)
+[![PyPI version](https://badge.fury.io/py/cli-ollama.svg)](https://badge.fury.io/py/cli-ollama)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Ollama CLI is a local-first AI coding assistant that runs on your machine with Ollama, with optional cloud provider support for Claude, Gemini, Codex, and Hugging Face.
@@ -22,12 +22,12 @@ Ollama CLI is a local-first AI coding assistant that runs on your machine with O
 ### One-Line Install (Recommended)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/muah1987/ollama-cli/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/muah1987/cli-ollama/main/install.sh | bash
 ```
 
 This script will:
 1. Install `uv` if not present
-2. Clone or update ollama-cli from GitHub
+2. Clone or update cli-ollama from GitHub
 3. Install Python dependencies
 4. Detect Ollama and install it if missing
 
@@ -35,8 +35,8 @@ This script will:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/muah1987/ollama-cli.git
-cd ollama-cli
+git clone https://github.com/muah1987/cli-ollama.git
+cd cli-ollama
 
 # 2. Install dependencies with uv
 uv sync
@@ -54,25 +54,25 @@ cp .env.sample .env
 
 ```bash
 # Start an interactive chat session
-ollama-cli interactive
+cli-ollama interactive
 
 # Run a one-shot prompt
-ollama-cli run "explain this code"
+cli-ollama run "explain this code"
 
 # List available local models
-ollama-cli list
+cli-ollama list
 
 # Pull a model from registry
-ollama-cli pull llama3.2
+cli-ollama pull llama3.2
 
 # Use a specific model
-ollama-cli --model codellama run "write a fibonacci function"
+cli-ollama --model codellama run "write a fibonacci function"
 
 # Use a cloud provider
-ollama-cli --provider claude run "review this architecture"
+cli-ollama --provider claude run "review this architecture"
 
 # Show version
-ollama-cli version
+cli-ollama version
 ```
 
 ---
@@ -101,7 +101,7 @@ For detailed documentation on all features, configuration, and advanced usage, s
 ## Getting Help
 
 - Check the [Documentation Index](README.md)
-- File an issue on [GitHub](https://github.com/muah1987/ollama-cli/issues)
+- File an issue on [GitHub](https://github.com/muah1987/cli-ollama/issues)
 - Visit the [Ollama documentation](https://ollama.ai/docs)
 
 ---

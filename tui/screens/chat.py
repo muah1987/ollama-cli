@@ -1,4 +1,4 @@
-"""Chat screen -- primary view for the ollama-cli TUI.
+"""Chat screen -- primary view for the cli-ollama TUI.
 
 Layout follows the documented 3-zone structure:
   TOP:    ASCII banner with side info (scrolls away after first interaction)
@@ -49,7 +49,7 @@ def _build_banner(session=None, warnings: list[str] | None = None) -> str:
     try:
         from importlib.metadata import version as pkg_version
 
-        ver = pkg_version("ollama-cli")
+        ver = pkg_version("cli-ollama")
     except Exception:
         ver = "dev"
 
@@ -118,7 +118,7 @@ def _build_notification_boxes() -> list[str]:
         from importlib.metadata import PackageNotFoundError
         from importlib.metadata import version as pkg_version
 
-        installed = pkg_version("ollama-cli")
+        installed = pkg_version("cli-ollama")
     except (PackageNotFoundError, ModuleNotFoundError):
         installed = "dev"
     latest = os.environ.get("OLLAMA_LATEST_VERSION", "")

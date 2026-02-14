@@ -62,12 +62,12 @@ def handle_config(args: argparse.Namespace) -> None:
 
     if action == "set":
         if not key or value is None:
-            console.print("[red]Error:[/red] Usage: ollama-cli config set <key> <value>")
+            console.print("[red]Error:[/red] Usage: cli-ollama config set <key> <value>")
             sys.exit(1)
         _set_config_key(cfg, key, value)
         return
 
-    # If action looks like a key name (e.g. `ollama-cli config ollama_model`)
+    # If action looks like a key name (e.g. `cli-ollama config ollama_model`)
     if hasattr(cfg, action):
         _get_config_key(cfg, action, use_json)
         return
@@ -158,15 +158,15 @@ def _set_config_key(cfg: OllamaCliConfig, key: str, value: str) -> None:
 def build_parser() -> argparse.ArgumentParser:
     """Build the config command argument parser."""
     parser = argparse.ArgumentParser(
-        prog="ollama-cli config",
+        prog="cli-ollama config",
         description="Show/set provider configuration",
         epilog="""
 Examples:
-  ollama-cli config                         # Show all config
-  ollama-cli config get                     # Show all config
-  ollama-cli config get ollama_model        # Show specific key
-  ollama-cli config set ollama_model llama3  # Set a value
-  ollama-cli config --json                  # JSON output
+  cli-ollama config                         # Show all config
+  cli-ollama config get                     # Show all config
+  cli-ollama config get ollama_model        # Show specific key
+  cli-ollama config set ollama_model llama3  # Set a value
+  cli-ollama config --json                  # JSON output
         """,
     )
     parser.add_argument("action", nargs="?", type=str, help="Action (get/set) or config key")

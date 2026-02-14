@@ -347,7 +347,7 @@ if __name__ == "__main__":
 ### Enable Verbose Mode
 
 ```bash
-ollama-cli --verbose interactive
+cli-ollama --verbose interactive
 ```
 
 ### Test Hook Manually

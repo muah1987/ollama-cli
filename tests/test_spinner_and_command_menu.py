@@ -65,19 +65,19 @@ class TestCLIBrandedSpinners:
     """Tests that build/plan/test spinners include the CLI icon branding."""
 
     def test_build_spinner_has_cli_brand(self) -> None:
-        """Build spinner frames should include [ollama-cli] branding."""
+        """Build spinner frames should include [cli-ollama] branding."""
         from ollama_cmd.interactive import _LLAMA_BUILD_SPINNER
 
         for frame in _LLAMA_BUILD_SPINNER:
-            assert "[ollama-cli]" in frame, f"Missing branding in: {frame}"
+            assert "[cli-ollama]" in frame, f"Missing branding in: {frame}"
             assert "🦙" in frame, f"Missing llama icon in: {frame}"
 
     def test_plan_spinner_has_cli_brand(self) -> None:
-        """Plan spinner frames should include [ollama-cli] branding."""
+        """Plan spinner frames should include [cli-ollama] branding."""
         from ollama_cmd.interactive import _LLAMA_PLAN_SPINNER
 
         for frame in _LLAMA_PLAN_SPINNER:
-            assert "[ollama-cli]" in frame, f"Missing branding in: {frame}"
+            assert "[cli-ollama]" in frame, f"Missing branding in: {frame}"
             assert "🦙" in frame, f"Missing llama icon in: {frame}"
 
     def test_test_spinner_exists(self) -> None:
@@ -86,7 +86,7 @@ class TestCLIBrandedSpinners:
 
         assert len(_LLAMA_TEST_SPINNER) > 0
         for frame in _LLAMA_TEST_SPINNER:
-            assert "[ollama-cli]" in frame, f"Missing branding in: {frame}"
+            assert "[cli-ollama]" in frame, f"Missing branding in: {frame}"
             assert "🦙" in frame, f"Missing llama icon in: {frame}"
 
 

@@ -179,9 +179,9 @@ def cmd_rdma(_args: argparse.Namespace) -> None:
     console.print("  rdma connect  - Connect to RDMA device")
     console.print("")
     console.print(" Examples:")
-    console.print("  ollama-cli rdma detect")
-    console.print("  ollama-cli rdma status")
-    console.print("  ollama-cli rdma connect mlx5_0")
+    console.print("  cli-ollama rdma detect")
+    console.print("  cli-ollama rdma status")
+    console.print("  cli-ollama rdma connect mlx5_0")
 
 
 # Command registration
@@ -189,19 +189,19 @@ def register_commands(parser: argparse._SubParsersAction) -> None:
     """Register RDMA commands with the main parser."""
     subparsers = parser.add_subparsers(help="RDMA management commands")
 
-    # ollama-cli rdma
+    # cli-ollama rdma
     rdma_parser = subparsers.add_parser("rdma", help="RDMA management")
     rdma_parser.set_defaults(func=cmd_rdma)
 
-    # ollama-cli rdma detect
+    # cli-ollama rdma detect
     detect_parser = subparsers.add_parser("detect", help="Detect RDMA devices")
     detect_parser.set_defaults(func=cmd_rdma_detect)
 
-    # ollama-cli rdma status
+    # cli-ollama rdma status
     status_parser = subparsers.add_parser("status", help="Show RDMA status")
     status_parser.set_defaults(func=cmd_rdma_status)
 
-    # ollama-cli rdma connect <device>
+    # cli-ollama rdma connect <device>
     connect_parser = subparsers.add_parser("connect", help="Connect to RDMA device")
     connect_parser.add_argument("device", help="RDMA device name (e.g., mlx5_0)")
     connect_parser.set_defaults(func=cmd_rdma_connect)

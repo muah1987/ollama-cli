@@ -1,1 +1,1 @@
-"""ollama-cli TUI package -- Textual-based terminal user interface."""
+"""cli-ollama TUI package -- Textual-based terminal user interface."""

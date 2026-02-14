@@ -4,7 +4,7 @@
 # dependencies = ["python-dotenv"]
 # ///
 """
-Configuration management for ollama-cli.
+Configuration management for cli-ollama.
 
 Loads settings from environment variables (via .env) and overlays
 from .ollama/config.json if it exists. Provides a singleton accessor.
@@ -112,7 +112,7 @@ def load_config(env_path: str | Path | None = None, config_json_path: str | Path
     """
     # Load .env
     if env_path is None:
-        # Try ollama-cli directory first, then cwd
+        # Try cli-ollama directory first, then cwd
         candidates = [
             Path(__file__).resolve().parent.parent / ".env",
             Path.cwd() / ".env",

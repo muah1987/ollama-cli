@@ -8,7 +8,7 @@
 # ///
 
 """
-Permissions bypass module for ollama-cli.
+Permissions bypass module for cli-ollama.
 
 This module provides functionality to bypass interactive prompts and permissions
 for autonomous operation.

@@ -8,11 +8,11 @@ All available commands in Ollama CLI.
 
 | Command | Description | Example |
 |---------|-------------|---------|
-| `interactive` | Start interactive chat session | `ollama-cli interactive` |
-| `run` | Run a one-shot prompt | `ollama-cli run "Hello!"` |
-| `list` | List available local models | `ollama-cli list` |
-| `serve` | Check Ollama server status | `ollama-cli serve` |
-| `version` | Show CLI version | `ollama-cli version` |
+| `interactive` | Start interactive chat session | `cli-ollama interactive` |
+| `run` | Run a one-shot prompt | `cli-ollama run "Hello!"` |
+| `list` | List available local models | `cli-ollama list` |
+| `serve` | Check Ollama server status | `cli-ollama serve` |
+| `version` | Show CLI version | `cli-ollama version` |
 
 ---
 
@@ -20,10 +20,10 @@ All available commands in Ollama CLI.
 
 | Command | Description | Example |
 |---------|-------------|---------|
-| `install` | Install Ollama automatically | `ollama-cli install` |
-| `check` | Check Ollama installation | `ollama-cli check` |
-| `rdma` | RDMA device management | `ollama-cli rdma detect` |
-| `accelerate` | Hardware acceleration | `ollama-cli accelerate check` |
+| `install` | Install Ollama automatically | `cli-ollama install` |
+| `check` | Check Ollama installation | `cli-ollama check` |
+| `rdma` | RDMA device management | `cli-ollama rdma detect` |
+| `accelerate` | Hardware acceleration | `cli-ollama accelerate check` |
 
 ---
 ## Agent Commands
@@ -211,35 +211,35 @@ Type `/` in the REPL to see the full command menu. Key commands:
 
 ### Chat with a specific model
 ```bash
-ollama-cli --model codellama interactive
+cli-ollama --model codellama interactive
 ```
 
 ### Run with cloud provider
 ```bash
-ollama-cli --provider claude run "Review my code"
+cli-ollama --provider claude run "Review my code"
 ```
 
 ### Use a custom API host
 ```bash
-ollama-cli --api http://myserver:11434 --model llama3.2 interactive
+cli-ollama --api http://myserver:11434 --model llama3.2 interactive
 ```
 
 ### Combine model, provider, and API
 ```bash
-ollama-cli --model glm-5:cloud --provider hf --api http://remote:8080 interactive
+cli-ollama --model glm-5:cloud --provider hf --api http://remote:8080 interactive
 ```
 
 ### JSON output
 ```bash
-ollama-cli --provider gemini list --json
+cli-ollama --provider gemini list --json
 ```
 
 ### Check RDMA
 ```bash
-ollama-cli rdma detect
+cli-ollama rdma detect
 ```
 
 ### Enable MLX acceleration
 ```bash
-ollama-cli accelerate enable mlx
+cli-ollama accelerate enable mlx
 ```

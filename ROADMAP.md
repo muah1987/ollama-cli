@@ -212,7 +212,7 @@ a single static binary.
 - [ ] Port chain orchestration
 - [ ] Port context management and auto-compact
 - [ ] Single-binary distribution (no Python/uv dependency)
-- [ ] Archive current Python implementation to `ollama-cli.bak/`
+- [ ] Archive current Python implementation to `cli-ollama.bak/`
 
 ---
 

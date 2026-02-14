@@ -1,7 +1,8 @@
 # Ollama CLI
 
-[![Build & Test](https://github.com/muah1987/ollama-cli/actions/workflows/build-test.yml/badge.svg)](https://github.com/muah1987/ollama-cli/actions/workflows/build-test.yml)
-[![codecov](https://codecov.io/gh/muah1987/ollama-cli/branch/main/graph/badge.svg)](https://codecov.io/gh/muah1987/ollama-cli)
+[![PyPI version](https://img.shields.io/pypi/v/cli-ollama.svg)](https://pypi.org/project/cli-ollama/)
+[![Build & Test](https://github.com/muah1987/cli-ollama/actions/workflows/build-test.yml/badge.svg)](https://github.com/muah1987/cli-ollama/actions/workflows/build-test.yml)
+[![codecov](https://codecov.io/gh/muah1987/cli-ollama/branch/main/graph/badge.svg)](https://codecov.io/gh/muah1987/cli-ollama)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
@@ -17,34 +18,46 @@ An open-source AI coding assistant with Textual TUI interface that runs in your 
 
 ### Install
 
+**Via installer script (recommended):**
+
 ```bash
-curl -fsSL https://raw.githubusercontent.com/muah1987/ollama-cli/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/muah1987/cli-ollama/main/install.sh | bash
 ```
 
-This installs `ollama-cli` to `~/.local/bin/`, sets up dependencies, and installs Ollama if needed.
+This installs `cli-ollama` to `~/.local/bin/`, sets up dependencies, and installs Ollama if needed.
+
+**Via PyPI:**
+
+```bash
+pip install cli-ollama
+# or
+pipx install cli-ollama
+```
+
+This installs the `cli-ollama` command globally.
 
 ### Start chatting
 
 ```bash
 # Start interactive session (default)
-ollama-cli
+cli-ollama
 
 # Or with a direct prompt
-ollama-cli "Explain this codebase to me"
+cli-ollama "Explain this codebase to me"
 
 # Non-interactive mode
-ollama-cli -p "Write a Python function that reverses a string"
+cli-ollama -p "Write a Python function that reverses a string"
 
 # Resume last session
-ollama-cli --resume
+cli-ollama --resume
 ```
 
 ### Pipe input
 
 ```bash
-echo "Fix the bug in this code" | ollama-cli
-cat error.log | ollama-cli -p "What went wrong?"
-git diff | ollama-cli -p "Review these changes"
+echo "Fix the bug in this code" | cli-ollama
+cat error.log | cli-ollama -p "What went wrong?"
+git diff | cli-ollama -p "Review these changes"
 ```
 
 ---
@@ -52,7 +65,7 @@ git diff | ollama-cli -p "Review these changes"
 ## Usage
 
 ```
-Usage: ollama-cli [options] [command] [prompt]
+Usage: cli-ollama [options] [command] [prompt]
 
 Options:
   -v, --version                   Show version
@@ -130,19 +143,19 @@ Seamlessly switch between providers — your conversation context is preserved:
 
 ```bash
 # Use Ollama (default, local)
-ollama-cli --provider ollama
+cli-ollama --provider ollama
 
 # Use Claude
-ollama-cli --provider claude
+cli-ollama --provider claude
 
 # Use Gemini
-ollama-cli --provider gemini
+cli-ollama --provider gemini
 
 # Use OpenAI Codex
-ollama-cli --provider codex
+cli-ollama --provider codex
 
 # Use Hugging Face
-ollama-cli --provider hf
+cli-ollama --provider hf
 ```
 
 Switch mid-session with `/provider claude` in the REPL.
@@ -202,12 +215,12 @@ Available tools:
 **Tool permissions:** Use `--allowed-tools` to restrict which tools are available:
 
 ```bash
-ollama-cli --allowed-tools file_read,grep_search
+cli-ollama --allowed-tools file_read,grep_search
 ```
 
 ### Project Memory (OLLAMA.md)
 
-Like Claude's `CLAUDE.md` and Gemini's `GEMINI.md`, ollama-cli reads `OLLAMA.md` from your project root to load persistent context:
+Like Claude's `CLAUDE.md` and Gemini's `GEMINI.md`, cli-ollama reads `OLLAMA.md` from your project root to load persistent context:
 
 ```bash
 # View project memory
@@ -330,7 +343,7 @@ Save and resume conversations across sessions:
 >>> /load my-project
 
 # Or use the CLI flag
-ollama-cli --resume
+cli-ollama --resume
 ```
 
 ### Agent Model Assignment
@@ -370,7 +383,7 @@ See [`.env.sample`](.env.sample) for the full template.
 
 ### Tested Ollama Cloud Models
 
-The following [Ollama Cloud](https://ollama.com) models have been tested and verified to work with ollama-cli. Set `OLLAMA_HOST=https://ollama.com` and provide your `OLLAMA_API_KEY` to use them:
+The following [Ollama Cloud](https://ollama.com) models have been tested and verified to work with cli-ollama. Set `OLLAMA_HOST=https://ollama.com` and provide your `OLLAMA_API_KEY` to use them:
 
 | Model | Tag |
 |-------|-----|
@@ -404,8 +417,8 @@ The following [Ollama Cloud](https://ollama.com) models have been tested and ver
 
 ```bash
 # Clone
-git clone https://github.com/muah1987/ollama-cli.git
-cd ollama-cli
+git clone https://github.com/muah1987/cli-ollama.git
+cd cli-ollama
 
 # Install dependencies
 uv sync --dev
@@ -427,7 +440,7 @@ uv run ruff format .
 
 ## Support
 
-- **GitHub Issues:** [Report bugs or request features](https://github.com/muah1987/ollama-cli/issues)
+- **GitHub Issues:** [Report bugs or request features](https://github.com/muah1987/cli-ollama/issues)
 - **Ollama:** [Official Ollama website](https://ollama.ai)
 
 ## Migration Notice

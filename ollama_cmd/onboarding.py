@@ -1,4 +1,4 @@
-"""First-time interactive onboarding wizard for ollama-cli.
+"""First-time interactive onboarding wizard for cli-ollama.
 
 Runs once after installation to help the user choose a provider, enter API
 keys (if needed), and pick a default model.  Saves the result to
@@ -89,7 +89,7 @@ def run_onboarding() -> OllamaCliConfig:
     console.print()
     console.print(
         Panel(
-            "[bold cyan]Welcome to ollama-cli![/bold cyan]\n\n"
+            "[bold cyan]Welcome to cli-ollama![/bold cyan]\n\n"
             "Let's get you set up. This wizard runs only once.\n"
             "You can change these settings later with [bold]/config[/bold] "
             "or by editing [bold].ollama/config.json[/bold].",
@@ -227,7 +227,7 @@ def run_onboarding() -> OllamaCliConfig:
             f"  Model    : [cyan]{cfg.ollama_model}[/cyan]\n"
             f"  Config   : [dim]{saved_path}[/dim]\n\n"
             "Type [bold]/help[/bold] inside the REPL for available commands.\n"
-            "Run [bold]ollama-cli config set <key> <value>[/bold] to change settings later.",
+            "Run [bold]cli-ollama config set <key> <value>[/bold] to change settings later.",
             title="Ready",
             border_style="green",
         )

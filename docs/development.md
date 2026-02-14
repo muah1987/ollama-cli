@@ -5,7 +5,7 @@
 Ollama CLI follows the directory structure of the [official Ollama project](https://github.com/ollama/ollama):
 
 ```
-ollama-cli/
+cli-ollama/
 ├── ollama_cmd/       # CLI entry points per command
 │   ├── root.py       # Main entry point and argument parser
 │   ├── run.py        # Run model interactively
@@ -193,8 +193,8 @@ Status lines are in `.ollama/status_lines/` and can be customized.
 
 ## Got in Touch
 
-- GitHub: [https://github.com/muah1987/ollama-cli](https://github.com/muah1987/ollama-cli)
-- Issues: [https://github.com/muah1987/ollama-cli/issues](https://github.com/muah1987/ollama-cli/issues)
+- GitHub: [https://github.com/muah1987/cli-ollama](https://github.com/muah1987/cli-ollama)
+- Issues: [https://github.com/muah1987/cli-ollama/issues](https://github.com/muah1987/cli-ollama/issues)
 
 ---
 

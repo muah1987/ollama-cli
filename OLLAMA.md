@@ -26,7 +26,7 @@ Ollama CLI is a full-featured AI coding assistant powered by Ollama with multi-p
 ## Source Structure
 
 ```
-ollama-cli/
+cli-ollama/
 ├── src/
 │   ├── cli.py              — Main CLI entry point (9 commands)
 │   ├── api_client.py       — Ollama API client (native + OpenAI-compatible)
@@ -133,3 +133,11 @@ ollama-cli/
 - Duration: 3s
 - Messages: 1
 - Tokens: 1,162 (prompt: 1,154, completion: 8)
+
+
+<!-- session:43bccdff61c1 -->
+### Session 43bccdff61c1
+- Model: llama3.2 (ollama)
+- Duration: 3s
+- Messages: 1
+- Tokens: 1,250 (prompt: 1,242, completion: 8)

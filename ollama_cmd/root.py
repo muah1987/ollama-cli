@@ -8,7 +8,7 @@
 # ]
 # ///
 """
-ollama-cli -- Main CLI entry point.
+cli-ollama -- Main CLI entry point.
 
 Provides subcommands for chatting, running prompts, listing models, pulling models,
 and managing configuration. Organized to match Ollama's command structure.
@@ -63,7 +63,7 @@ def print_banner() -> None:
     """Print a startup banner showing current config."""
     cfg = get_config()
     compact_status = "on" if cfg.auto_compact else "off"
-    console.print(f"[bold cyan]ollama-cli[/bold cyan] v{VERSION}")
+    console.print(f"[bold cyan]cli-ollama[/bold cyan] v{VERSION}")
     console.print(f"  provider : [green]{cfg.provider}[/green]")
     console.print(f"  model    : [green]{cfg.ollama_model}[/green]")
     console.print(f"  context  : [green]{cfg.context_length}[/green] tokens")
@@ -184,7 +184,7 @@ def cmd_list(args: argparse.Namespace) -> None:
 
     models = data.get("models", [])
     if not models:
-        console.print("No models found locally. Pull one with: [bold]ollama-cli pull <model>[/bold]")
+        console.print("No models found locally. Pull one with: [bold]cli-ollama pull <model>[/bold]")
         return
 
     if args.json:
@@ -264,7 +264,7 @@ def cmd_status(args: argparse.Namespace) -> None:
 
 def cmd_version(_args: argparse.Namespace) -> None:
     """Show CLI version."""
-    print(f"ollama-cli v{VERSION}")
+    print(f"cli-ollama v{VERSION}")
 
 
 def cmd_interactive(args: argparse.Namespace) -> None:
@@ -438,8 +438,8 @@ def cmd_stop(args: argparse.Namespace) -> None:
 def build_parser() -> argparse.ArgumentParser:
     """Build the top-level argument parser with all subcommands."""
     parser = argparse.ArgumentParser(
-        prog="ollama-cli",
-        usage="ollama-cli [options] [command] [prompt]",
+        prog="cli-ollama",
+        usage="cli-ollama [options] [command] [prompt]",
         description=(
             "Ollama CLI - an AI coding assistant powered by Ollama with Textual TUI interface. "
             "Starts an interactive session by default. "
@@ -448,7 +448,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     # Global flags
-    parser.add_argument("-v", "--version", action="version", version=f"ollama-cli v{VERSION}")
+    parser.add_argument("-v", "--version", action="version", version=f"cli-ollama v{VERSION}")
     parser.add_argument("--model", type=str, default=None, help="Override the default model for this session")
     parser.add_argument(
         "--provider",
@@ -672,7 +672,7 @@ def main() -> None:
 
     raw_args = sys.argv[1:]
 
-    # Support piped stdin: `echo "fix this" | ollama-cli`
+    # Support piped stdin: `echo "fix this" | cli-ollama`
     # Only treat piped stdin as a prompt when no explicit subcommand is present.
     piped_input = None
     if (
@@ -699,7 +699,7 @@ def main() -> None:
     if not command:
         if args.print_mode:
             console.print("[red]Error:[/red] --print requires a prompt.")
-            console.print('Usage: ollama-cli -p "your prompt here"')
+            console.print('Usage: cli-ollama -p "your prompt here"')
             sys.exit(1)
         # Default to interactive mode
         command = "interactive"

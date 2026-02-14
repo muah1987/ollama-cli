@@ -716,7 +716,7 @@ class Session:
             tools = []
 
         prompt = (
-            "You are an AI coding assistant powered by ollama-cli. "
+            "You are an AI coding assistant powered by cli-ollama. "
             "You help users with coding tasks, file operations, and project management.\n\n"
         )
 

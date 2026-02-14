@@ -20,7 +20,7 @@ class TestRootVersion:
         from ollama_cmd.root import cmd_version
         cmd_version(argparse.Namespace())
         out = capsys.readouterr().out
-        assert "ollama-cli" in out
+        assert "cli-ollama" in out
 
     @patch("ollama_cmd.root.get_config")
     def test_print_banner(self, mock_cfg):

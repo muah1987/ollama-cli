@@ -50,7 +50,7 @@ def handle_list(args: argparse.Namespace) -> None:
 
     models = data.get("models", [])
     if not models:
-        console.print("No models found locally. Pull one with: [bold]ollama-cli pull <model>[/bold]")
+        console.print("No models found locally. Pull one with: [bold]cli-ollama pull <model>[/bold]")
         return
 
     if args.json:
@@ -82,7 +82,7 @@ def handle_list(args: argparse.Namespace) -> None:
 def build_parser() -> argparse.ArgumentParser:
     """Build the list command argument parser."""
     parser = argparse.ArgumentParser(
-        prog="ollama-cli list",
+        prog="cli-ollama list",
         description="List available local models",
     )
     parser.add_argument("--json", action="store_true", default=False, help="JSON output mode")

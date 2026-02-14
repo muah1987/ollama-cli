@@ -1,5 +1,5 @@
 [project]
-name = "ollama-cli"
+name = "cli-ollama"
 version = "0.2.0"
 description = "Full-featured AI coding assistant powered by Ollama with multi-provider support, 13 lifecycle hooks, MCP integration, and chain orchestration"
 readme = "README.md"
@@ -46,13 +46,13 @@ exo = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/muah1987/ollama-cli"
-Repository = "https://github.com/muah1987/ollama-cli"
-Issues = "https://github.com/muah1987/ollama-cli/issues"
-Documentation = "https://github.com/muah1987/ollama-cli/tree/main/docs"
+Homepage = "https://github.com/muah1987/cli-ollama"
+Repository = "https://github.com/muah1987/cli-ollama"
+Issues = "https://github.com/muah1987/cli-ollama/issues"
+Documentation = "https://github.com/muah1987/cli-ollama/tree/main/docs"
 
 [project.scripts]
-ollama-cli = "ollama_cmd.root:main"
+cli-ollama = "ollama_cmd.root:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -83,7 +83,7 @@ tag_commit = true
 commit_parser = "angular"
 commit_author_token = "${GH_TOKEN}"
 commit_message = "chore(release): {version}\n\nAutomatically generated release notes."
-build_command = "uv build --release"
+build_command = "uv build"
 upload_to_pypi = false
 upload_to_release = true
 remove_dist = false

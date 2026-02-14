@@ -1,10 +1,10 @@
 #!/bin/bash
 set -euo pipefail
-# One-line installer for ollama-cli
-# Usage: curl -fsSL https://raw.githubusercontent.com/muah1987/ollama-cli/main/install.sh | bash
+# One-line installer for cli-ollama
+# Usage: curl -fsSL https://raw.githubusercontent.com/muah1987/cli-ollama/main/install.sh | bash
 
-REPO_URL="https://github.com/muah1987/ollama-cli.git"
-INSTALL_DIR="${HOME}/.ollama-cli"
+REPO_URL="https://github.com/muah1987/cli-ollama.git"
+INSTALL_DIR="${HOME}/.cli-ollama"
 OLLAMA_VERSION="0.5.7"
 
 echo "=== Ollama CLI Installer ==="
@@ -51,17 +51,17 @@ uv sync
 # Create .env from sample if not exists
 [ ! -f .env ] && cp .env.sample .env 2>/dev/null || true
 
-# Create wrapper script in ~/.local/bin so ollama-cli is on PATH
+# Create wrapper script in ~/.local/bin so cli-ollama is on PATH
 BIN_DIR="${HOME}/.local/bin"
 mkdir -p "$BIN_DIR"
 
-WRAPPER="$BIN_DIR/ollama-cli"
+WRAPPER="$BIN_DIR/cli-ollama"
 cat > "$WRAPPER" << 'WRAPPER_EOF'
 #!/bin/bash
-exec uv run --project "${HOME}/.ollama-cli" ollama-cli "$@"
+exec uv run --project "${HOME}/.cli-ollama" cli-ollama "$@"
 WRAPPER_EOF
 chmod +x "$WRAPPER"
-echo "Installed ollama-cli command to $WRAPPER"
+echo "Installed cli-ollama command to $WRAPPER"
 
 # Install Ollama if not present
 echo ""
@@ -109,7 +109,7 @@ echo ""
 # Check if ~/.local/bin is on PATH
 if echo "$PATH" | tr ':' '\n' | grep -qx "$BIN_DIR"; then
     echo "You can now run:"
-    echo "  ollama-cli --help"
+    echo "  cli-ollama --help"
 else
     echo "Add ~/.local/bin to your PATH by adding this to your shell profile (~/.bashrc or ~/.zshrc):"
     echo "  export PATH=\"\$HOME/.local/bin:\$PATH\""
@@ -118,12 +118,12 @@ else
     echo "  source ~/.bashrc"
     echo ""
     echo "After that, you can run:"
-    echo "  ollama-cli --help"
+    echo "  cli-ollama --help"
 fi
 echo ""
 echo "Start Ollama server (if not already running):"
 echo "  ollama serve"
 echo ""
 echo "Then start chatting:"
-echo "  ollama-cli"
+echo "  cli-ollama"
 echo ""

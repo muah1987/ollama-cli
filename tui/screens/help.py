@@ -8,7 +8,7 @@ from textual.screen import Screen
 from textual.widgets import Footer, Header, Markdown
 
 _HELP_TEXT = """\
-# ollama-cli Help
+# cli-ollama Help
 
 ## Chat
 Type a message and press **Enter** to send it to the AI.

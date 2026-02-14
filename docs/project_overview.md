@@ -39,7 +39,7 @@ Ollama CLI defaults to your local Ollama instance but can route requests to clou
 ANTHROPIC_API_KEY=sk-ant-...
 
 # Use it
-ollama-cli --provider claude run "explain this error"
+cli-ollama --provider claude run "explain this error"
 ```
 
 ### Gemini (Google)
@@ -49,7 +49,7 @@ ollama-cli --provider claude run "explain this error"
 GEMINI_API_KEY=AI...
 
 # Use it
-ollama-cli --provider gemini run "summarize this file"
+cli-ollama --provider gemini run "summarize this file"
 ```
 
 ### Codex (OpenAI)
@@ -59,7 +59,7 @@ ollama-cli --provider gemini run "summarize this file"
 OPENAI_API_KEY=sk-...
 
 # Use it
-ollama-cli --provider codex run "refactor this function"
+cli-ollama --provider codex run "refactor this function"
 ```
 
 ### Hugging Face
@@ -69,7 +69,7 @@ ollama-cli --provider codex run "refactor this function"
 HF_TOKEN=your-huggingface-token
 
 # Use it
-ollama-cli --provider hf run "answer this question"
+cli-ollama --provider hf run "answer this question"
 ```
 
 ### Provider Selection
@@ -81,7 +81,7 @@ You can set a default provider in `.env` or override per-command:
 OLLAMA_CLI_PROVIDER=claude
 
 # Override per-command
-ollama-cli --provider ollama run "quick local question"
+cli-ollama --provider ollama run "quick local question"
 ```
 
 ---
@@ -151,7 +151,7 @@ Development follows the ATLAS Workflow:
 ### Source Structure
 
 ```
-ollama-cli/
+cli-ollama/
   ollama_cmd/
     root.py              -- Main CLI entry point
     run.py               -- Run model with streaming
@@ -231,7 +231,7 @@ Please follow the existing code style and include tests for new functionality.
 ## Getting Help
 
 - Check the [Documentation Index](README.md)
-- File an issue on [GitHub](https://github.com/muah1987/ollama-cli/issues)
+- File an issue on [GitHub](https://github.com/muah1987/cli-ollama/issues)
 - Visit the [Ollama documentation](https://ollama.ai/docs)
 
 ---

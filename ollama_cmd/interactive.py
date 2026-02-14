@@ -220,24 +220,24 @@ _LLAMA_SPINNER_FRAMES = [
 ]
 
 _LLAMA_PLAN_SPINNER = [
-    "🦙📋 [ollama-cli] Assembling the herd...",
-    "🦙📋 [ollama-cli] Planning the trail...",
-    "🦙📋 [ollama-cli] Mapping the pasture...",
-    "🦙📋 [ollama-cli] Organizing the caravan...",
+    "🦙📋 [cli-ollama] Assembling the herd...",
+    "🦙📋 [cli-ollama] Planning the trail...",
+    "🦙📋 [cli-ollama] Mapping the pasture...",
+    "🦙📋 [cli-ollama] Organizing the caravan...",
 ]
 
 _LLAMA_BUILD_SPINNER = [
-    "🦙🔨 [ollama-cli] Building the barn...",
-    "🦙🔨 [ollama-cli] Hammering away...",
-    "🦙🔨 [ollama-cli] Laying foundation...",
-    "🦙🔨 [ollama-cli] Constructing...",
+    "🦙🔨 [cli-ollama] Building the barn...",
+    "🦙🔨 [cli-ollama] Hammering away...",
+    "🦙🔨 [cli-ollama] Laying foundation...",
+    "🦙🔨 [cli-ollama] Constructing...",
 ]
 
 _LLAMA_TEST_SPINNER = [
-    "🦙🧪 [ollama-cli] Running tests...",
-    "🦙🧪 [ollama-cli] Checking assertions...",
-    "🦙🧪 [ollama-cli] Validating output...",
-    "🦙🧪 [ollama-cli] Verifying results...",
+    "🦙🧪 [cli-ollama] Running tests...",
+    "🦙🧪 [cli-ollama] Checking assertions...",
+    "🦙🧪 [cli-ollama] Validating output...",
+    "🦙🧪 [cli-ollama] Verifying results...",
 ]
 
 
@@ -1472,7 +1472,7 @@ class InteractiveMode:
         return False
 
     def _cmd_init(self, _arg: str) -> bool:
-        """Initialize the current folder as an ollama-cli project.
+        """Initialize the current folder as a cli-ollama project.
 
         Creates ``OLLAMA.md`` (project memory) and ``.ollama/`` (local config
         directory) if they do not already exist.  Also detects instruction
@@ -1495,7 +1495,7 @@ class InteractiveMode:
                 f"# {project_name}\n\n"
                 "## Project Notes\n\n"
                 "<!-- Add project-specific context, conventions, and notes below. -->\n"
-                "<!-- ollama-cli reads this file to maintain project memory.       -->\n"
+                "<!-- cli-ollama reads this file to maintain project memory.       -->\n"
             )
             try:
                 _PROJECT_MEMORY_FILE.write_text(template, encoding="utf-8")

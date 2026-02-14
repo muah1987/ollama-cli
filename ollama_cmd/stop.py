@@ -68,7 +68,7 @@ def handle_stop(args: argparse.Namespace) -> None:
                 name = m.get("name", "unknown")
                 console.print(f"  - {name}")
 
-            console.print("\nSpecify a model to stop with: ollama-cli stop <model-name>")
+            console.print("\nSpecify a model to stop with: cli-ollama stop <model-name>")
             return
 
         except httpx.ConnectError:
@@ -94,7 +94,7 @@ def handle_stop(args: argparse.Namespace) -> None:
 
         if not is_running:
             console.print(f"[yellow]Warning:[/yellow] Model '{model_name}' does not appear to be running.")
-            console.print("List running models with: ollama-cli ps")
+            console.print("List running models with: cli-ollama ps")
             # Continue anyway to attempt cleanup
 
     except httpx.ConnectError:
@@ -150,12 +150,12 @@ def handle_stop(args: argparse.Namespace) -> None:
 def build_parser() -> argparse.ArgumentParser:
     """Build the stop command argument parser."""
     parser = argparse.ArgumentParser(
-        prog="ollama-cli stop",
+        prog="cli-ollama stop",
         description="Stop a running model",
         epilog="""
 Examples:
-  ollama-cli stop llama3.2
-  ollama-cli stop                   # List running models
+  cli-ollama stop llama3.2
+  cli-ollama stop                   # List running models
         """,
     )
     parser.add_argument(

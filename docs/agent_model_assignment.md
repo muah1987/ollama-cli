@@ -50,7 +50,7 @@ Users can also configure agent model assignments in `.ollama/settings.json`:
 Users can also specify agent model assignments directly in commands:
 
 ```bash
-ollama-cli --agent-model code:mistralai/Mistral-7B-Instruct-v0.3 --agent-provider code:hf run "Write a Python function"
+cli-ollama --agent-model code:mistralai/Mistral-7B-Instruct-v0.3 --agent-provider code:hf run "Write a Python function"
 ```
 
 ## Implementation Plan
@@ -210,7 +210,7 @@ export OLLAMA_CLI_AGENT_CODE_PROVIDER=hf
 export OLLAMA_CLI_AGENT_RESEARCH_MODEL=meta-llama/Meta-Llama-3-8B-Instruct
 export OLLAMA_CLI_AGENT_RESEARCH_PROVIDER=claude
 
-ollama-cli run "Write a Python function to calculate factorial"
+cli-ollama run "Write a Python function to calculate factorial"
 ```
 
 ### Setting Agent Models via Configuration File
@@ -235,7 +235,7 @@ Create `.ollama/settings.json`:
 ### Setting Agent Models Inline
 
 ```bash
-ollama-cli --agent-model code:mistralai/Mistral-7B-Instruct-v0.3 --agent-provider code:hf run "Write a Python function"
+cli-ollama --agent-model code:mistralai/Mistral-7B-Instruct-v0.3 --agent-provider code:hf run "Write a Python function"
 ```
 
 ## Orchestrator Auto-Allocation
