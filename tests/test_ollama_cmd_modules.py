@@ -265,10 +265,10 @@ class TestConfigCmdModule:
 
     @patch("ollama_cmd.config.get_config")
     def test_show_config_default(self, mock_cfg):
-        from api.config import OllamaCliConfig
+        from api.config import CliOllamaConfig
         from ollama_cmd.config import handle_config
 
-        mock_cfg.return_value = OllamaCliConfig()
+        mock_cfg.return_value = CliOllamaConfig()
         args = argparse.Namespace(action=None, key=None, value=None, json=False)
         handle_config(args)
 
@@ -438,10 +438,10 @@ class TestConfigCmdModule:
 
     @patch("ollama_cmd.config.get_config")
     def test_show_config_json(self, mock_cfg, capsys):
-        from api.config import OllamaCliConfig
+        from api.config import CliOllamaConfig
         from ollama_cmd.config import handle_config
 
-        mock_cfg.return_value = OllamaCliConfig()
+        mock_cfg.return_value = CliOllamaConfig()
         args = argparse.Namespace(action=None, key=None, value=None, json=True)
         handle_config(args)
         captured = capsys.readouterr()

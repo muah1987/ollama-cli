@@ -23,7 +23,7 @@ try:
 except ImportError:
     HAS_BYPASS = False
 
-from api.config import OllamaCliConfig, get_config, save_config
+from api.config import CliOllamaConfig, get_config, save_config
 
 console = Console()
 
@@ -80,10 +80,10 @@ def needs_onboarding() -> bool:
     return not cfg.onboarding_complete
 
 
-def run_onboarding() -> OllamaCliConfig:
+def run_onboarding() -> CliOllamaConfig:
     """Run the interactive first-time setup wizard.
 
-    Returns the updated :class:`OllamaCliConfig` (already persisted).
+    Returns the updated :class:`CliOllamaConfig` (already persisted).
     """
     cfg = get_config()
 

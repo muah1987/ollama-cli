@@ -19,13 +19,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from api.config import OllamaCliConfig
+    from api.config import CliOllamaConfig
 
 
 class BypassPermissions:
     """Manager for bypassing permissions and interactive prompts."""
 
-    def __init__(self, config: OllamaCliConfig):
+    def __init__(self, config: CliOllamaConfig):
         """Initialize the bypass permissions manager.
 
         Parameters
@@ -119,7 +119,7 @@ class BypassPermissions:
 _bypass_instance: BypassPermissions | None = None
 
 
-def get_bypass_manager(config: OllamaCliConfig | None = None) -> BypassPermissions:
+def get_bypass_manager(config: CliOllamaConfig | None = None) -> BypassPermissions:
     """Get the global bypass permissions manager instance.
 
     Parameters

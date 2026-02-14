@@ -8,8 +8,8 @@ This package contains:
 """
 
 from .errors import (
+    CliOllamaError,
     ConfigurationError,
-    OllamaCliError,
     OllamaConnectionError,
     OllamaError,
     OllamaModelNotFoundError,
@@ -37,7 +37,7 @@ from .provider_router import (
 
 __all__ = [
     # Unified error hierarchy
-    "OllamaCliError",
+    "CliOllamaError",
     "ConfigurationError",
     "SessionError",
     # Client

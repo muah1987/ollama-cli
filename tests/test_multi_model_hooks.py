@@ -24,25 +24,25 @@ class TestMultiModelConfig:
 
     def test_config_has_agent_models_field(self) -> None:
         """Config dataclass should have agent_models field."""
-        from api.config import OllamaCliConfig
+        from api.config import CliOllamaConfig
 
-        cfg = OllamaCliConfig()
+        cfg = CliOllamaConfig()
         assert hasattr(cfg, "agent_models")
         assert cfg.agent_models is None
 
     def test_config_has_hf_token_field(self) -> None:
         """Config dataclass should have hf_token field."""
-        from api.config import OllamaCliConfig
+        from api.config import CliOllamaConfig
 
-        cfg = OllamaCliConfig()
+        cfg = CliOllamaConfig()
         assert hasattr(cfg, "hf_token")
         assert cfg.hf_token == ""
 
     def test_config_has_gh_token_field(self) -> None:
         """Config dataclass should have gh_token field."""
-        from api.config import OllamaCliConfig
+        from api.config import CliOllamaConfig
 
-        cfg = OllamaCliConfig()
+        cfg = CliOllamaConfig()
         assert hasattr(cfg, "gh_token")
         assert cfg.gh_token == ""
 
@@ -72,9 +72,9 @@ class TestMultiModelConfig:
 
     def test_save_config_excludes_tokens(self) -> None:
         """save_config should not persist API keys or tokens."""
-        from api.config import OllamaCliConfig, save_config
+        from api.config import CliOllamaConfig, save_config
 
-        cfg = OllamaCliConfig(
+        cfg = CliOllamaConfig(
             hf_token="secret-hf",
             gh_token="secret-gh",
             anthropic_api_key="secret-anthropic",
@@ -95,9 +95,9 @@ class TestMultiModelConfig:
 
     def test_agent_models_loaded_from_settings(self) -> None:
         """agent_models should be loadable from settings.json."""
-        from api.config import OllamaCliConfig
+        from api.config import CliOllamaConfig
 
-        cfg = OllamaCliConfig()
+        cfg = CliOllamaConfig()
         cfg.agent_models = {
             "code": {"provider": "ollama", "model": "codestral:latest"},
             "review": {"provider": "claude", "model": "claude-sonnet"},
@@ -177,7 +177,7 @@ class TestProviderFallbackChain:
             "    async def chat(self, messages, model=None, **kw):\n"
             "        call_log.append((self.pname, model or ''))\n"
             "        raise ProviderError(self.pname)\n"
-            "for p in ('ollama','claude','gemini','codex','hf'):\n"
+            "for p in ('ollama','llamacpp','vllm','other','claude','gemini','codex','hf'):\n"
             "    router._providers[p] = FP(p)\n"
             "try:\n"
             "    asyncio.run(router.route('agent', [{'role':'user','content':'hi'}]))\n"
@@ -217,15 +217,16 @@ class TestProviderFallbackChain:
             "    async def chat(self, messages, model=None, **kw):\n"
             "        call_log.append((self.pname, model or ''))\n"
             "        raise ProviderError(self.pname)\n"
-            "for p in ('ollama','claude','gemini','codex','hf'):\n"
+            "for p in ('ollama','llamacpp','vllm','other','claude','gemini','codex','hf'):\n"
             "    router._providers[p] = FP(p)\n"
             "try:\n"
             "    asyncio.run(router.route('agent', [{'role':'user','content':'test'}]))\n"
             "except Exception:\n"
             "    pass\n"
             "assert call_log[0] == ('ollama','custom-model:latest'), f'first={call_log[0]}'\n"
-            "assert call_log[1][0] == 'claude'\n"
-            "assert call_log[1][1] == _DEFAULT_MODELS['claude'], f'claude got {call_log[1][1]!r}'\n"
+            "claude_entries = [(p,m) for p,m in call_log if p == 'claude']\n"
+            "assert len(claude_entries) == 1, f'claude not found in {call_log}'\n"
+            "assert claude_entries[0][1] == _DEFAULT_MODELS['claude'], f'claude got {claude_entries[0][1]!r}'\n"
             "print('OK')\n"
         )
         with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:

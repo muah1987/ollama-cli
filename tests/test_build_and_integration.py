@@ -1013,9 +1013,9 @@ class TestConfig:
         assert 0 < cfg.compact_threshold <= 1.0
 
     def test_config_has_all_fields(self) -> None:
-        from api.config import OllamaCliConfig
+        from api.config import CliOllamaConfig
 
-        cfg = OllamaCliConfig()
+        cfg = CliOllamaConfig()
         assert hasattr(cfg, "provider")
         assert hasattr(cfg, "ollama_model")
         assert hasattr(cfg, "context_length")
@@ -1094,10 +1094,10 @@ class TestOllamaAPIKeySupport:
         assert "authorization" not in received_headers
 
     def test_config_has_ollama_api_key(self) -> None:
-        """OllamaCliConfig should have ollama_api_key field."""
-        from api.config import OllamaCliConfig
+        """CliOllamaConfig should have ollama_api_key field."""
+        from api.config import CliOllamaConfig
 
-        cfg = OllamaCliConfig()
+        cfg = CliOllamaConfig()
         assert hasattr(cfg, "ollama_api_key")
         assert cfg.ollama_api_key == ""
 
@@ -1111,9 +1111,9 @@ class TestOllamaAPIKeySupport:
 
     def test_config_excludes_api_key_from_save(self, tmp_path) -> None:
         """ollama_api_key should NOT be persisted to config.json."""
-        from api.config import OllamaCliConfig, save_config
+        from api.config import CliOllamaConfig, save_config
 
-        cfg = OllamaCliConfig(ollama_api_key="secret-key")
+        cfg = CliOllamaConfig(ollama_api_key="secret-key")
         path = save_config(cfg, tmp_path / "config.json")
         saved = json.loads(Path(path).read_text())
         assert "ollama_api_key" not in saved

@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from unittest.mock import patch
 
-from api.config import OllamaCliConfig, save_config
+from api.config import CliOllamaConfig, save_config
 from ollama_cmd.onboarding import needs_onboarding, run_onboarding
 
 
@@ -13,19 +13,19 @@ class TestNeedsOnboarding:
 
     def test_needs_onboarding_when_not_completed(self) -> None:
         """Returns True when onboarding_complete is False."""
-        cfg = OllamaCliConfig(onboarding_complete=False)
+        cfg = CliOllamaConfig(onboarding_complete=False)
         with patch("ollama_cmd.onboarding.get_config", return_value=cfg):
             assert needs_onboarding() is True
 
     def test_no_onboarding_when_completed(self) -> None:
         """Returns False when onboarding_complete is True."""
-        cfg = OllamaCliConfig(onboarding_complete=True)
+        cfg = CliOllamaConfig(onboarding_complete=True)
         with patch("ollama_cmd.onboarding.get_config", return_value=cfg):
             assert needs_onboarding() is False
 
     def test_needs_onboarding_reads_from_config_json(self, tmp_path: Path) -> None:
         """Onboarding flag persists via config.json round-trip."""
-        cfg = OllamaCliConfig(onboarding_complete=True)
+        cfg = CliOllamaConfig(onboarding_complete=True)
         config_path = tmp_path / "config.json"
         save_config(cfg, config_path)
 
@@ -39,7 +39,7 @@ class TestRunOnboarding:
 
     def test_run_onboarding_sets_provider_and_model(self, tmp_path: Path) -> None:
         """Wizard saves provider, model, and marks complete."""
-        cfg = OllamaCliConfig()
+        cfg = CliOllamaConfig()
         config_path = tmp_path / "config.json"
 
         with (
@@ -63,7 +63,7 @@ class TestRunOnboarding:
 
     def test_run_onboarding_ollama_asks_host(self, tmp_path: Path) -> None:
         """When ollama provider is chosen, wizard asks for host URL before API key."""
-        cfg = OllamaCliConfig()
+        cfg = CliOllamaConfig()
         config_path = tmp_path / "config.json"
 
         with (
@@ -87,7 +87,7 @@ class TestRunOnboarding:
 
     def test_run_onboarding_cloud_provider_sets_api_key(self, tmp_path: Path) -> None:
         """When a cloud provider is chosen, API key is stored in config."""
-        cfg = OllamaCliConfig()
+        cfg = CliOllamaConfig()
         config_path = tmp_path / "config.json"
 
         with (
@@ -110,7 +110,7 @@ class TestRunOnboarding:
 
     def test_run_onboarding_numeric_provider_selection(self, tmp_path: Path) -> None:
         """Wizard accepts a 1-based number to choose a provider."""
-        cfg = OllamaCliConfig()
+        cfg = CliOllamaConfig()
         config_path = tmp_path / "config.json"
 
         with (
@@ -134,7 +134,7 @@ class TestRunOnboarding:
 
     def test_run_onboarding_fetches_models_for_cloud_provider(self, tmp_path: Path) -> None:
         """When a cloud provider returns models, wizard shows them for selection."""
-        cfg = OllamaCliConfig()
+        cfg = CliOllamaConfig()
         config_path = tmp_path / "config.json"
         fetched = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-1.5-pro"]
 
@@ -158,7 +158,7 @@ class TestRunOnboarding:
 
     def test_run_onboarding_model_fetch_failure_falls_back(self, tmp_path: Path) -> None:
         """When model fetching fails, wizard falls back to manual entry."""
-        cfg = OllamaCliConfig()
+        cfg = CliOllamaConfig()
         config_path = tmp_path / "config.json"
 
         with (
@@ -181,7 +181,7 @@ class TestRunOnboarding:
 
     def test_run_onboarding_model_selection_by_name(self, tmp_path: Path) -> None:
         """User can type a model name from the fetched list."""
-        cfg = OllamaCliConfig()
+        cfg = CliOllamaConfig()
         config_path = tmp_path / "config.json"
         fetched = ["gpt-4.1", "gpt-4.1-mini", "gpt-4o"]
 
@@ -205,7 +205,7 @@ class TestRunOnboarding:
 
     def test_run_onboarding_ollama_with_api_key_fetches_models(self, tmp_path: Path) -> None:
         """When ollama is chosen with an API key, models are fetched from the server."""
-        cfg = OllamaCliConfig()
+        cfg = CliOllamaConfig()
         config_path = tmp_path / "config.json"
         fetched = ["llama3.2:latest", "codestral:latest", "qwen2:7b"]
 
@@ -232,7 +232,7 @@ class TestRunOnboarding:
 
     def test_run_onboarding_ollama_api_key_not_saved_to_disk(self, tmp_path: Path) -> None:
         """Ollama API key must not be persisted to config.json on disk."""
-        cfg = OllamaCliConfig()
+        cfg = CliOllamaConfig()
         config_path = tmp_path / "config.json"
 
         with (

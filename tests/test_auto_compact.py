@@ -418,14 +418,14 @@ def test_compact_command_in_help_output() -> None:
 
 
 def test_config_has_compact_fields() -> None:
-    """OllamaCliConfig has auto_compact and compact_threshold fields."""
+    """CliOllamaConfig has auto_compact and compact_threshold fields."""
     result = subprocess.run(
         [
             sys.executable,
             "-c",
             (
-                "from api.config import OllamaCliConfig; "
-                "c = OllamaCliConfig(); "
+                "from api.config import CliOllamaConfig; "
+                "c = CliOllamaConfig(); "
                 "print(c.auto_compact, c.compact_threshold)"
             ),
         ],

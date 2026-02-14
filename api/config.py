@@ -25,7 +25,7 @@ from dotenv import load_dotenv
 
 
 @dataclass
-class OllamaCliConfig:
+class CliOllamaConfig:
     """Central configuration for the CLI."""
 
     ollama_host: str = "http://localhost:11434"
@@ -110,7 +110,7 @@ def _float_from_env(value: str | None, default: float) -> float:
 # ---------------------------------------------------------------------------
 
 
-def load_config(env_path: str | Path | None = None, config_json_path: str | Path | None = None) -> OllamaCliConfig:
+def load_config(env_path: str | Path | None = None, config_json_path: str | Path | None = None) -> CliOllamaConfig:
     """Load configuration from environment variables, then overlay from config.json.
 
     Parameters
@@ -135,55 +135,55 @@ def load_config(env_path: str | Path | None = None, config_json_path: str | Path
         load_dotenv(env_path)
 
     # Build config from env vars
-    cfg = OllamaCliConfig(
-        ollama_host=os.getenv("OLLAMA_HOST", OllamaCliConfig.ollama_host),
-        ollama_model=os.getenv("OLLAMA_MODEL", OllamaCliConfig.ollama_model),
-        provider=os.getenv("OLLAMA_CLI_PROVIDER", OllamaCliConfig.provider),
-        context_length=_int_from_env(os.getenv("OLLAMA_CONTEXT_LENGTH"), OllamaCliConfig.context_length),
-        auto_compact=_bool_from_env(os.getenv("AUTO_COMPACT"), OllamaCliConfig.auto_compact),
-        compact_threshold=_float_from_env(os.getenv("COMPACT_THRESHOLD"), OllamaCliConfig.compact_threshold),
-        cloud_host=os.getenv("OLLAMA_CLOUD_HOST", OllamaCliConfig.cloud_host),
-        cloud_api_key=os.getenv("OLLAMA_CLOUD_API_KEY", OllamaCliConfig.cloud_api_key),
-        ollama_api_key=os.getenv("OLLAMA_API_KEY", OllamaCliConfig.ollama_api_key),
-        anthropic_api_key=os.getenv("ANTHROPIC_API_KEY", OllamaCliConfig.anthropic_api_key),
-        gemini_api_key=os.getenv("GEMINI_API_KEY", OllamaCliConfig.gemini_api_key),
-        openai_api_key=os.getenv("OPENAI_API_KEY", OllamaCliConfig.openai_api_key),
-        hf_token=os.getenv("HF_TOKEN", OllamaCliConfig.hf_token),
-        gh_token=os.getenv("GH_TOKEN", OllamaCliConfig.gh_token),
-        llamacpp_host=os.getenv("LLAMACPP_HOST", OllamaCliConfig.llamacpp_host),
-        llamacpp_api_key=os.getenv("LLAMACPP_API_KEY", OllamaCliConfig.llamacpp_api_key),
-        llamacpp_model=os.getenv("LLAMACPP_MODEL", OllamaCliConfig.llamacpp_model),
-        vllm_host=os.getenv("VLLM_HOST", OllamaCliConfig.vllm_host),
-        vllm_api_key=os.getenv("VLLM_API_KEY", OllamaCliConfig.vllm_api_key),
-        vllm_model=os.getenv("VLLM_MODEL", OllamaCliConfig.vllm_model),
+    cfg = CliOllamaConfig(
+        ollama_host=os.getenv("OLLAMA_HOST", CliOllamaConfig.ollama_host),
+        ollama_model=os.getenv("OLLAMA_MODEL", CliOllamaConfig.ollama_model),
+        provider=os.getenv("OLLAMA_CLI_PROVIDER", CliOllamaConfig.provider),
+        context_length=_int_from_env(os.getenv("OLLAMA_CONTEXT_LENGTH"), CliOllamaConfig.context_length),
+        auto_compact=_bool_from_env(os.getenv("AUTO_COMPACT"), CliOllamaConfig.auto_compact),
+        compact_threshold=_float_from_env(os.getenv("COMPACT_THRESHOLD"), CliOllamaConfig.compact_threshold),
+        cloud_host=os.getenv("OLLAMA_CLOUD_HOST", CliOllamaConfig.cloud_host),
+        cloud_api_key=os.getenv("OLLAMA_CLOUD_API_KEY", CliOllamaConfig.cloud_api_key),
+        ollama_api_key=os.getenv("OLLAMA_API_KEY", CliOllamaConfig.ollama_api_key),
+        anthropic_api_key=os.getenv("ANTHROPIC_API_KEY", CliOllamaConfig.anthropic_api_key),
+        gemini_api_key=os.getenv("GEMINI_API_KEY", CliOllamaConfig.gemini_api_key),
+        openai_api_key=os.getenv("OPENAI_API_KEY", CliOllamaConfig.openai_api_key),
+        hf_token=os.getenv("HF_TOKEN", CliOllamaConfig.hf_token),
+        gh_token=os.getenv("GH_TOKEN", CliOllamaConfig.gh_token),
+        llamacpp_host=os.getenv("LLAMACPP_HOST", CliOllamaConfig.llamacpp_host),
+        llamacpp_api_key=os.getenv("LLAMACPP_API_KEY", CliOllamaConfig.llamacpp_api_key),
+        llamacpp_model=os.getenv("LLAMACPP_MODEL", CliOllamaConfig.llamacpp_model),
+        vllm_host=os.getenv("VLLM_HOST", CliOllamaConfig.vllm_host),
+        vllm_api_key=os.getenv("VLLM_API_KEY", CliOllamaConfig.vllm_api_key),
+        vllm_model=os.getenv("VLLM_MODEL", CliOllamaConfig.vllm_model),
         vllm_tensor_parallel_size=_int_from_env(
-            os.getenv("VLLM_TENSOR_PARALLEL_SIZE"), OllamaCliConfig.vllm_tensor_parallel_size
+            os.getenv("VLLM_TENSOR_PARALLEL_SIZE"), CliOllamaConfig.vllm_tensor_parallel_size
         ),
-        other_provider_host=os.getenv("OTHER_PROVIDER_HOST", OllamaCliConfig.other_provider_host),
-        other_provider_api_key=os.getenv("OTHER_PROVIDER_API_KEY", OllamaCliConfig.other_provider_api_key),
-        other_provider_model=os.getenv("OTHER_PROVIDER_MODEL", OllamaCliConfig.other_provider_model),
-        search_api_key=os.getenv("SEARCH_API_KEY", OllamaCliConfig.search_api_key),
-        search_api_provider=os.getenv("SEARCH_API_PROVIDER", OllamaCliConfig.search_api_provider),
-        hooks_enabled=_bool_from_env(os.getenv("HOOKS_ENABLED"), OllamaCliConfig.hooks_enabled),
-        intent_enabled=_bool_from_env(os.getenv("OLLAMA_CLI_INTENT_ENABLED"), OllamaCliConfig.intent_enabled),
+        other_provider_host=os.getenv("OTHER_PROVIDER_HOST", CliOllamaConfig.other_provider_host),
+        other_provider_api_key=os.getenv("OTHER_PROVIDER_API_KEY", CliOllamaConfig.other_provider_api_key),
+        other_provider_model=os.getenv("OTHER_PROVIDER_MODEL", CliOllamaConfig.other_provider_model),
+        search_api_key=os.getenv("SEARCH_API_KEY", CliOllamaConfig.search_api_key),
+        search_api_provider=os.getenv("SEARCH_API_PROVIDER", CliOllamaConfig.search_api_provider),
+        hooks_enabled=_bool_from_env(os.getenv("HOOKS_ENABLED"), CliOllamaConfig.hooks_enabled),
+        intent_enabled=_bool_from_env(os.getenv("OLLAMA_CLI_INTENT_ENABLED"), CliOllamaConfig.intent_enabled),
         intent_confidence_threshold=_float_from_env(
-            os.getenv("OLLAMA_CLI_INTENT_THRESHOLD"), OllamaCliConfig.intent_confidence_threshold
+            os.getenv("OLLAMA_CLI_INTENT_THRESHOLD"), CliOllamaConfig.intent_confidence_threshold
         ),
         intent_llm_fallback=_bool_from_env(
-            os.getenv("OLLAMA_CLI_INTENT_LLM_FALLBACK"), OllamaCliConfig.intent_llm_fallback
+            os.getenv("OLLAMA_CLI_INTENT_LLM_FALLBACK"), CliOllamaConfig.intent_llm_fallback
         ),
         intent_show_detection=_bool_from_env(
-            os.getenv("OLLAMA_CLI_INTENT_SHOW"), OllamaCliConfig.intent_show_detection
+            os.getenv("OLLAMA_CLI_INTENT_SHOW"), CliOllamaConfig.intent_show_detection
         ),
         intent_default_agent_type=os.getenv("OLLAMA_CLI_INTENT_DEFAULT_AGENT"),
-        tui_theme=os.getenv("OLLAMA_CLI_TUI_THEME", OllamaCliConfig.tui_theme),
-        tui_sidebar_visible=_bool_from_env(os.getenv("OLLAMA_CLI_TUI_SIDEBAR"), OllamaCliConfig.tui_sidebar_visible),
-        tui_show_timestamps=_bool_from_env(os.getenv("OLLAMA_CLI_TUI_TIMESTAMPS"), OllamaCliConfig.tui_show_timestamps),
-        tui_auto_scroll=_bool_from_env(os.getenv("OLLAMA_CLI_TUI_AUTOSCROLL"), OllamaCliConfig.tui_auto_scroll),
-        planning_mode=_bool_from_env(os.getenv("OLLAMA_CLI_PLANNING_MODE"), OllamaCliConfig.planning_mode),
-        work_mode=_bool_from_env(os.getenv("OLLAMA_CLI_WORK_MODE"), OllamaCliConfig.work_mode),
+        tui_theme=os.getenv("OLLAMA_CLI_TUI_THEME", CliOllamaConfig.tui_theme),
+        tui_sidebar_visible=_bool_from_env(os.getenv("OLLAMA_CLI_TUI_SIDEBAR"), CliOllamaConfig.tui_sidebar_visible),
+        tui_show_timestamps=_bool_from_env(os.getenv("OLLAMA_CLI_TUI_TIMESTAMPS"), CliOllamaConfig.tui_show_timestamps),
+        tui_auto_scroll=_bool_from_env(os.getenv("OLLAMA_CLI_TUI_AUTOSCROLL"), CliOllamaConfig.tui_auto_scroll),
+        planning_mode=_bool_from_env(os.getenv("OLLAMA_CLI_PLANNING_MODE"), CliOllamaConfig.planning_mode),
+        work_mode=_bool_from_env(os.getenv("OLLAMA_CLI_WORK_MODE"), CliOllamaConfig.work_mode),
         bypass_permissions=_bool_from_env(
-            os.getenv("OLLAMA_CLI_BYPASS_PERMISSIONS"), OllamaCliConfig.bypass_permissions
+            os.getenv("OLLAMA_CLI_BYPASS_PERMISSIONS"), CliOllamaConfig.bypass_permissions
         ),
     )
 
@@ -274,7 +274,7 @@ def load_config(env_path: str | Path | None = None, config_json_path: str | Path
     return cfg
 
 
-def save_config(config: OllamaCliConfig, path: str | Path | None = None) -> Path:
+def save_config(config: CliOllamaConfig, path: str | Path | None = None) -> Path:
     """Save the config to a JSON file.
 
     Parameters
@@ -327,10 +327,10 @@ def save_config(config: OllamaCliConfig, path: str | Path | None = None) -> Path
 # Singleton accessor
 # ---------------------------------------------------------------------------
 
-_config_instance: OllamaCliConfig | None = None
+_config_instance: CliOllamaConfig | None = None
 
 
-def get_config() -> OllamaCliConfig:
+def get_config() -> CliOllamaConfig:
     """Return the singleton config, loading it on first access."""
     global _config_instance
     if _config_instance is None:

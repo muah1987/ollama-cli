@@ -173,3 +173,27 @@ cli-ollama/
 - Duration: 3s
 - Messages: 1
 - Tokens: 1,410 (prompt: 1,402, completion: 8)
+
+
+<!-- session:c3682ca8747c -->
+### Session c3682ca8747c
+- Model: llama3.2 (ollama)
+- Duration: 3s
+- Messages: 1
+- Tokens: 1,450 (prompt: 1,442, completion: 8)
+
+
+<!-- session:c62a13f4f2c3 -->
+### Session c62a13f4f2c3
+- Model: llama3.2 (ollama)
+- Duration: 3s
+- Messages: 1
+- Tokens: 1,490 (prompt: 1,482, completion: 8)
+
+
+<!-- session:8dadafdf517f -->
+### Session 8dadafdf517f
+- Model: llama3.2 (ollama)
+- Duration: 3s
+- Messages: 1
+- Tokens: 1,530 (prompt: 1,522, completion: 8)
