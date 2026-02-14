@@ -72,7 +72,7 @@ class InputArea(Widget):
 
     def compose(self) -> ComposeResult:
         with Vertical(id="input-box"):
-            yield Static("› Type your message or /command", id="input-hint")
+            yield Static("› Type your message or @path/to/file", id="input-hint")
             yield Input(placeholder="> ", id="chat-input")
 
     def on_input_submitted(self, event: Input.Submitted) -> None:

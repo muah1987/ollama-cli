@@ -44,9 +44,9 @@ class StatusPanel(Widget):
     }
 
     StatusPanel #status-separator {
-        color: #30363d;
+        color: #b2a266;
         height: 1;
-        border-top: solid #30363d;
+        border-top: solid #b2a266;
     }
 
     StatusPanel #status-hint {
@@ -120,18 +120,15 @@ class StatusPanel(Widget):
 
         cwd_short = os.path.basename(os.getcwd()) or "~"
 
-        parts = [
-            f"[{self.model_name}]",
-            f"{pct_str} used",
-            progress,
-            f"{remaining_str} left",
-        ]
+        # Build the line: [model] | X.X% used |bar| ~Nk left | uuid | cwd: path
+        # The progress bar already has pipe delimiters, so assemble manually
+        line = f"[{self.model_name}] | {pct_str} used {progress} {remaining_str} left"
         if self.session_id:
-            parts.append(self.session_id[:self._SESSION_ID_DISPLAY_LEN])
-        parts.append(f"cwd: {cwd_short}")
+            line += f" | {self.session_id[:self._SESSION_ID_DISPLAY_LEN]}"
+        line += f" | cwd: {cwd_short}"
         if self.job_status and self.job_status != "idle":
-            parts.append(f"● {self.job_status}")
-        return " | ".join(parts)
+            line += f" | \u25cf {self.job_status}"
+        return line
 
     def watch_model_name(self, value: str) -> None:
         self._update_hint(value)
