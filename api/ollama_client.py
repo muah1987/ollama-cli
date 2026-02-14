@@ -37,7 +37,6 @@ import httpx
 
 from .errors import OllamaConnectionError, OllamaError, OllamaModelNotFoundError
 
-
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
