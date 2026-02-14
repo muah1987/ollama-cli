@@ -4,10 +4,12 @@ The BOTTOM zone is persistent (never scrolls) and shows:
   Line 1: separator
   Line 2: hint / tip line
   Line 3: keyboard shortcuts
-  Line 4: model | context% | remaining tokens
+  Line 4: model | context% | progress bar | remaining tokens | uuid | cwd
 """
 
 from __future__ import annotations
+
+import os
 
 from textual.app import ComposeResult
 from textual.containers import Vertical
@@ -97,20 +99,36 @@ class StatusPanel(Widget):
             )
 
     def _build_metrics_text(self) -> str:
-        """Build the metrics line: [model] | X.X% used | ~Nk left | session_id."""
-        pct = f"{self.context_pct:.1%}"
+        """Build the metrics line with progress bar, per the reference layout.
+
+        Format: [model] | X.X% used |##------%| ~Nk left | uuid | cwd: path
+        """
+        pct = self.context_pct
+        pct_str = f"{pct:.1%}"
+
+        # Progress bar: 16 chars wide
+        bar_width = 16
+        filled = int(pct * bar_width)
+        bar = "#" * filled + "-" * (bar_width - filled - 1) + "%"
+        progress = f"|{bar}|"
+
         remaining = max(0, self.context_max - self.token_count)
         if remaining >= 1000:
             remaining_str = f"~{remaining / 1000:.1f}k"
         else:
             remaining_str = f"~{remaining}"
+
+        cwd_short = os.path.basename(os.getcwd()) or "~"
+
         parts = [
             f"[{self.model_name}]",
-            f"{pct} used",
+            f"{pct_str} used",
+            progress,
             f"{remaining_str} left",
         ]
         if self.session_id:
             parts.append(self.session_id[:self._SESSION_ID_DISPLAY_LEN])
+        parts.append(f"cwd: {cwd_short}")
         if self.job_status and self.job_status != "idle":
             parts.append(f"● {self.job_status}")
         return " | ".join(parts)

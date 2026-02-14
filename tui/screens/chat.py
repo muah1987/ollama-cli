@@ -44,7 +44,7 @@ _BANNER_WIDTH = max(len(line) for line in _BANNER_LINES)
 _DEFAULT_MODEL = "llama3.2"
 
 
-def _build_banner(session=None) -> str:
+def _build_banner(session=None, warnings: list[str] | None = None) -> str:
     """Build the TOP zone banner with side info next to the ASCII art."""
     try:
         from importlib.metadata import version as pkg_version
@@ -57,7 +57,8 @@ def _build_banner(session=None) -> str:
     provider = getattr(session, "provider", "ollama") if session else "ollama"
     host = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
     now = datetime.datetime.now(tz=datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    cwd = os.path.basename(os.getcwd()) or "~"
+    cwd_path = os.getcwd()
+    cwd_short = os.path.basename(cwd_path) or "~"
 
     # Context size from session or default
     ctx = "128k"
@@ -66,20 +67,38 @@ def _build_banner(session=None) -> str:
         if hasattr(cm, "max_tokens"):
             ctx = f"{cm.max_tokens // 1000}k"
 
+    # Check for OLLAMA.md size warning
+    warning_line = ""
+    memory_line = ""
+    ollama_md = os.path.join(cwd_path, "OLLAMA.md")
+    if os.path.isfile(ollama_md):
+        try:
+            size = os.path.getsize(ollama_md)
+            chars = size  # approximate chars ≈ bytes for UTF-8 text
+            limit = 40_000
+            if chars > limit:
+                warning_line = (
+                    f"⚠ large OLLAMA.md may impact performance "
+                    f"({chars / 1000:.1f}k chars > {limit / 1000:.1f}k)"
+                )
+                memory_line = "• /memory to edit"
+        except OSError:
+            pass
+
     side_info = [
         f"Ollama CLI v{ver}",
         f"Model: {model}  •  Context: {ctx}",
         f"Runtime: {provider}  •  API: {host}",
-        f"{now}  •  cwd: {cwd}",
-        "",
-        "",
+        f"{now}  •  cwd: {cwd_short}",
+        warning_line,
+        memory_line,
     ]
 
     # Combine banner lines with side info
     lines = []
     for i, art_line in enumerate(_BANNER_LINES):
         padded = art_line.ljust(_BANNER_WIDTH)
-        info = f"   {side_info[i]}" if i < len(side_info) else ""
+        info = f"   {side_info[i]}" if i < len(side_info) and side_info[i] else ""
         lines.append(f"{padded}{info}")
 
     # Extra line for tip below banner
@@ -88,6 +107,21 @@ def _build_banner(session=None) -> str:
     )
 
     return "\n".join(lines)
+
+
+def _build_notification_boxes() -> list[str]:
+    """Build notification boxes shown between tips and the input area."""
+    boxes: list[str] = []
+
+    # Home directory warning
+    home = os.path.expanduser("~")
+    if os.getcwd() == home:
+        boxes.append(
+            "Warning: running in your home directory.\n"
+            "This warning can be disabled in /settings"
+        )
+
+    return boxes
 
 
 class ChatScreen(Screen):
@@ -112,6 +146,14 @@ class ChatScreen(Screen):
     .banner-tips {
         color: #484f58;
         padding: 1 2 0 2;
+    }
+
+    .notification-box {
+        border: round #30363d;
+        background: #161b22;
+        color: #e6edf3;
+        padding: 0 2;
+        margin: 1 2 0 2;
     }
 
     #message-area {
@@ -146,13 +188,19 @@ class ChatScreen(Screen):
             "3. /help for more information."
         )
 
+        # Build notification boxes
+        notification_widgets: list[Static] = []
+        for box_text in _build_notification_boxes():
+            notification_widgets.append(Static(box_text, classes="notification-box"))
+
         # ── TOP zone: ASCII banner with side info (scrolls away) ──
+        top_children = [
+            Static(banner_text, id="ascii-banner"),
+            Static(tips, classes="banner-tips"),
+            *notification_widgets,
+        ]
         yield ScrollableContainer(
-            Vertical(
-                Static(banner_text, id="ascii-banner"),
-                Static(tips, classes="banner-tips"),
-                id="top-zone",
-            ),
+            Vertical(*top_children, id="top-zone"),
             id="message-area",
         )
 
