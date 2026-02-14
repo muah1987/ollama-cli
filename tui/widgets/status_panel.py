@@ -106,10 +106,10 @@ class StatusPanel(Widget):
         pct = self.context_pct
         pct_str = f"{pct:.1%}"
 
-        # Progress bar: 16 chars wide
-        bar_width = 16
-        filled = int(pct * bar_width)
-        bar = "#" * filled + "-" * (bar_width - filled - 1) + "%"
+        # Progress bar: 16 display chars (N filled '#' + M empty '-' + '%')
+        bar_total = 16
+        filled = min(int(pct * (bar_total - 1)), bar_total - 1)
+        bar = "#" * filled + "-" * (bar_total - 1 - filled) + "%"
         progress = f"|{bar}|"
 
         remaining = max(0, self.context_max - self.token_count)

@@ -73,8 +73,8 @@ def _build_banner(session=None, warnings: list[str] | None = None) -> str:
     ollama_md = os.path.join(cwd_path, "OLLAMA.md")
     if os.path.isfile(ollama_md):
         try:
-            size = os.path.getsize(ollama_md)
-            chars = size  # approximate chars ≈ bytes for UTF-8 text
+            with open(ollama_md, encoding="utf-8", errors="replace") as fh:
+                chars = len(fh.read())
             limit = 40_000
             if chars > limit:
                 warning_line = (
