@@ -19,21 +19,27 @@ Current task priorities and pending work for the Ollama CLI project.
 - [x] Update pyproject.toml with all dependencies, `skills` in wheel, classifiers, URLs
 - [x] Agent communication bus (`runner/agent_comm.py`)
 - [x] Memory layer (`runner/memory_layer.py`)
-- [x] Interactive REPL with 25+ slash commands (`ollama_cmd/interactive.py`)
+- [x] Interactive REPL with 30+ slash commands (`tui/command_processor.py`)
 - [x] Session persistence with save/load/resume
 - [x] Auto-compact context management at 85% threshold
 - [x] Token tracking and cost estimation across all providers
+- [x] Unified error hierarchy (`api/errors.py`) with user-friendly messages
+- [x] Coverage badges (CI, Codecov, Python, License) in README
+- [x] Team completion loop (`/complete_w_team`) with autonomous command execution
+- [x] Enhanced intent classifier with `team` and `research` agent types
+- [x] System workflow documentation (`docs/SYSTEM_WORKFLOW.md`)
 
 ### Infrastructure — Completed
 - [x] `install.sh` — automatic Ollama installation script
 - [x] `.ollama/hooks/install_ollama.py` — installation hook
-- [x] `.github/workflows/build-test.yml` — runs tests, lint, type check, structure validation
+- [x] `.github/workflows/build-test.yml` — runs tests, lint, security scan, coverage, structure validation
 - [x] `.github/workflows/autorelease.yml` — automated releases
 - [x] `.github/workflows/release.yml` — manual release workflow
 - [x] `.github/workflows/pypi-publish.yml` — PyPI publishing
 - [x] `.github/workflows/auto-merge-dependabot.yml` — auto-merge Dependabot PRs
 - [x] `.github/dependabot.yml` — dependency update config
 - [x] `conftest.py` — pytest configuration with importlib mode
+- [x] `.pre-commit-config.yaml` — ruff, black, mypy, bandit, pre-commit hooks
 
 ### Commands — Implemented
 - [x] `interactive` / `chat` / `i` — interactive REPL (fully implemented)
@@ -64,7 +70,7 @@ Current task priorities and pending work for the Ollama CLI project.
 - [ ] Thunderbolt<>RDMA driver — transport layer (framework only)
 - [ ] Network<>RDMA driver — transport layer (framework only)
 
-### Tests — 314 passing, 4 skipped (18 test files)
+### Tests — 1,169 passing, 4 skipped (38+ test files)
 - [x] `test_token_counter.py` — token counting for all providers
 - [x] `test_subagent_scenarios.py` — nested sub-agents and context compression
 - [x] `test_cli_integration.py` — CLI integration tests
@@ -83,6 +89,18 @@ Current task priorities and pending work for the Ollama CLI project.
 - [x] `test_mcp_client.py` — MCP client and server management
 - [x] `test_commands_implemented.py` — pull, config, status command tests
 - [x] `test_chain_controller.py` — chain controller and wave orchestration
+- [x] `test_error_hierarchy.py` — unified error hierarchy tests
+- [x] `test_tui_app.py` — Textual TUI application tests
+- [x] `test_tui_widgets.py` — TUI widget tests
+- [x] `test_command_processor.py` — TUI command processor tests
+- [x] `test_workspace_init.py` — workspace initialization tests
+- [x] `test_intent_classifier.py` — intent classification tests
+- [x] `test_model_session.py` — model session tests
+- [x] `test_onboarding.py` — onboarding flow tests
+- [x] `test_hook_runner.py` — hook runner tests
+- [x] `test_provider_router.py` — provider routing tests
+- [x] `test_skills_tools.py` — skills and tools tests
+- [x] `test_team_completion.py` — team completion loop and autonomous command execution
 
 ### Documentation — Complete (15 docs + 6 root files)
 - [x] `README.md` — project overview with all features
@@ -120,6 +138,13 @@ Current task priorities and pending work for the Ollama CLI project.
 - [x] Implement `status` CLI command (currently REPL-only via `/status`)
 - [x] Wire all command modules to root.py (show, create, rm, cp, ps, stop)
 - [x] Add code coverage reporting to CI
+- [x] Create unified error hierarchy (`api/errors.py`)
+- [x] Add security scanning to CI (bandit)
+- [x] Add coverage and CI badges to README
+- [x] Create `/complete_w_team` agentic sub-agent completion loop
+- [x] Add autonomous command execution to team completion loop
+- [x] Add `team` and `research` agent types to intent classifier
+- [x] Create system workflow documentation (`docs/SYSTEM_WORKFLOW.md`)
 
 ### Medium Term
 - [ ] RDMA transport drivers (USB, Thunderbolt, Network) — real hardware integration
@@ -144,5 +169,5 @@ Current task priorities and pending work for the Ollama CLI project.
 
 ---
 
-*Last updated: 2026-02-12*
-*314 tests passing | 15 hook scripts | 25+ REPL commands | 5 providers | 4 MCP servers*
+*Last updated: 2026-02-14*
+*1,169 tests passing | 15 hook scripts | 30+ REPL commands | 5 providers | 4 MCP servers | unified error hierarchy | team completion loop*

@@ -1,5 +1,10 @@
 # Ollama CLI
 
+[![Build & Test](https://github.com/muah1987/ollama-cli/actions/workflows/build-test.yml/badge.svg)](https://github.com/muah1987/ollama-cli/actions/workflows/build-test.yml)
+[![codecov](https://codecov.io/gh/muah1987/ollama-cli/branch/main/graph/badge.svg)](https://codecov.io/gh/muah1987/ollama-cli)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 An open-source AI coding assistant with Textual TUI interface that runs in your terminal, powered by [Ollama](https://ollama.ai) with multi-provider support for Claude, Gemini, OpenAI Codex, and Hugging Face.
 
 <p align="center">

@@ -100,6 +100,11 @@ COMMAND_REGISTRY: dict[str, tuple[str, str, str]] = {
         "Generate implementation plan (alias)",
         "Agents",
     ),
+    "/complete_w_team": (
+        "_cmd_complete_w_team",
+        "Team plan-then-build completion loop",
+        "Agents",
+    ),
     "/update_status_line": (
         "_cmd_update_status_line",
         "Update status line",
@@ -1415,6 +1420,65 @@ class CommandProcessor:
             )
 
         return CommandResult(output=lines)
+
+    async def _cmd_complete_w_team(self, arg: str) -> CommandResult:
+        """Run the team plan-then-build completion loop.
+
+        Launches a multi-phase agentic pipeline (analyse → plan → validate
+        → spec → review) and saves the resulting spec to ``.ollama/spec/``.
+        Each agent has knowledge of all available slash commands and may
+        autonomously invoke them via ``[CMD: /command]`` directives.
+        """
+        if not arg:
+            return CommandResult(
+                errors=[
+                    "Usage: /complete_w_team <task description>",
+                    "  Runs a team loop: analyse → plan → validate → spec → review",
+                    "  Output: .ollama/spec/<slug>.md (executable via /build)",
+                ]
+            )
+
+        try:
+            from runner.team_completion import TeamCompletionLoop
+
+            loop = TeamCompletionLoop(self.session, command_processor=self)
+            result = await loop.run(arg)
+
+            lines = [
+                "🏗️  Team Completion Loop",
+                f"  Task: {arg[:100]}{'...' if len(arg) > 100 else ''}",
+                "",
+                f"📋 Spec ready (run: {result.run_id})",
+                f"  File:     {result.spec_path}",
+                f"  Phases:   {len(result.phases)}",
+                f"  Duration: {result.total_duration:.1f}s",
+            ]
+
+            if result.total_commands:
+                lines.append(f"  Commands: {result.total_commands} autonomous executions")
+
+            for phase in result.phases:
+                cmds_label = f", {len(phase.commands_executed)} cmds" if phase.commands_executed else ""
+                lines.append(
+                    f"  • {phase.phase_name}: {len(phase.content)} chars, "
+                    f"{phase.duration_seconds:.1f}s{cmds_label}"
+                )
+
+            if hasattr(self.session, "agent_comm"):
+                comm_stats = self.session.agent_comm.get_token_savings()
+                lines.append(
+                    f"  Agent messages: {comm_stats['total_messages']}"
+                    f" • Token savings: {comm_stats['context_tokens_saved']:,}"
+                )
+
+            lines.append("")
+            lines.append(f"To execute this spec, run: /build {result.spec_path}")
+            return CommandResult(output=lines)
+        except ImportError:
+            return CommandResult(errors=["Team completion module not available."])
+        except Exception as exc:
+            logger.exception("Team completion failed")
+            return CommandResult(errors=[f"Team completion failed: {exc}"])
 
     def _cmd_resume(self, arg: str) -> CommandResult:
         """List or resume previous tasks."""

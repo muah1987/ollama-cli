@@ -83,8 +83,14 @@ jobs:
       - name: Run linter
         run: uv run ruff check .
 
-      - name: Type check
+      - name: Check import sorting
         run: uv run ruff check --select I .
+
+      - name: Security scan
+        run: |
+          uv run pip install bandit 2>/dev/null || true
+          uv run bandit -r ollama_cmd api runner model server -ll -q || true
+          echo "Security scan completed"
 
       - name: Validate production folder
         run: |

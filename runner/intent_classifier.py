@@ -144,6 +144,34 @@ PATTERN_REGISTRY: dict[str, list[str]] = {
         "automate",
         "batch",
     ],
+    "team": [
+        "complete with team",
+        "team planning",
+        "complete_w_team",
+        "team build",
+        "team spec",
+        "collaborate",
+        "full team",
+        "plan and build",
+        "plan then build",
+        "team loop",
+        "agentic loop",
+        "multi-agent",
+    ],
+    "research": [
+        "research",
+        "compare",
+        "summarize",
+        "what is",
+        "how does",
+        "explain how",
+        "pros and cons",
+        "alternatives",
+        "benchmark",
+        "evaluate options",
+        "best practices",
+        "state of the art",
+    ],
 }
 
 # ---------------------------------------------------------------------------
@@ -376,6 +404,8 @@ if __name__ == "__main__":
         "Plan the architecture for the new microservice",
         "Document the API endpoints",
         "Orchestrate the deployment pipeline",
+        "Complete with team: build a REST API",
+        "Research the best practices for error handling",
         "Hello, how are you?",
         "Fix the broken test and refactor the code",
     ]

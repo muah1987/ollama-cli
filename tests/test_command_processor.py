@@ -16,9 +16,9 @@ from tui.command_processor import COMMAND_REGISTRY, CommandProcessor, CommandRes
 class TestCommandRegistry:
     """Test the COMMAND_REGISTRY structure and contents."""
 
-    def test_registry_has_33_commands(self):
-        """The registry contains exactly 33 slash commands."""
-        assert len(COMMAND_REGISTRY) == 33
+    def test_registry_has_34_commands(self):
+        """The registry contains exactly 34 slash commands."""
+        assert len(COMMAND_REGISTRY) == 34
 
     def test_all_expected_commands_registered(self):
         """Every expected command name is present in the registry."""
@@ -55,6 +55,7 @@ class TestCommandRegistry:
             "/settings",
             "/bug",
             "/plan",
+            "/complete_w_team",
             "/update_status_line",
         ]
         for cmd in expected:
@@ -69,7 +70,7 @@ class TestCommandRegistry:
             "/pull", "/diff", "/mcp", "/agents", "/set-agent-model",
             "/list-agent-models", "/chain", "/team_planning", "/build",
             "/resume", "/intent", "/init", "/config", "/settings",
-            "/bug", "/plan", "/update_status_line",
+            "/bug", "/plan", "/complete_w_team", "/update_status_line",
         }
         actual = set(COMMAND_REGISTRY.keys())
         unexpected = actual - expected
@@ -508,9 +509,9 @@ class TestStaticHelpers:
         assert isinstance(names, list)
 
     def test_get_command_names_count(self):
-        """get_command_names() returns all 33 command names."""
+        """get_command_names() returns all 34 command names."""
         names = CommandProcessor.get_command_names()
-        assert len(names) == 33
+        assert len(names) == 34
 
     def test_get_command_names_contains_expected(self):
         """get_command_names() includes /help, /quit, /status."""

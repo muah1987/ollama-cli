@@ -4,7 +4,7 @@ A comprehensive roadmap for the Ollama CLI project, tracking current priorities 
 
 ---
 
-## Current Status: v0.1.0 (Production)
+## Current Status: v0.2.0 (Production)
 
 > **⚠️ Migration Notice:** The CLI frontend is migrating from Python/readline
 > to [BubbleTea](https://github.com/charmbracelet/bubbletea) (Go).  The API
@@ -25,18 +25,12 @@ A comprehensive roadmap for the Ollama CLI project, tracking current priorities 
 - [x] Session persistence
 - [x] GH_TOKEN and HF_TOKEN support
 - [x] Dependabot with auto-merge for patch/minor updates
-
-### Current Priority: Production Readiness (v0.2.0)
-- [x] Folder structure synchronization (production/ as GitHub root)
-- [x] `.gitignore` for local development folders
-- [x] Automatic Ollama installation support
-- [x] RDMA acceleration support (MLX, EXO, RMDA)
-- [x] RDMA transport drivers (USB<>RDMA, Thunderbolt<>RDMA, Network<>RDMA)
-- [x] Updated GitHub workflows for production folder
-- [x] Documentation updates (ROADMAP, TODO, README)
-- [x] Code coverage reporting in CI workflows
 - [x] Textual TUI as primary interface (removed legacy readline)
-- [x] PyPI publishing workflow preparation
+- [x] Unified error hierarchy (`api/errors.py`)
+- [x] CI/CD with coverage reporting, linting, security scanning
+- [x] Coverage and CI badges in README
+
+### Current Priority: Feature Completion (v0.3.0)
 
 ---
 
@@ -239,5 +233,5 @@ a single static binary.
 
 ---
 
-*Last updated: 2026-02-11*
+*Last updated: 2026-02-14*
 *This document is maintained by the project team.*

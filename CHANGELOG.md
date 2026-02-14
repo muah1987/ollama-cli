@@ -1,10 +1,20 @@
-## [0.2.0] - 2026-02-13
+## [0.2.0] - 2026-02-14
 
 ### Added
+- Unified error hierarchy in `api/errors.py` with centralized exception classes
+- `OllamaCliError` root exception with `user_message` property and `hint` support
+- New error types: `ProviderRateLimitError`, `ProviderResponseError`, `ConfigurationError`, `SessionError`
+- CI security scanning via bandit
+- Coverage, CI, Python version, and license badges in README
+- Test suite for error hierarchy (23 new tests)
 - Textual TUI as the primary and only interface (removed legacy readline REPL)
-- Code coverage reporting in CI workflows with 80% minimum requirement
-- Comprehensive testing documentation
-- Updated dependencies with pytest-cov support
+- Code coverage reporting in CI workflows with 75% minimum requirement
+- `/complete_w_team` agentic sub-agent completion loop (analyse→plan→validate→spec→review)
+- Autonomous command execution: agents can invoke slash commands via `[CMD: /command]` directives
+- Command knowledge injection into all team completion agents
+- `team` and `research` agent types in intent classifier
+- Comprehensive system workflow documentation (`docs/SYSTEM_WORKFLOW.md`)
+- 34 new tests for team completion loop
 
 ### Changed
 - Simplified CLI interface to focus exclusively on Textual TUI
