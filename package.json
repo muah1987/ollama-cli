@@ -11,7 +11,8 @@
     "build": "tsc",
     "build:binary": "bun build src/index.tsx --compile --outfile qarin-ts",
     "lint": "tsc --noEmit",
-    "test": "node --experimental-vm-modules node_modules/.bin/jest"
+    "test": "node --import tsx --test src/**/*.test.ts",
+    "test:py": "python -m pytest tests/"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
