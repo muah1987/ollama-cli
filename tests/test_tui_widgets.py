@@ -472,17 +472,18 @@ class TestLlamaSpinnerFrames:
     """Test the spinner frame definitions."""
 
     def test_has_animated_frames(self):
-        """There are 24 spinner frames defined (8 messages × 3 dot states)."""
-        from tui.widgets.spinner import _LLAMA_SPINNER_FRAMES
+        """Flat frame list should contain frames from all themes."""
+        from tui.widgets.spinner import _LLAMA_SPINNER_FRAMES, THEMES
 
-        assert len(_LLAMA_SPINNER_FRAMES) == 24
+        expected = sum(len(v) for v in THEMES.values())
+        assert len(_LLAMA_SPINNER_FRAMES) == expected
 
-    def test_all_frames_contain_llama_emoji(self):
-        """Every frame contains the llama emoji."""
-        from tui.widgets.spinner import _LLAMA_SPINNER_FRAMES
+    def test_all_themes_have_frames(self):
+        """Every theme has at least 5 frames covering the narrative arc."""
+        from tui.widgets.spinner import THEMES
 
-        for i, frame in enumerate(_LLAMA_SPINNER_FRAMES):
-            assert "\U0001f999" in frame, f"Frame {i} missing llama emoji: {frame}"
+        for name, frames in THEMES.items():
+            assert len(frames) >= 5, f"Theme {name!r} has only {len(frames)} frames"
 
     def test_all_frames_are_non_empty_strings(self):
         """Every frame is a non-empty string."""
@@ -497,6 +498,15 @@ class TestLlamaSpinnerFrames:
         from tui.widgets.spinner import _LLAMA_SPINNER_FRAMES
 
         assert len(set(_LLAMA_SPINNER_FRAMES)) == len(_LLAMA_SPINNER_FRAMES)
+
+    def test_pick_theme_returns_valid_list(self):
+        """pick_theme() returns a list of strings from THEMES."""
+        from tui.widgets.spinner import THEMES, pick_theme
+
+        theme = pick_theme()
+        assert isinstance(theme, list)
+        assert len(theme) >= 5
+        assert theme in THEMES.values()
 
 
 class TestLlamaSpinnerReactives:

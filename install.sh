@@ -1,13 +1,13 @@
 #!/bin/bash
 set -euo pipefail
-# One-line installer for cli-ollama
+# One-line installer for Qarin CLI
 # Usage: curl -fsSL https://raw.githubusercontent.com/muah1987/cli-ollama/main/install.sh | bash
 
 REPO_URL="https://github.com/muah1987/cli-ollama.git"
-INSTALL_DIR="${HOME}/.cli-ollama"
+INSTALL_DIR="${HOME}/.qarin-cli"
 OLLAMA_VERSION="0.5.7"
 
-echo "=== Ollama CLI Installer ==="
+echo "=== Qarin CLI Installer ==="
 echo ""
 
 # Check for required tools
@@ -30,11 +30,11 @@ if [ -d "$INSTALL_DIR" ]; then
     echo "Updating existing installation..."
     cd "$INSTALL_DIR" && git pull
 
-    # Migration: remove old cmd/ directory (renamed to ollama_cmd/ to avoid
+    # Migration: remove old cmd/ directory (renamed to qarin_cmd/ to avoid
     # collision with Python's stdlib cmd module).  The directory may linger
     # after git pull because __pycache__ or .pyc files are untracked.
     if [ -d "$INSTALL_DIR/cmd" ]; then
-        echo "Migrating: removing old cmd/ directory (renamed to ollama_cmd/)..."
+        echo "Migrating: removing old cmd/ directory (renamed to qarin_cmd/)..."
         rm -rf "$INSTALL_DIR/cmd"
     fi
 else
@@ -51,17 +51,17 @@ uv sync
 # Create .env from sample if not exists
 [ ! -f .env ] && cp .env.sample .env 2>/dev/null || true
 
-# Create wrapper script in ~/.local/bin so cli-ollama is on PATH
+# Create wrapper script in ~/.local/bin so qarin is on PATH
 BIN_DIR="${HOME}/.local/bin"
 mkdir -p "$BIN_DIR"
 
-WRAPPER="$BIN_DIR/cli-ollama"
+WRAPPER="$BIN_DIR/qarin"
 cat > "$WRAPPER" << 'WRAPPER_EOF'
 #!/bin/bash
-exec uv run --project "${HOME}/.cli-ollama" cli-ollama "$@"
+exec uv run --project "${HOME}/.qarin-cli" qarin "$@"
 WRAPPER_EOF
 chmod +x "$WRAPPER"
-echo "Installed cli-ollama command to $WRAPPER"
+echo "Installed qarin command to $WRAPPER"
 
 # Install Ollama if not present
 echo ""
@@ -109,7 +109,7 @@ echo ""
 # Check if ~/.local/bin is on PATH
 if echo "$PATH" | tr ':' '\n' | grep -qx "$BIN_DIR"; then
     echo "You can now run:"
-    echo "  cli-ollama --help"
+    echo "  qarin --help"
 else
     echo "Add ~/.local/bin to your PATH by adding this to your shell profile (~/.bashrc or ~/.zshrc):"
     echo "  export PATH=\"\$HOME/.local/bin:\$PATH\""
@@ -118,7 +118,7 @@ else
     echo "  source ~/.bashrc"
     echo ""
     echo "After that, you can run:"
-    echo "  cli-ollama --help"
+    echo "  qarin --help"
 fi
 echo ""
 echo "Start Ollama server (if not already running):"

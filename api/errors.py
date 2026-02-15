@@ -7,7 +7,7 @@ Hierarchy
 ---------
 ::
 
-    CliOllamaError
+    QarinCliError
     ├── ProviderError
     │   ├── ProviderUnavailableError
     │   ├── ProviderAuthError
@@ -27,11 +27,11 @@ from __future__ import annotations
 # ---------------------------------------------------------------------------
 
 
-class CliOllamaError(Exception):
+class QarinCliError(Exception):
     """Base exception for all Ollama CLI errors.
 
     Every custom exception in the project inherits from this class so that
-    callers can use a single ``except CliOllamaError`` clause to catch all
+    callers can use a single ``except QarinCliError`` clause to catch all
     application-level errors.
     """
 
@@ -53,7 +53,7 @@ class CliOllamaError(Exception):
 # ---------------------------------------------------------------------------
 
 
-class ProviderError(CliOllamaError):
+class ProviderError(QarinCliError):
     """Base exception for provider-related errors."""
 
 
@@ -78,7 +78,7 @@ class ProviderResponseError(ProviderError):
 # ---------------------------------------------------------------------------
 
 
-class OllamaError(CliOllamaError):
+class OllamaError(QarinCliError):
     """Base exception for Ollama API errors."""
 
 
@@ -95,9 +95,9 @@ class OllamaModelNotFoundError(OllamaError):
 # ---------------------------------------------------------------------------
 
 
-class ConfigurationError(CliOllamaError):
+class ConfigurationError(QarinCliError):
     """Raised when a configuration value is missing or invalid."""
 
 
-class SessionError(CliOllamaError):
+class SessionError(QarinCliError):
     """Raised when a session operation fails (save, load, resume)."""

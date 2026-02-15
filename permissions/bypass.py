@@ -8,7 +8,7 @@
 # ///
 
 """
-Permissions bypass module for cli-ollama.
+Permissions bypass module for qarin.
 
 This module provides functionality to bypass interactive prompts and permissions
 for autonomous operation.
@@ -19,13 +19,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from api.config import CliOllamaConfig
+    from api.config import QarinCliConfig
 
 
 class BypassPermissions:
     """Manager for bypassing permissions and interactive prompts."""
 
-    def __init__(self, config: CliOllamaConfig):
+    def __init__(self, config: QarinCliConfig):
         """Initialize the bypass permissions manager.
 
         Parameters
@@ -119,7 +119,7 @@ class BypassPermissions:
 _bypass_instance: BypassPermissions | None = None
 
 
-def get_bypass_manager(config: CliOllamaConfig | None = None) -> BypassPermissions:
+def get_bypass_manager(config: QarinCliConfig | None = None) -> BypassPermissions:
     """Get the global bypass permissions manager instance.
 
     Parameters

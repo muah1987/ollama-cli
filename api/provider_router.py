@@ -103,8 +103,8 @@ def _load_agent_model_config() -> dict[str, tuple[str, str]]:
         "orchestrator",
     ]
     for agent_type in agent_types:
-        provider_var = f"OLLAMA_CLI_AGENT_{agent_type.upper()}_PROVIDER"
-        model_var = f"OLLAMA_CLI_AGENT_{agent_type.upper()}_MODEL"
+        provider_var = f"QARIN_CLI_AGENT_{agent_type.upper()}_PROVIDER"
+        model_var = f"QARIN_CLI_AGENT_{agent_type.upper()}_MODEL"
 
         provider = os.environ.get(provider_var)
         model = os.environ.get(model_var)
@@ -1273,20 +1273,20 @@ class OtherProvider(BaseProvider):
 _TASK_ENV_MAP: dict[str, tuple[str, str, str, str]] = {
     # task_type: (provider_env_var, model_env_var, default_provider, default_model)
     "coding": (
-        "OLLAMA_CLI_CODING_PROVIDER",
-        "OLLAMA_CLI_CODING_MODEL",
+        "QARIN_CLI_CODING_PROVIDER",
+        "QARIN_CLI_CODING_MODEL",
         "ollama",
         "codestral:latest",
     ),
     "agent": (
-        "OLLAMA_CLI_AGENT_PROVIDER",
-        "OLLAMA_CLI_AGENT_MODEL",
+        "QARIN_CLI_AGENT_PROVIDER",
+        "QARIN_CLI_AGENT_MODEL",
         "ollama",
         "llama3.2",
     ),
     "subagent": (
-        "OLLAMA_CLI_SUBAGENT_PROVIDER",
-        "OLLAMA_CLI_SUBAGENT_MODEL",
+        "QARIN_CLI_SUBAGENT_PROVIDER",
+        "QARIN_CLI_SUBAGENT_MODEL",
         "ollama",
         "glm-ocr",
     ),

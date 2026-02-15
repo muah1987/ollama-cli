@@ -344,26 +344,26 @@ class TestVllmSkill:
 
 class TestConfigNewFields:
     def test_config_has_llamacpp_fields(self):
-        from api.config import CliOllamaConfig
+        from api.config import QarinCliConfig
 
-        cfg = CliOllamaConfig()
+        cfg = QarinCliConfig()
         assert cfg.llamacpp_host == "http://localhost:8080"
         assert cfg.llamacpp_api_key == ""
         assert cfg.llamacpp_model == "default"
 
     def test_config_has_vllm_fields(self):
-        from api.config import CliOllamaConfig
+        from api.config import QarinCliConfig
 
-        cfg = CliOllamaConfig()
+        cfg = QarinCliConfig()
         assert cfg.vllm_host == "http://localhost:8000"
         assert cfg.vllm_api_key == ""
         assert cfg.vllm_model == "default"
         assert cfg.vllm_tensor_parallel_size == 1
 
     def test_config_has_other_provider_fields(self):
-        from api.config import CliOllamaConfig
+        from api.config import QarinCliConfig
 
-        cfg = CliOllamaConfig()
+        cfg = QarinCliConfig()
         assert cfg.other_provider_host == ""
         assert cfg.other_provider_api_key == ""
         assert cfg.other_provider_model == "default"

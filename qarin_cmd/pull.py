@@ -36,8 +36,8 @@ def handle_pull(args: argparse.Namespace) -> None:
     model_name: str | None = getattr(args, "model_name", None)
     if not model_name:
         console.print("[red]Error:[/red] No model name provided.")
-        console.print("Usage: [bold]cli-ollama pull <model>[/bold]")
-        console.print("Example: [bold]cli-ollama pull llama3.2[/bold]")
+        console.print("Usage: [bold]qarin pull <model>[/bold]")
+        console.print("Example: [bold]qarin pull llama3.2[/bold]")
         sys.exit(1)
 
     cfg = get_config()
@@ -110,7 +110,7 @@ def _stream_pull_progress(response: httpx.Response, model_name: str) -> None:
 def build_parser() -> argparse.ArgumentParser:
     """Build the pull command argument parser."""
     parser = argparse.ArgumentParser(
-        prog="cli-ollama pull",
+        prog="qarin pull",
         description="Pull a model from the Ollama registry",
     )
     parser.add_argument("model_name", nargs="?", type=str, help="Model to pull")

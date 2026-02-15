@@ -17,8 +17,8 @@ from unittest.mock import patch
 
 import pytest  # type: ignore[import-untyped]
 
-from api.config import CliOllamaConfig
-from ollama_cmd.interactive import InteractiveMode
+from api.config import QarinCliConfig
+from qarin_cmd.interactive import InteractiveMode
 from runner.intent_classifier import IntentResult
 
 # ---------------------------------------------------------------------------
@@ -65,9 +65,9 @@ def repl(mock_session: _MockSession) -> InteractiveMode:
 
 
 @pytest.fixture()
-def cfg() -> CliOllamaConfig:
+def cfg() -> QarinCliConfig:
     """Return a fresh, default config object for patching into get_config."""
-    return CliOllamaConfig()
+    return QarinCliConfig()
 
 
 # ---------------------------------------------------------------------------
@@ -97,7 +97,7 @@ class TestCmdIntentHandler:
     """Exercise every _cmd_intent subcommand and verify return values."""
 
     def test_status_no_arg(
-        self, repl: InteractiveMode, cfg: CliOllamaConfig, capsys: pytest.CaptureFixture[str]
+        self, repl: InteractiveMode, cfg: QarinCliConfig, capsys: pytest.CaptureFixture[str]
     ) -> None:
         """Calling /intent with no argument prints current status."""
         with patch("api.config.get_config", return_value=cfg):
@@ -107,7 +107,7 @@ class TestCmdIntentHandler:
         assert "Intent classifier" in out
         assert "Confidence threshold" in out
 
-    def test_on(self, repl: InteractiveMode, cfg: CliOllamaConfig, capsys: pytest.CaptureFixture[str]) -> None:
+    def test_on(self, repl: InteractiveMode, cfg: QarinCliConfig, capsys: pytest.CaptureFixture[str]) -> None:
         cfg.intent_enabled = False
         with patch("api.config.get_config", return_value=cfg):
             result = repl._cmd_intent("on")
@@ -116,7 +116,7 @@ class TestCmdIntentHandler:
         out = capsys.readouterr().out
         assert "enabled" in out.lower()
 
-    def test_off(self, repl: InteractiveMode, cfg: CliOllamaConfig, capsys: pytest.CaptureFixture[str]) -> None:
+    def test_off(self, repl: InteractiveMode, cfg: QarinCliConfig, capsys: pytest.CaptureFixture[str]) -> None:
         cfg.intent_enabled = True
         with patch("api.config.get_config", return_value=cfg):
             result = repl._cmd_intent("off")
@@ -125,7 +125,7 @@ class TestCmdIntentHandler:
         out = capsys.readouterr().out
         assert "disabled" in out.lower()
 
-    def test_show_toggle(self, repl: InteractiveMode, cfg: CliOllamaConfig, capsys: pytest.CaptureFixture[str]) -> None:
+    def test_show_toggle(self, repl: InteractiveMode, cfg: QarinCliConfig, capsys: pytest.CaptureFixture[str]) -> None:
         original = cfg.intent_show_detection
         with patch("api.config.get_config", return_value=cfg):
             result = repl._cmd_intent("show")
@@ -135,7 +135,7 @@ class TestCmdIntentHandler:
         assert "toggled" in out.lower()
 
     def test_threshold_set(
-        self, repl: InteractiveMode, cfg: CliOllamaConfig, capsys: pytest.CaptureFixture[str]
+        self, repl: InteractiveMode, cfg: QarinCliConfig, capsys: pytest.CaptureFixture[str]
     ) -> None:
         with patch("api.config.get_config", return_value=cfg):
             result = repl._cmd_intent("threshold 0.5")
@@ -145,7 +145,7 @@ class TestCmdIntentHandler:
         assert "0.50" in out
 
     def test_threshold_no_value(
-        self, repl: InteractiveMode, cfg: CliOllamaConfig, capsys: pytest.CaptureFixture[str]
+        self, repl: InteractiveMode, cfg: QarinCliConfig, capsys: pytest.CaptureFixture[str]
     ) -> None:
         with patch("api.config.get_config", return_value=cfg):
             result = repl._cmd_intent("threshold")
@@ -154,7 +154,7 @@ class TestCmdIntentHandler:
         assert "threshold" in out.lower()
 
     def test_threshold_out_of_range(
-        self, repl: InteractiveMode, cfg: CliOllamaConfig, capsys: pytest.CaptureFixture[str]
+        self, repl: InteractiveMode, cfg: QarinCliConfig, capsys: pytest.CaptureFixture[str]
     ) -> None:
         with patch("api.config.get_config", return_value=cfg):
             result = repl._cmd_intent("threshold 1.5")
@@ -163,7 +163,7 @@ class TestCmdIntentHandler:
         assert "between" in out.lower() or "0.0" in out
 
     def test_threshold_invalid(
-        self, repl: InteractiveMode, cfg: CliOllamaConfig, capsys: pytest.CaptureFixture[str]
+        self, repl: InteractiveMode, cfg: QarinCliConfig, capsys: pytest.CaptureFixture[str]
     ) -> None:
         with patch("api.config.get_config", return_value=cfg):
             result = repl._cmd_intent("threshold abc")
@@ -172,7 +172,7 @@ class TestCmdIntentHandler:
         assert "invalid" in out.lower()
 
     def test_test_subcommand(
-        self, repl: InteractiveMode, cfg: CliOllamaConfig, capsys: pytest.CaptureFixture[str]
+        self, repl: InteractiveMode, cfg: QarinCliConfig, capsys: pytest.CaptureFixture[str]
     ) -> None:
         """``/intent test <prompt>`` should classify and print results."""
         with patch("api.config.get_config", return_value=cfg):
@@ -184,7 +184,7 @@ class TestCmdIntentHandler:
         assert "Reasoning" in out or "reasoning" in out
 
     def test_test_no_prompt(
-        self, repl: InteractiveMode, cfg: CliOllamaConfig, capsys: pytest.CaptureFixture[str]
+        self, repl: InteractiveMode, cfg: QarinCliConfig, capsys: pytest.CaptureFixture[str]
     ) -> None:
         with patch("api.config.get_config", return_value=cfg):
             result = repl._cmd_intent("test")
@@ -193,7 +193,7 @@ class TestCmdIntentHandler:
         assert "usage" in out.lower()
 
     def test_invalid_subcommand(
-        self, repl: InteractiveMode, cfg: CliOllamaConfig, capsys: pytest.CaptureFixture[str]
+        self, repl: InteractiveMode, cfg: QarinCliConfig, capsys: pytest.CaptureFixture[str]
     ) -> None:
         with patch("api.config.get_config", return_value=cfg):
             result = repl._cmd_intent("invalid")
@@ -222,7 +222,7 @@ class TestCmdIntentAllReturnFalse:
             "notacommand",
         ],
     )
-    def test_returns_false(self, repl: InteractiveMode, cfg: CliOllamaConfig, arg: str) -> None:
+    def test_returns_false(self, repl: InteractiveMode, cfg: QarinCliConfig, arg: str) -> None:
         with patch("api.config.get_config", return_value=cfg):
             result = repl._cmd_intent(arg)
         assert result is False, f"/intent {arg!r} should return False, got {result!r}"
@@ -236,7 +236,7 @@ class TestCmdIntentAllReturnFalse:
 class TestAutoDetectionLogic:
     """Verify the auto-detection block in the REPL loop."""
 
-    def test_classifier_runs_when_enabled_and_no_prefix(self, cfg: CliOllamaConfig) -> None:
+    def test_classifier_runs_when_enabled_and_no_prefix(self, cfg: QarinCliConfig) -> None:
         """When intent_enabled=True and no @agent prefix, classify_intent is called."""
         cfg.intent_enabled = True
         fake_result = IntentResult(
@@ -262,7 +262,7 @@ class TestAutoDetectionLogic:
             mock_classify.assert_called_once_with(stripped, threshold=cfg.intent_confidence_threshold)
         assert agent_type == "code"
 
-    def test_classifier_skipped_when_disabled(self, cfg: CliOllamaConfig) -> None:
+    def test_classifier_skipped_when_disabled(self, cfg: QarinCliConfig) -> None:
         """When intent_enabled=False, classify_intent is never called."""
         cfg.intent_enabled = False
 
@@ -281,7 +281,7 @@ class TestAutoDetectionLogic:
             mock_classify.assert_not_called()
         assert agent_type is None
 
-    def test_explicit_agent_prefix_overrides_autodetect(self, cfg: CliOllamaConfig) -> None:
+    def test_explicit_agent_prefix_overrides_autodetect(self, cfg: QarinCliConfig) -> None:
         """When the user types ``@code prompt``, auto-detect is skipped."""
         cfg.intent_enabled = True
 
@@ -305,7 +305,7 @@ class TestAutoDetectionLogic:
             mock_classify.assert_not_called()
         assert agent_type == "code"
 
-    def test_low_confidence_does_not_set_agent_type(self, cfg: CliOllamaConfig) -> None:
+    def test_low_confidence_does_not_set_agent_type(self, cfg: QarinCliConfig) -> None:
         """When the classifier returns None agent_type (below threshold), agent_type stays None."""
         cfg.intent_enabled = True
         low_result = IntentResult(
@@ -329,7 +329,7 @@ class TestAutoDetectionLogic:
 
         assert agent_type is None
 
-    def test_auto_detected_type_passed_to_session_send(self, cfg: CliOllamaConfig) -> None:
+    def test_auto_detected_type_passed_to_session_send(self, cfg: QarinCliConfig) -> None:
         """The auto-detected agent_type should be the value ultimately used."""
         cfg.intent_enabled = True
         fake_result = IntentResult(
@@ -394,31 +394,31 @@ class TestConfigIntegration:
     """Verify that _cmd_intent correctly reads and mutates config."""
 
     def test_on_mutates_config(self, repl: InteractiveMode) -> None:
-        cfg = CliOllamaConfig(intent_enabled=False)
+        cfg = QarinCliConfig(intent_enabled=False)
         with patch("api.config.get_config", return_value=cfg):
             repl._cmd_intent("on")
         assert cfg.intent_enabled is True
 
     def test_off_mutates_config(self, repl: InteractiveMode) -> None:
-        cfg = CliOllamaConfig(intent_enabled=True)
+        cfg = QarinCliConfig(intent_enabled=True)
         with patch("api.config.get_config", return_value=cfg):
             repl._cmd_intent("off")
         assert cfg.intent_enabled is False
 
     def test_threshold_mutates_config(self, repl: InteractiveMode) -> None:
-        cfg = CliOllamaConfig(intent_confidence_threshold=0.7)
+        cfg = QarinCliConfig(intent_confidence_threshold=0.7)
         with patch("api.config.get_config", return_value=cfg):
             repl._cmd_intent("threshold 0.3")
         assert cfg.intent_confidence_threshold == pytest.approx(0.3)
 
     def test_show_toggle_mutates_config(self, repl: InteractiveMode) -> None:
-        cfg = CliOllamaConfig(intent_show_detection=True)
+        cfg = QarinCliConfig(intent_show_detection=True)
         with patch("api.config.get_config", return_value=cfg):
             repl._cmd_intent("show")
         assert cfg.intent_show_detection is False
 
     def test_show_toggle_back(self, repl: InteractiveMode) -> None:
-        cfg = CliOllamaConfig(intent_show_detection=False)
+        cfg = QarinCliConfig(intent_show_detection=False)
         with patch("api.config.get_config", return_value=cfg):
             repl._cmd_intent("show")
         assert cfg.intent_show_detection is True
@@ -426,7 +426,7 @@ class TestConfigIntegration:
     def test_status_shows_default_agent_type_when_set(
         self, repl: InteractiveMode, capsys: pytest.CaptureFixture[str]
     ) -> None:
-        cfg = CliOllamaConfig(intent_default_agent_type="code")
+        cfg = QarinCliConfig(intent_default_agent_type="code")
         with patch("api.config.get_config", return_value=cfg):
             repl._cmd_intent("")
         out = capsys.readouterr().out
@@ -436,7 +436,7 @@ class TestConfigIntegration:
     def test_status_hides_default_agent_type_when_none(
         self, repl: InteractiveMode, capsys: pytest.CaptureFixture[str]
     ) -> None:
-        cfg = CliOllamaConfig(intent_default_agent_type=None)
+        cfg = QarinCliConfig(intent_default_agent_type=None)
         with patch("api.config.get_config", return_value=cfg):
             repl._cmd_intent("")
         out = capsys.readouterr().out

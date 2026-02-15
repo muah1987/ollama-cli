@@ -8,7 +8,6 @@ This package contains:
 """
 
 from .errors import (
-    CliOllamaError,
     ConfigurationError,
     OllamaConnectionError,
     OllamaError,
@@ -18,6 +17,7 @@ from .errors import (
     ProviderRateLimitError,
     ProviderResponseError,
     ProviderUnavailableError,
+    QarinCliError,
     SessionError,
 )
 from .ollama_client import (
@@ -37,7 +37,7 @@ from .provider_router import (
 
 __all__ = [
     # Unified error hierarchy
-    "CliOllamaError",
+    "QarinCliError",
     "ConfigurationError",
     "SessionError",
     # Client

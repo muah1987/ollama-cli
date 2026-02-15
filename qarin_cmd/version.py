@@ -14,13 +14,13 @@ VERSION = "0.1.0"
 
 def handle_version(_args: argparse.Namespace) -> None:
     """Show CLI version."""
-    print(f"cli-ollama v{VERSION}")
+    print(f"qarin v{VERSION}")
 
 
 def build_parser() -> argparse.ArgumentParser:
     """Build the version command argument parser."""
     parser = argparse.ArgumentParser(
-        prog="cli-ollama version",
+        prog="qarin version",
         description="Show CLI version",
     )
     return parser

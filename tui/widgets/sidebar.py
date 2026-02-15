@@ -58,7 +58,7 @@ class Sidebar(Widget):
     visible: reactive[bool] = reactive(True)
 
     def compose(self) -> ComposeResult:
-        yield Label("cli-ollama", classes="sidebar-header")
+        yield Label("qarin", classes="sidebar-header")
         yield Static("\u2500" * 26)
 
         with Vertical(classes="sidebar-section"):

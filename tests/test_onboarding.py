@@ -4,8 +4,8 @@ import json
 from pathlib import Path
 from unittest.mock import patch
 
-from api.config import CliOllamaConfig, save_config
-from ollama_cmd.onboarding import needs_onboarding, run_onboarding
+from api.config import QarinCliConfig, save_config
+from qarin_cmd.onboarding import needs_onboarding, run_onboarding
 
 
 class TestNeedsOnboarding:
@@ -13,19 +13,19 @@ class TestNeedsOnboarding:
 
     def test_needs_onboarding_when_not_completed(self) -> None:
         """Returns True when onboarding_complete is False."""
-        cfg = CliOllamaConfig(onboarding_complete=False)
-        with patch("ollama_cmd.onboarding.get_config", return_value=cfg):
+        cfg = QarinCliConfig(onboarding_complete=False)
+        with patch("qarin_cmd.onboarding.get_config", return_value=cfg):
             assert needs_onboarding() is True
 
     def test_no_onboarding_when_completed(self) -> None:
         """Returns False when onboarding_complete is True."""
-        cfg = CliOllamaConfig(onboarding_complete=True)
-        with patch("ollama_cmd.onboarding.get_config", return_value=cfg):
+        cfg = QarinCliConfig(onboarding_complete=True)
+        with patch("qarin_cmd.onboarding.get_config", return_value=cfg):
             assert needs_onboarding() is False
 
     def test_needs_onboarding_reads_from_config_json(self, tmp_path: Path) -> None:
         """Onboarding flag persists via config.json round-trip."""
-        cfg = CliOllamaConfig(onboarding_complete=True)
+        cfg = QarinCliConfig(onboarding_complete=True)
         config_path = tmp_path / "config.json"
         save_config(cfg, config_path)
 
@@ -39,14 +39,14 @@ class TestRunOnboarding:
 
     def test_run_onboarding_sets_provider_and_model(self, tmp_path: Path) -> None:
         """Wizard saves provider, model, and marks complete."""
-        cfg = CliOllamaConfig()
+        cfg = QarinCliConfig()
         config_path = tmp_path / "config.json"
 
         with (
-            patch("ollama_cmd.onboarding.get_config", return_value=cfg),
-            patch("ollama_cmd.onboarding.save_config", return_value=config_path) as mock_save,
+            patch("qarin_cmd.onboarding.get_config", return_value=cfg),
+            patch("qarin_cmd.onboarding.save_config", return_value=config_path) as mock_save,
             patch("rich.prompt.Prompt.ask") as mock_ask,
-            patch("ollama_cmd.onboarding.console"),
+            patch("qarin_cmd.onboarding.console"),
         ):
             # Simulate user choosing gemini provider, default model, skip api key
             mock_ask.side_effect = [
@@ -63,14 +63,14 @@ class TestRunOnboarding:
 
     def test_run_onboarding_ollama_asks_host(self, tmp_path: Path) -> None:
         """When ollama provider is chosen, wizard asks for host URL before API key."""
-        cfg = CliOllamaConfig()
+        cfg = QarinCliConfig()
         config_path = tmp_path / "config.json"
 
         with (
-            patch("ollama_cmd.onboarding.get_config", return_value=cfg),
-            patch("ollama_cmd.onboarding.save_config", return_value=config_path),
+            patch("qarin_cmd.onboarding.get_config", return_value=cfg),
+            patch("qarin_cmd.onboarding.save_config", return_value=config_path),
             patch("rich.prompt.Prompt.ask") as mock_ask,
-            patch("ollama_cmd.onboarding.console"),
+            patch("qarin_cmd.onboarding.console"),
         ):
             mock_ask.side_effect = [
                 "ollama",  # provider
@@ -87,15 +87,15 @@ class TestRunOnboarding:
 
     def test_run_onboarding_cloud_provider_sets_api_key(self, tmp_path: Path) -> None:
         """When a cloud provider is chosen, API key is stored in config."""
-        cfg = CliOllamaConfig()
+        cfg = QarinCliConfig()
         config_path = tmp_path / "config.json"
 
         with (
-            patch("ollama_cmd.onboarding.get_config", return_value=cfg),
-            patch("ollama_cmd.onboarding.save_config", return_value=config_path),
+            patch("qarin_cmd.onboarding.get_config", return_value=cfg),
+            patch("qarin_cmd.onboarding.save_config", return_value=config_path),
             patch("rich.prompt.Prompt.ask") as mock_ask,
-            patch("ollama_cmd.onboarding.console"),
-            patch("ollama_cmd.onboarding._fetch_provider_models", return_value=[]),
+            patch("qarin_cmd.onboarding.console"),
+            patch("qarin_cmd.onboarding._fetch_provider_models", return_value=[]),
         ):
             mock_ask.side_effect = [
                 "claude",  # provider
@@ -110,14 +110,14 @@ class TestRunOnboarding:
 
     def test_run_onboarding_numeric_provider_selection(self, tmp_path: Path) -> None:
         """Wizard accepts a 1-based number to choose a provider."""
-        cfg = CliOllamaConfig()
+        cfg = QarinCliConfig()
         config_path = tmp_path / "config.json"
 
         with (
-            patch("ollama_cmd.onboarding.get_config", return_value=cfg),
-            patch("ollama_cmd.onboarding.save_config", return_value=config_path),
+            patch("qarin_cmd.onboarding.get_config", return_value=cfg),
+            patch("qarin_cmd.onboarding.save_config", return_value=config_path),
             patch("rich.prompt.Prompt.ask") as mock_ask,
-            patch("ollama_cmd.onboarding.console"),
+            patch("qarin_cmd.onboarding.console"),
         ):
             mock_ask.side_effect = [
                 "1",  # provider by number (ollama)
@@ -134,16 +134,16 @@ class TestRunOnboarding:
 
     def test_run_onboarding_fetches_models_for_cloud_provider(self, tmp_path: Path) -> None:
         """When a cloud provider returns models, wizard shows them for selection."""
-        cfg = CliOllamaConfig()
+        cfg = QarinCliConfig()
         config_path = tmp_path / "config.json"
         fetched = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-1.5-pro"]
 
         with (
-            patch("ollama_cmd.onboarding.get_config", return_value=cfg),
-            patch("ollama_cmd.onboarding.save_config", return_value=config_path),
+            patch("qarin_cmd.onboarding.get_config", return_value=cfg),
+            patch("qarin_cmd.onboarding.save_config", return_value=config_path),
             patch("rich.prompt.Prompt.ask") as mock_ask,
-            patch("ollama_cmd.onboarding.console"),
-            patch("ollama_cmd.onboarding._fetch_provider_models", return_value=fetched),
+            patch("qarin_cmd.onboarding.console"),
+            patch("qarin_cmd.onboarding._fetch_provider_models", return_value=fetched),
         ):
             mock_ask.side_effect = [
                 "gemini",  # provider
@@ -158,15 +158,15 @@ class TestRunOnboarding:
 
     def test_run_onboarding_model_fetch_failure_falls_back(self, tmp_path: Path) -> None:
         """When model fetching fails, wizard falls back to manual entry."""
-        cfg = CliOllamaConfig()
+        cfg = QarinCliConfig()
         config_path = tmp_path / "config.json"
 
         with (
-            patch("ollama_cmd.onboarding.get_config", return_value=cfg),
-            patch("ollama_cmd.onboarding.save_config", return_value=config_path),
+            patch("qarin_cmd.onboarding.get_config", return_value=cfg),
+            patch("qarin_cmd.onboarding.save_config", return_value=config_path),
             patch("rich.prompt.Prompt.ask") as mock_ask,
-            patch("ollama_cmd.onboarding.console"),
-            patch("ollama_cmd.onboarding._fetch_provider_models", return_value=[]),
+            patch("qarin_cmd.onboarding.console"),
+            patch("qarin_cmd.onboarding._fetch_provider_models", return_value=[]),
         ):
             mock_ask.side_effect = [
                 "claude",  # provider
@@ -181,16 +181,16 @@ class TestRunOnboarding:
 
     def test_run_onboarding_model_selection_by_name(self, tmp_path: Path) -> None:
         """User can type a model name from the fetched list."""
-        cfg = CliOllamaConfig()
+        cfg = QarinCliConfig()
         config_path = tmp_path / "config.json"
         fetched = ["gpt-4.1", "gpt-4.1-mini", "gpt-4o"]
 
         with (
-            patch("ollama_cmd.onboarding.get_config", return_value=cfg),
-            patch("ollama_cmd.onboarding.save_config", return_value=config_path),
+            patch("qarin_cmd.onboarding.get_config", return_value=cfg),
+            patch("qarin_cmd.onboarding.save_config", return_value=config_path),
             patch("rich.prompt.Prompt.ask") as mock_ask,
-            patch("ollama_cmd.onboarding.console"),
-            patch("ollama_cmd.onboarding._fetch_provider_models", return_value=fetched),
+            patch("qarin_cmd.onboarding.console"),
+            patch("qarin_cmd.onboarding._fetch_provider_models", return_value=fetched),
         ):
             mock_ask.side_effect = [
                 "codex",  # provider
@@ -205,16 +205,16 @@ class TestRunOnboarding:
 
     def test_run_onboarding_ollama_with_api_key_fetches_models(self, tmp_path: Path) -> None:
         """When ollama is chosen with an API key, models are fetched from the server."""
-        cfg = CliOllamaConfig()
+        cfg = QarinCliConfig()
         config_path = tmp_path / "config.json"
         fetched = ["llama3.2:latest", "codestral:latest", "qwen2:7b"]
 
         with (
-            patch("ollama_cmd.onboarding.get_config", return_value=cfg),
-            patch("ollama_cmd.onboarding.save_config", return_value=config_path),
+            patch("qarin_cmd.onboarding.get_config", return_value=cfg),
+            patch("qarin_cmd.onboarding.save_config", return_value=config_path),
             patch("rich.prompt.Prompt.ask") as mock_ask,
-            patch("ollama_cmd.onboarding.console"),
-            patch("ollama_cmd.onboarding._fetch_provider_models", return_value=fetched),
+            patch("qarin_cmd.onboarding.console"),
+            patch("qarin_cmd.onboarding._fetch_provider_models", return_value=fetched),
         ):
             mock_ask.side_effect = [
                 "ollama",  # provider
@@ -232,15 +232,15 @@ class TestRunOnboarding:
 
     def test_run_onboarding_ollama_api_key_not_saved_to_disk(self, tmp_path: Path) -> None:
         """Ollama API key must not be persisted to config.json on disk."""
-        cfg = CliOllamaConfig()
+        cfg = QarinCliConfig()
         config_path = tmp_path / "config.json"
 
         with (
-            patch("ollama_cmd.onboarding.get_config", return_value=cfg),
-            patch("ollama_cmd.onboarding.save_config", wraps=lambda c, p=None: save_config(c, config_path)),
+            patch("qarin_cmd.onboarding.get_config", return_value=cfg),
+            patch("qarin_cmd.onboarding.save_config", wraps=lambda c, p=None: save_config(c, config_path)),
             patch("rich.prompt.Prompt.ask") as mock_ask,
-            patch("ollama_cmd.onboarding.console"),
-            patch("ollama_cmd.onboarding._fetch_provider_models", return_value=[]),
+            patch("qarin_cmd.onboarding.console"),
+            patch("qarin_cmd.onboarding._fetch_provider_models", return_value=[]),
         ):
             mock_ask.side_effect = [
                 "ollama",  # provider

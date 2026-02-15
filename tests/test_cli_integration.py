@@ -1,5 +1,5 @@
 """
-CLI Integration Tests for cli-ollama
+CLI Integration Tests for qarin
 
 Tests cover:
 1. CLI argument parsing

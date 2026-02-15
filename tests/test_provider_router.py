@@ -67,7 +67,7 @@ class TestLoadAgentModelConfig:
         monkeypatch.setenv("OLLAMA_PROJECT_DIR", str(tmp_path))
         # Clear any agent env vars
         for key in list(os.environ):
-            if key.startswith("OLLAMA_CLI_AGENT_"):
+            if key.startswith("QARIN_CLI_AGENT_"):
                 monkeypatch.delenv(key, raising=False)
         result = _load_agent_model_config()
         assert isinstance(result, dict)

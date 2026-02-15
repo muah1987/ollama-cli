@@ -89,7 +89,7 @@ async def handle_rm_async(args: argparse.Namespace) -> None:
     except httpx.HTTPStatusError as exc:
         if exc.response.status_code == 404:
             console.print(f"[red]Error:[/red] Model '{model_name}' not found.")
-            console.print("List available models with: cli-ollama list")
+            console.print("List available models with: qarin list")
         else:
             console.print(f"[red]Error:[/red] HTTP {exc.response.status_code}: {exc.response.text}")
         sys.exit(1)
@@ -112,12 +112,12 @@ def handle_rm(args: argparse.Namespace) -> None:
 def build_parser() -> argparse.ArgumentParser:
     """Build the rm command argument parser."""
     parser = argparse.ArgumentParser(
-        prog="cli-ollama rm",
+        prog="qarin rm",
         description="Delete a local model",
         epilog="""
 Examples:
-  cli-ollama rm llama3.2
-  cli-ollama rm my-model --force
+  qarin rm llama3.2
+  qarin rm my-model --force
         """,
     )
     parser.add_argument("model_name", help="Model to remove (e.g. llama3.2)")

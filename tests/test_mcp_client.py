@@ -169,7 +169,7 @@ class TestMCPCommandRegistered:
             [
                 sys.executable,
                 "-c",
-                ("from ollama_cmd.interactive import InteractiveMode; print('/mcp' in InteractiveMode._COMMAND_TABLE)"),
+                ("from qarin_cmd.interactive import InteractiveMode; print('/mcp' in InteractiveMode._COMMAND_TABLE)"),
             ],
             capture_output=True,
             text=True,

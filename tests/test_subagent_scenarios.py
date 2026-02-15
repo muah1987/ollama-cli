@@ -1,5 +1,5 @@
 """
-Sub-Agent Scenario Tests for cli-ollama
+Sub-Agent Scenario Tests for qarin
 
 Tests cover:
 1. Nested sub-agent token tracking

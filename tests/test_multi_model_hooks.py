@@ -24,25 +24,25 @@ class TestMultiModelConfig:
 
     def test_config_has_agent_models_field(self) -> None:
         """Config dataclass should have agent_models field."""
-        from api.config import CliOllamaConfig
+        from api.config import QarinCliConfig
 
-        cfg = CliOllamaConfig()
+        cfg = QarinCliConfig()
         assert hasattr(cfg, "agent_models")
         assert cfg.agent_models is None
 
     def test_config_has_hf_token_field(self) -> None:
         """Config dataclass should have hf_token field."""
-        from api.config import CliOllamaConfig
+        from api.config import QarinCliConfig
 
-        cfg = CliOllamaConfig()
+        cfg = QarinCliConfig()
         assert hasattr(cfg, "hf_token")
         assert cfg.hf_token == ""
 
     def test_config_has_gh_token_field(self) -> None:
         """Config dataclass should have gh_token field."""
-        from api.config import CliOllamaConfig
+        from api.config import QarinCliConfig
 
-        cfg = CliOllamaConfig()
+        cfg = QarinCliConfig()
         assert hasattr(cfg, "gh_token")
         assert cfg.gh_token == ""
 
@@ -72,9 +72,9 @@ class TestMultiModelConfig:
 
     def test_save_config_excludes_tokens(self) -> None:
         """save_config should not persist API keys or tokens."""
-        from api.config import CliOllamaConfig, save_config
+        from api.config import QarinCliConfig, save_config
 
-        cfg = CliOllamaConfig(
+        cfg = QarinCliConfig(
             hf_token="secret-hf",
             gh_token="secret-gh",
             anthropic_api_key="secret-anthropic",
@@ -95,9 +95,9 @@ class TestMultiModelConfig:
 
     def test_agent_models_loaded_from_settings(self) -> None:
         """agent_models should be loadable from settings.json."""
-        from api.config import CliOllamaConfig
+        from api.config import QarinCliConfig
 
-        cfg = CliOllamaConfig()
+        cfg = QarinCliConfig()
         cfg.agent_models = {
             "code": {"provider": "ollama", "model": "codestral:latest"},
             "review": {"provider": "claude", "model": "claude-sonnet"},
@@ -120,8 +120,8 @@ class TestProviderRouterMultiModel:
         with patch.dict(
             os.environ,
             {
-                "OLLAMA_CLI_AGENT_CODE_PROVIDER": "ollama",
-                "OLLAMA_CLI_AGENT_CODE_MODEL": "codestral:latest",
+                "QARIN_CLI_AGENT_CODE_PROVIDER": "ollama",
+                "QARIN_CLI_AGENT_CODE_MODEL": "codestral:latest",
             },
             clear=False,
         ):
@@ -134,14 +134,14 @@ class TestProviderRouterMultiModel:
         from api.provider_router import _load_agent_model_config
 
         env_vars = {
-            "OLLAMA_CLI_AGENT_REVIEW_PROVIDER": "claude",
-            "OLLAMA_CLI_AGENT_REVIEW_MODEL": "claude-sonnet",
-            "OLLAMA_CLI_AGENT_DEBUG_PROVIDER": "gemini",
-            "OLLAMA_CLI_AGENT_DEBUG_MODEL": "gemini-flash",
-            "OLLAMA_CLI_AGENT_DOCS_PROVIDER": "hf",
-            "OLLAMA_CLI_AGENT_DOCS_MODEL": "mistral-7b",
-            "OLLAMA_CLI_AGENT_ORCHESTRATOR_PROVIDER": "codex",
-            "OLLAMA_CLI_AGENT_ORCHESTRATOR_MODEL": "gpt-4",
+            "QARIN_CLI_AGENT_REVIEW_PROVIDER": "claude",
+            "QARIN_CLI_AGENT_REVIEW_MODEL": "claude-sonnet",
+            "QARIN_CLI_AGENT_DEBUG_PROVIDER": "gemini",
+            "QARIN_CLI_AGENT_DEBUG_MODEL": "gemini-flash",
+            "QARIN_CLI_AGENT_DOCS_PROVIDER": "hf",
+            "QARIN_CLI_AGENT_DOCS_MODEL": "mistral-7b",
+            "QARIN_CLI_AGENT_ORCHESTRATOR_PROVIDER": "codex",
+            "QARIN_CLI_AGENT_ORCHESTRATOR_MODEL": "gpt-4",
         }
         with patch.dict(os.environ, env_vars, clear=False):
             config = _load_agent_model_config()
@@ -259,7 +259,7 @@ class TestStatusBarJobTracking:
                 "-c",
                 (
                     "from model.session import Session; "
-                    "from ollama_cmd.interactive import InteractiveMode; "
+                    "from qarin_cmd.interactive import InteractiveMode; "
                     "s = Session(model='llama3.2', provider='ollama'); "
                     "r = InteractiveMode(s); "
                     "print(hasattr(r, '_current_job')); "
@@ -283,7 +283,7 @@ class TestStatusBarJobTracking:
                 "-c",
                 (
                     "from model.session import Session; "
-                    "from ollama_cmd.interactive import InteractiveMode; "
+                    "from qarin_cmd.interactive import InteractiveMode; "
                     "s = Session(model='llama3.2', provider='ollama'); "
                     "r = InteractiveMode(s); "
                     "r._current_job = 'thinking'; "
@@ -305,7 +305,7 @@ class TestStatusBarJobTracking:
                 "-c",
                 (
                     "from model.session import Session; "
-                    "from ollama_cmd.interactive import InteractiveMode; "
+                    "from qarin_cmd.interactive import InteractiveMode; "
                     "s = Session(model='llama3.2', provider='ollama'); "
                     "r = InteractiveMode(s); "
                     "r._current_job = 'idle'; "

@@ -199,7 +199,7 @@ def test_allowed_tools_flag_parsed() -> None:
             sys.executable,
             "-c",
             (
-                "from ollama_cmd.root import build_parser; "
+                "from qarin_cmd.root import build_parser; "
                 "a = build_parser().parse_args(['--allowed-tools', 'file_read,grep_search', 'version']); "
                 "print(a.allowed_tools)"
             ),
@@ -218,7 +218,7 @@ def test_output_format_flag_parsed() -> None:
             sys.executable,
             "-c",
             (
-                "from ollama_cmd.root import build_parser; "
+                "from qarin_cmd.root import build_parser; "
                 "a = build_parser().parse_args(['--output-format', 'json', 'version']); "
                 "print(a.output_format)"
             ),
@@ -236,7 +236,7 @@ def test_output_format_choices() -> None:
         [
             sys.executable,
             "-c",
-            "from ollama_cmd.root import build_parser; build_parser().parse_args(['--output-format', 'xml'])",
+            "from qarin_cmd.root import build_parser; build_parser().parse_args(['--output-format', 'xml'])",
         ],
         capture_output=True,
         text=True,
@@ -248,7 +248,7 @@ def test_output_format_choices() -> None:
 def test_help_includes_allowed_tools() -> None:
     """--help should mention --allowed-tools."""
     result = subprocess.run(
-        [sys.executable, "-c", "from ollama_cmd.root import build_parser; build_parser().parse_args(['--help'])"],
+        [sys.executable, "-c", "from qarin_cmd.root import build_parser; build_parser().parse_args(['--help'])"],
         capture_output=True,
         text=True,
         cwd=_PROJECT_DIR,
@@ -259,7 +259,7 @@ def test_help_includes_allowed_tools() -> None:
 def test_help_includes_output_format() -> None:
     """--help should mention --output-format."""
     result = subprocess.run(
-        [sys.executable, "-c", "from ollama_cmd.root import build_parser; build_parser().parse_args(['--help'])"],
+        [sys.executable, "-c", "from qarin_cmd.root import build_parser; build_parser().parse_args(['--help'])"],
         capture_output=True,
         text=True,
         cwd=_PROJECT_DIR,
@@ -279,7 +279,7 @@ def test_interactive_mode_has_new_commands() -> None:
             sys.executable,
             "-c",
             (
-                "from ollama_cmd.interactive import InteractiveMode; "
+                "from qarin_cmd.interactive import InteractiveMode; "
                 "cmds = list(InteractiveMode._COMMAND_TABLE.keys()); "
                 "print(','.join(cmds))"
             ),
@@ -310,7 +310,7 @@ def test_interactive_help_mentions_new_commands() -> None:
         "import sys, asyncio\n"
         "sys.path.insert(0, '.')\n"
         "from model.session import Session\n"
-        "from ollama_cmd.interactive import InteractiveMode\n"
+        "from qarin_cmd.interactive import InteractiveMode\n"
         "async def t():\n"
         "    s = Session(model='m', provider='ollama')\n"
         "    await s.start()\n"
@@ -393,7 +393,7 @@ class TestResumeCommand:
             "import sys, asyncio\n"
             "sys.path.insert(0, '.')\n"
             "from model.session import Session\n"
-            "from ollama_cmd.interactive import InteractiveMode\n"
+            "from qarin_cmd.interactive import InteractiveMode\n"
             "async def t():\n"
             "    s = Session(model='m', provider='ollama')\n"
             "    await s.start()\n"
@@ -429,7 +429,7 @@ class TestResumeCommand:
             "import sys, asyncio\n"
             "sys.path.insert(0, PROJ)\n"
             "from model.session import Session\n"
-            "from ollama_cmd.interactive import InteractiveMode\n"
+            "from qarin_cmd.interactive import InteractiveMode\n"
             "async def t():\n"
             "    s = Session(model='m', provider='ollama')\n"
             "    await s.start()\n"
@@ -463,7 +463,7 @@ class TestUpdateStatusLine:
             "import sys, asyncio\n"
             "sys.path.insert(0, PROJ)\n"
             "from model.session import Session\n"
-            "from ollama_cmd.interactive import InteractiveMode\n"
+            "from qarin_cmd.interactive import InteractiveMode\n"
             "async def t():\n"
             "    s = Session(model='m', provider='ollama')\n"
             "    await s.start()\n"
@@ -488,7 +488,7 @@ class TestUpdateStatusLine:
             "import sys, asyncio\n"
             "sys.path.insert(0, '.')\n"
             "from model.session import Session\n"
-            "from ollama_cmd.interactive import InteractiveMode\n"
+            "from qarin_cmd.interactive import InteractiveMode\n"
             "async def t():\n"
             "    s = Session(model='m', provider='ollama')\n"
             "    await s.start()\n"
@@ -515,7 +515,7 @@ class TestBuildCommand:
             "import sys, asyncio\n"
             "sys.path.insert(0, '.')\n"
             "from model.session import Session\n"
-            "from ollama_cmd.interactive import InteractiveMode\n"
+            "from qarin_cmd.interactive import InteractiveMode\n"
             "async def t():\n"
             "    s = Session(model='m', provider='ollama')\n"
             "    await s.start()\n"
@@ -539,7 +539,7 @@ class TestBuildCommand:
             "import sys, asyncio\n"
             "sys.path.insert(0, '.')\n"
             "from model.session import Session\n"
-            "from ollama_cmd.interactive import InteractiveMode\n"
+            "from qarin_cmd.interactive import InteractiveMode\n"
             "async def t():\n"
             "    s = Session(model='m', provider='ollama')\n"
             "    await s.start()\n"
@@ -563,7 +563,7 @@ class TestBuildCommand:
             "import sys, asyncio, tempfile, os\n"
             "sys.path.insert(0, '.')\n"
             "from model.session import Session\n"
-            "from ollama_cmd.interactive import InteractiveMode\n"
+            "from qarin_cmd.interactive import InteractiveMode\n"
             "async def t():\n"
             "    s = Session(model='m', provider='ollama')\n"
             "    await s.start()\n"
@@ -600,7 +600,7 @@ class TestTeamPlanningCommand:
             "import sys, asyncio\n"
             "sys.path.insert(0, '.')\n"
             "from model.session import Session\n"
-            "from ollama_cmd.interactive import InteractiveMode\n"
+            "from qarin_cmd.interactive import InteractiveMode\n"
             "async def t():\n"
             "    s = Session(model='m', provider='ollama')\n"
             "    await s.start()\n"

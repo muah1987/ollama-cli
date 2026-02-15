@@ -162,7 +162,7 @@ class TestStatusBarLayout:
                 "-c",
                 (
                     "from model.session import Session; "
-                    "from ollama_cmd.interactive import InteractiveMode; "
+                    "from qarin_cmd.interactive import InteractiveMode; "
                     "s = Session(model='llama3.2', provider='ollama'); "
                     "r = InteractiveMode(s); "
                     "r._print_status_bar(); "
@@ -185,7 +185,7 @@ class TestStatusBarLayout:
                 "-c",
                 (
                     "from model.session import Session; "
-                    "from ollama_cmd.interactive import InteractiveMode; "
+                    "from qarin_cmd.interactive import InteractiveMode; "
                     "s = Session(model='llama3.2', provider='ollama'); "
                     "r = InteractiveMode(s); "
                     "r._print_status_bar(); "
@@ -208,7 +208,7 @@ class TestStatusBarLayout:
                 "-c",
                 (
                     "from model.session import Session; "
-                    "from ollama_cmd.interactive import InteractiveMode; "
+                    "from qarin_cmd.interactive import InteractiveMode; "
                     "s = Session(model='test-model', provider='ollama'); "
                     "r = InteractiveMode(s); "
                     "r._current_job = 'thinking'; "
@@ -229,7 +229,7 @@ class TestStatusBarLayout:
             [
                 sys.executable,
                 "-c",
-                ("from ollama_cmd.interactive import InteractiveMode; print(InteractiveMode._get_terminal_height())"),
+                ("from qarin_cmd.interactive import InteractiveMode; print(InteractiveMode._get_terminal_height())"),
             ],
             capture_output=True,
             text=True,
@@ -250,84 +250,84 @@ class TestModelDiscovery:
 
     def test_resolve_model_returns_configured_when_available(self) -> None:
         """When the configured model is in the local list, return it unchanged."""
-        from ollama_cmd.root import _resolve_model
+        from qarin_cmd.root import _resolve_model
 
-        with patch("ollama_cmd.root._fetch_local_models", return_value=["llama3.2:latest", "codestral:latest"]):
+        with patch("qarin_cmd.root._fetch_local_models", return_value=["llama3.2:latest", "codestral:latest"]):
             result = _resolve_model("llama3.2:latest", "http://localhost:11434")
             assert result == "llama3.2:latest"
 
     def test_resolve_model_partial_match(self) -> None:
         """When the configured model is a prefix of a local model, return the full name."""
-        from ollama_cmd.root import _resolve_model
+        from qarin_cmd.root import _resolve_model
 
-        with patch("ollama_cmd.root._fetch_local_models", return_value=["llama3.2:latest", "codestral:latest"]):
+        with patch("qarin_cmd.root._fetch_local_models", return_value=["llama3.2:latest", "codestral:latest"]):
             result = _resolve_model("llama3.2", "http://localhost:11434")
             assert result == "llama3.2:latest"
 
     def test_resolve_model_fallback_to_first_available(self) -> None:
         """When the configured model is not available, select the first local model."""
-        from ollama_cmd.root import _resolve_model
+        from qarin_cmd.root import _resolve_model
 
-        with patch("ollama_cmd.root._fetch_local_models", return_value=["codestral:latest", "mistral:latest"]):
+        with patch("qarin_cmd.root._fetch_local_models", return_value=["codestral:latest", "mistral:latest"]):
             result = _resolve_model("nonexistent-model", "http://localhost:11434")
             assert result == "codestral:latest"
 
     def test_resolve_model_returns_default_when_no_models(self) -> None:
         """When no local models exist, return the configured default."""
-        from ollama_cmd.root import _resolve_model
+        from qarin_cmd.root import _resolve_model
 
-        with patch("ollama_cmd.root._fetch_local_models", return_value=[]):
+        with patch("qarin_cmd.root._fetch_local_models", return_value=[]):
             result = _resolve_model("llama3.2", "http://localhost:11434")
             assert result == "llama3.2"
 
     def test_resolve_model_returns_default_when_server_unreachable(self) -> None:
         """When Ollama server is unreachable, return the configured default."""
-        from ollama_cmd.root import _resolve_model
+        from qarin_cmd.root import _resolve_model
 
-        with patch("ollama_cmd.root._fetch_local_models", return_value=[]):
+        with patch("qarin_cmd.root._fetch_local_models", return_value=[]):
             result = _resolve_model("glm-5:cloud", "http://localhost:99999")
             assert result == "glm-5:cloud"
 
     def test_fetch_local_models_returns_empty_on_connection_error(self) -> None:
         """_fetch_local_models should return [] when Ollama is unreachable."""
-        from ollama_cmd.root import _fetch_local_models
+        from qarin_cmd.root import _fetch_local_models
 
         result = _fetch_local_models("http://localhost:99999")
         assert result == []
 
     def test_resolve_model_function_exists(self) -> None:
         """_resolve_model should be importable from root."""
-        from ollama_cmd.root import _resolve_model
+        from qarin_cmd.root import _resolve_model
 
         assert callable(_resolve_model)
 
     def test_fetch_local_models_function_exists(self) -> None:
         """_fetch_local_models should be importable from root."""
-        from ollama_cmd.root import _fetch_local_models
+        from qarin_cmd.root import _fetch_local_models
 
         assert callable(_fetch_local_models)
 
     def test_resolve_model_cloud_tag_partial_match(self) -> None:
         """'glm-5' should match 'glm-5:cloud' when no :latest variant exists."""
-        from ollama_cmd.root import _resolve_model
+        from qarin_cmd.root import _resolve_model
 
-        with patch("ollama_cmd.root._fetch_local_models", return_value=["glm-5:cloud", "codestral:latest"]):
+        with patch("qarin_cmd.root._fetch_local_models", return_value=["glm-5:cloud", "codestral:latest"]):
             result = _resolve_model("glm-5", "http://localhost:11434")
             assert result == "glm-5:cloud"
 
     def test_resolve_model_reverse_partial_match(self) -> None:
         """'glm-5:cloud' should be preserved when :cloud tag is not locally available."""
-        from ollama_cmd.root import _resolve_model
+        from qarin_cmd.root import _resolve_model
 
-        with patch("ollama_cmd.root._fetch_local_models", return_value=["glm-5:latest", "codestral:latest"]):
+        with patch("qarin_cmd.root._fetch_local_models", return_value=["glm-5:latest", "codestral:latest"]):
             result = _resolve_model("glm-5:cloud", "http://localhost:11434")
             assert result == "glm-5:cloud"
 
     def test_resolve_model_cloud_exact_match(self) -> None:
         """'glm-5:cloud' should match exactly when present."""
-        from ollama_cmd.root import _resolve_model
+        from qarin_cmd.root import _resolve_model
 
-        with patch("ollama_cmd.root._fetch_local_models", return_value=["glm-5:cloud", "glm-5:latest"]):
+        with patch("qarin_cmd.root._fetch_local_models", return_value=["glm-5:cloud", "glm-5:latest"]):
             result = _resolve_model("glm-5:cloud", "http://localhost:11434")
             assert result == "glm-5:cloud"
 
@@ -384,13 +384,13 @@ class TestModelNotFoundAutoRecovery:
             "import asyncio\n"
             "import os\n"
             "# Explicitly disable bypass for strict validation testing\n"
-            "os.environ.pop('OLLAMA_CLI_BYPASS_PERMISSIONS', None)\n"
+            "os.environ.pop('QARIN_CLI_BYPASS_PERMISSIONS', None)\n"
             "from unittest.mock import patch\n"
             "from model.session import Session\n"
-            "from ollama_cmd.interactive import InteractiveMode\n"
+            "from qarin_cmd.interactive import InteractiveMode\n"
             "s = Session(model='llama3.2:latest', provider='ollama')\n"
             "r = InteractiveMode(s)\n"
-            "with patch('ollama_cmd.root._fetch_local_models', "
+            "with patch('qarin_cmd.root._fetch_local_models', "
             "return_value=['llama3.2:latest', 'codestral:latest']):\n"
             "    result = asyncio.run(r._dispatch_command('/model glm-5'))\n"
             "assert result is False\n"
@@ -412,10 +412,10 @@ class TestModelNotFoundAutoRecovery:
             "import asyncio\n"
             "from unittest.mock import patch\n"
             "from model.session import Session\n"
-            "from ollama_cmd.interactive import InteractiveMode\n"
+            "from qarin_cmd.interactive import InteractiveMode\n"
             "s = Session(model='llama3.2:latest', provider='ollama')\n"
             "r = InteractiveMode(s)\n"
-            "with patch('ollama_cmd.root._fetch_local_models', "
+            "with patch('qarin_cmd.root._fetch_local_models', "
             "return_value=['llama3.2:latest', 'codestral:latest']):\n"
             "    result = asyncio.run(r._dispatch_command('/model codestral:latest'))\n"
             "assert result is False\n"
@@ -437,10 +437,10 @@ class TestModelNotFoundAutoRecovery:
             "import asyncio\n"
             "from unittest.mock import patch\n"
             "from model.session import Session\n"
-            "from ollama_cmd.interactive import InteractiveMode\n"
+            "from qarin_cmd.interactive import InteractiveMode\n"
             "s = Session(model='codestral:latest', provider='ollama')\n"
             "r = InteractiveMode(s)\n"
-            "with patch('ollama_cmd.root._fetch_local_models', "
+            "with patch('qarin_cmd.root._fetch_local_models', "
             "return_value=['llama3.2:latest', 'codestral:latest']):\n"
             "    result = asyncio.run(r._dispatch_command('/model llama3.2'))\n"
             "assert result is False\n"
@@ -461,7 +461,7 @@ class TestModelNotFoundAutoRecovery:
         script = (
             "import asyncio\n"
             "from model.session import Session\n"
-            "from ollama_cmd.interactive import InteractiveMode\n"
+            "from qarin_cmd.interactive import InteractiveMode\n"
             "s = Session(model='old', provider='claude')\n"
             "r = InteractiveMode(s)\n"
             "result = asyncio.run(r._dispatch_command('/model claude-sonnet'))\n"
@@ -484,10 +484,10 @@ class TestModelNotFoundAutoRecovery:
             "import asyncio\n"
             "from unittest.mock import patch\n"
             "from model.session import Session\n"
-            "from ollama_cmd.interactive import InteractiveMode\n"
+            "from qarin_cmd.interactive import InteractiveMode\n"
             "s = Session(model='old', provider='ollama')\n"
             "r = InteractiveMode(s)\n"
-            "with patch('ollama_cmd.root._fetch_local_models', return_value=[]):\n"
+            "with patch('qarin_cmd.root._fetch_local_models', return_value=[]):\n"
             "    result = asyncio.run(r._dispatch_command('/model new-model'))\n"
             "assert result is False\n"
             "assert s.model == 'new-model', f'model={s.model}'\n"
@@ -514,10 +514,10 @@ class TestModelNotFoundAutoRecovery:
             "import asyncio\n"
             "from unittest.mock import patch\n"
             "from model.session import Session\n"
-            "from ollama_cmd.interactive import InteractiveMode\n"
+            "from qarin_cmd.interactive import InteractiveMode\n"
             "s = Session(model='codestral:latest', provider='ollama')\n"
             "r = InteractiveMode(s)\n"
-            "with patch('ollama_cmd.root._fetch_local_models', "
+            "with patch('qarin_cmd.root._fetch_local_models', "
             "return_value=['glm-5:cloud', 'codestral:latest']):\n"
             "    result = asyncio.run(r._dispatch_command('/model glm-5'))\n"
             "assert result is False\n"
@@ -539,10 +539,10 @@ class TestModelNotFoundAutoRecovery:
             "import asyncio\n"
             "from unittest.mock import patch\n"
             "from model.session import Session\n"
-            "from ollama_cmd.interactive import InteractiveMode\n"
+            "from qarin_cmd.interactive import InteractiveMode\n"
             "s = Session(model='codestral:latest', provider='ollama')\n"
             "r = InteractiveMode(s)\n"
-            "with patch('ollama_cmd.root._fetch_local_models', "
+            "with patch('qarin_cmd.root._fetch_local_models', "
             "return_value=['glm-5:latest', 'codestral:latest']):\n"
             "    result = asyncio.run(r._dispatch_command('/model glm-5:cloud'))\n"
             "assert result is False\n"
@@ -610,10 +610,10 @@ class TestModelTagPreservation:
             "import asyncio\n"
             "from unittest.mock import patch\n"
             "from model.session import Session\n"
-            "from ollama_cmd.interactive import InteractiveMode\n"
+            "from qarin_cmd.interactive import InteractiveMode\n"
             "s = Session(model='glm-5', provider='ollama')\n"
             "r = InteractiveMode(s)\n"
-            "with patch('ollama_cmd.root._fetch_local_models', "
+            "with patch('qarin_cmd.root._fetch_local_models', "
             "return_value=['glm-5', 'codestral:latest']):\n"
             "    result = asyncio.run(r._dispatch_command('/model glm-5:cloud'))\n"
             "assert result is False\n"
@@ -634,7 +634,7 @@ class TestModelTagPreservation:
         script = (
             "import asyncio\n"
             "from model.session import Session\n"
-            "from ollama_cmd.interactive import InteractiveMode\n"
+            "from qarin_cmd.interactive import InteractiveMode\n"
             "s = Session(model='claude-sonnet', provider='claude')\n"
             "r = InteractiveMode(s)\n"
             "result = asyncio.run(r._dispatch_command('/model Opus4.6:thinking'))\n"
@@ -653,9 +653,9 @@ class TestModelTagPreservation:
 
     def test_resolve_model_preserves_tag_when_only_bare_name_exists(self) -> None:
         """_resolve_model('glm-5:cloud') should return 'glm-5:cloud' when only bare 'glm-5' exists."""
-        from ollama_cmd.root import _resolve_model
+        from qarin_cmd.root import _resolve_model
 
-        with patch("ollama_cmd.root._fetch_local_models", return_value=["glm-5", "codestral:latest"]):
+        with patch("qarin_cmd.root._fetch_local_models", return_value=["glm-5", "codestral:latest"]):
             result = _resolve_model("glm-5:cloud", "http://localhost:11434")
             assert result == "glm-5:cloud"
 
@@ -664,7 +664,7 @@ class TestModelTagPreservation:
         script = (
             "import asyncio\n"
             "from model.session import Session\n"
-            "from ollama_cmd.interactive import InteractiveMode\n"
+            "from qarin_cmd.interactive import InteractiveMode\n"
             "s = Session(model='llama3.2', provider='ollama')\n"
             "r = InteractiveMode(s)\n"
             "result = asyncio.run(r._dispatch_command('/set-agent-model code:claude:Opus4.6:thinking'))\n"

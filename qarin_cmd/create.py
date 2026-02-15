@@ -140,13 +140,13 @@ def handle_create(args: argparse.Namespace) -> None:
 def build_parser() -> argparse.ArgumentParser:
     """Build the create command argument parser."""
     parser = argparse.ArgumentParser(
-        prog="cli-ollama create",
+        prog="qarin create",
         description="Create a model from a Modelfile",
         epilog="""
 Examples:
-  cli-ollama create my-model
-  cli-ollama create my-model --modelfile ./my-modelfile
-  cli-ollama create my-model --stream --verbose
+  qarin create my-model
+  qarin create my-model --modelfile ./my-modelfile
+  qarin create my-model --stream --verbose
         """,
     )
     parser.add_argument("model_name", help="Name for the new model")

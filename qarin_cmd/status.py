@@ -138,7 +138,7 @@ def handle_status(args: argparse.Namespace) -> None:
 def build_parser() -> argparse.ArgumentParser:
     """Build the status command argument parser."""
     parser = argparse.ArgumentParser(
-        prog="cli-ollama status",
+        prog="qarin status",
         description="Show current session and server status",
     )
     parser.add_argument("--json", action="store_true", default=False, help="JSON output mode")
