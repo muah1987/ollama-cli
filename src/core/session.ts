@@ -7,7 +7,8 @@
  */
 
 import { readFile, writeFile, mkdir, access } from "node:fs/promises";
-import { resolve, join } from "node:path";
+import { resolve, join, dirname } from "node:path";
+import { randomUUID } from "node:crypto";
 
 import type { Message } from "../types/message.js";
 import type { SessionStatus } from "../types/agent.js";
@@ -61,7 +62,7 @@ export class Session {
     tokenCounter?: TokenCounter;
     hooksEnabled?: boolean;
   } = {}) {
-    this.sessionId = options.sessionId ?? crypto.randomUUID().slice(0, 12);
+    this.sessionId = options.sessionId ?? randomUUID().slice(0, 12);
     this.model = options.model ?? "llama3.2";
     this.provider = options.provider ?? "ollama";
     this.context = options.context ?? new ContextManager();
@@ -171,7 +172,7 @@ export class Session {
     };
 
     const resolvedPath = resolve(savePath);
-    const dir = resolvedPath.substring(0, resolvedPath.lastIndexOf("/"));
+    const dir = dirname(resolvedPath);
     await mkdir(dir, { recursive: true });
     await writeFile(resolvedPath, JSON.stringify(data, null, 2), "utf-8");
 
@@ -192,12 +193,18 @@ export class Session {
       data.contextManager as Record<string, unknown>,
     );
 
-    // Rebuild TokenCounter
-    const tokenData = data.tokenCounter as Record<string, number>;
-    const tokenCounter = new TokenCounter(
-      data.provider,
-      tokenData.contextMax as number,
-    );
+    // Rebuild TokenCounter with all persisted state
+    const tokenData = data.tokenCounter as {
+      promptTokens: number;
+      completionTokens: number;
+      totalTokens?: number;
+      tokensPerSecond: number;
+      contextUsed: number;
+      contextMax: number;
+      costEstimate?: number;
+      provider: string;
+    };
+    const tokenCounter = TokenCounter.fromJSON(tokenData);
 
     const session = new Session({
       sessionId: data.sessionId,
@@ -259,20 +266,38 @@ export class Session {
     };
   }
 
-  /** Look for QARIN.md in the current directory and parent dirs */
+  /** Look for QARIN.md in the current directory and parent dirs up to repo root */
   private async findQarinMd(): Promise<string | null> {
     let current = process.cwd();
-    for (let i = 0; i < 5; i++) {
+
+    // Walk up the directory tree until we reach the filesystem root or a .git marker.
+    // At each level, prefer the nearest QARIN.md.
+    // This mirrors the Python implementation behavior but without a hard depth limit.
+    for (;;) {
       const candidate = join(current, QARIN_MD);
       try {
         await access(candidate);
         return candidate;
       } catch {
-        const parent = resolve(current, "..");
-        if (parent === current) break;
-        current = parent;
+        // Not found at this level, keep walking up.
       }
+
+      // Stop if we detect a .git directory, assuming we've reached the repo root.
+      const gitDir = join(current, ".git");
+      try {
+        await access(gitDir);
+        break;
+      } catch {
+        // No .git here, continue walking up unless we're at the filesystem root.
+      }
+
+      const parent = resolve(current, "..");
+      if (parent === current) {
+        break;
+      }
+      current = parent;
     }
+
     return null;
   }
 
@@ -294,8 +319,12 @@ export class Session {
     try {
       const existing = await readFile(qarinMdPath, "utf-8");
       await writeFile(qarinMdPath, existing + entry, "utf-8");
-    } catch {
-      // Ignore write errors
+    } catch (error) {
+      // Log but do not throw, to avoid crashing on non-critical QARIN.md failures
+      console.warn(
+        `Failed to append session summary to QARIN.md at "${qarinMdPath}":`,
+        error,
+      );
     }
   }
 }

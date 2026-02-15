@@ -148,7 +148,7 @@ export class QarinAgent extends EventEmitter {
       await this.hookRunner.runHook("UserPromptSubmit", {
         session_id: this.sessionId,
         message: userInput,
-        intent: intent.agentType,
+        intent,
         confidence: intent.confidence,
       });
     }
@@ -212,7 +212,7 @@ export class QarinAgent extends EventEmitter {
       details: `Response ready ${this.tokenCounter.formatDisplay()}`,
     });
 
-    this.emit("success", { message: "Response is ready" });
+    this.emit("success", { message: "زبطت! Response is ready" });
     return response;
   }
 

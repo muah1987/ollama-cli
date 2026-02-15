@@ -8,7 +8,16 @@
 import type { TokenUsage } from "../types/message.js";
 import { Provider } from "../types/message.js";
 
-/** Cost per million tokens (input/output) by provider */
+/**
+ * Cost per million tokens (input/output) by provider.
+ *
+ * Provider keys use a mix of Provider enum values (lowercase strings)
+ * and string aliases for compatibility:
+ * - Provider.OLLAMA, Provider.ANTHROPIC, Provider.OPENAI (enum values)
+ * - "claude" is an alias for Provider.ANTHROPIC
+ * - "gemini" and "google" map to Google's Gemini pricing
+ * - "codex" maps to OpenAI Codex pricing
+ */
 const COST_PER_MILLION: Record<string, { input: number; output: number }> = {
   [Provider.OLLAMA]: { input: 0.0, output: 0.0 },
   [Provider.ANTHROPIC]: { input: 3.0, output: 15.0 },
@@ -128,6 +137,44 @@ export class TokenCounter {
       costEstimate: Math.round(this._costEstimate * 1_000_000) / 1_000_000,
       provider: this._provider,
     };
+  }
+
+  /**
+   * Recreate a TokenCounter instance from a JSON representation produced by toJSON().
+   */
+  static fromJSON(json: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens?: number;
+    tokensPerSecond: number;
+    contextUsed: number;
+    contextMax: number;
+    costEstimate?: number;
+    provider: string;
+  }): TokenCounter {
+    const provider = (json.provider as Provider) ?? Provider.OPENAI;
+    const counter = new this(provider, json.contextMax);
+
+    counter._promptTokens = Number.isFinite(json.promptTokens)
+      ? json.promptTokens
+      : 0;
+    counter._completionTokens = Number.isFinite(json.completionTokens)
+      ? json.completionTokens
+      : 0;
+    counter._tokensPerSecond = Number.isFinite(json.tokensPerSecond)
+      ? json.tokensPerSecond
+      : 0;
+    counter._contextUsed = Number.isFinite(json.contextUsed)
+      ? json.contextUsed
+      : 0;
+    counter._contextMax = Number.isFinite(json.contextMax)
+      ? json.contextMax
+      : 0;
+
+    // Recompute cost estimate from current pricing to keep behavior consistent.
+    counter._costEstimate = counter.estimateCost();
+
+    return counter;
   }
 
   /** Reset all counters to zero */

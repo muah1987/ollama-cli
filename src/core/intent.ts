@@ -132,6 +132,7 @@ const PATTERN_REGISTRY: Record<string, string[]> = {
     "best practices",
     "state of the art",
   ],
+  team: ["team", "team build", "complete with team"],
 };
 
 /** Compiled pattern: either a RegExp (single word) or a lowercase string (multi-word) */
@@ -271,7 +272,7 @@ export class IntentClassifier {
         agentType: "code",
         confidence,
         matchedPatterns: bestType ? (matches.get(bestType) ?? []) : [],
-        explanation: `No agent type met the confidence threshold (${this.threshold.toFixed(1)}). Best candidate was '${bestType}' with confidence ${confidence.toFixed(2)}.`,
+        explanation: `No agent type met the confidence threshold of ${this.threshold.toFixed(1)}. Best candidate was '${bestType}' with confidence ${confidence.toFixed(2)}.`,
       };
     }
 
