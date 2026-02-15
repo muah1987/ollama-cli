@@ -33,11 +33,11 @@ export const QAHWA_THEME: ThemeMap = {
   complete: {
     emoji: "🏆",
     messageEn: "Qahwa is ready! تفضّل",
-    messageAr: "!القهوة جاهزة! تفضّل",
+    messageAr: "القهوة جاهزة! تفضّل",
   },
   error: {
     emoji: "🔥",
     messageEn: "Overheated! Adjusting flame",
-    messageAr: "!سخنت كثيراً! تعديل اللهب",
+    messageAr: "سخنت كثيراً! تعديل اللهب",
   },
 };

@@ -60,7 +60,11 @@ export default function QarinApp({ task, options }: QarinAppProps): React.ReactE
   // If a task was passed as an argument, execute it immediately
   React.useEffect(() => {
     if (task) {
-      handleSubmit(task).catch(() => {});
+      handleSubmit(task).catch((err: unknown) => {
+        // Display error if initial task fails
+        const message = err instanceof Error ? err.message : String(err);
+        setMessages((prev) => [...prev, { role: "system", content: `Error: ${message}` }]);
+      });
     }
   }, []);
 

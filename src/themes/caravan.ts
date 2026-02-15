@@ -33,11 +33,11 @@ export const CARAVAN_THEME: ThemeMap = {
   complete: {
     emoji: "🏜️",
     messageEn: "Oasis reached! الحمد لله",
-    messageAr: "!وصلنا الواحة! الحمد لله",
+    messageAr: "وصلنا الواحة! الحمد لله",
   },
   error: {
     emoji: "🌪️",
     messageEn: "Sandstorm! Taking shelter",
-    messageAr: "!عاصفة رملية! نحتمي",
+    messageAr: "عاصفة رملية! نحتمي",
   },
 };

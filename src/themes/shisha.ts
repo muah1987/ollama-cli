@@ -33,11 +33,11 @@ export const SHISHA_THEME: ThemeMap = {
   complete: {
     emoji: "🪔",
     messageEn: "Session complete! يا سلام",
-    messageAr: "!انتهت الجلسة! يا سلام",
+    messageAr: "انتهت الجلسة! يا سلام",
   },
   error: {
     emoji: "🚫",
     messageEn: "Coal fell off! Recovering...",
-    messageAr: "...سقط الفحم! جارٍ الإصلاح",
+    messageAr: "سقط الفحم! جارٍ الإصلاح",
   },
 };

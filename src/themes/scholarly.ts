@@ -33,11 +33,11 @@ export const SCHOLARLY_THEME: ThemeMap = {
   complete: {
     emoji: "🕌",
     messageEn: "Knowledge preserved! بارك الله",
-    messageAr: "!حُفظ العلم! بارك الله",
+    messageAr: "حُفظ العلم! بارك الله",
   },
   error: {
     emoji: "🕯️",
     messageEn: "The candle flickered! Relighting...",
-    messageAr: "...اهتزت الشمعة! إعادة الإشعال",
+    messageAr: "اهتزت الشمعة! إعادة الإشعال",
   },
 };

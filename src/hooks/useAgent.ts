@@ -64,9 +64,11 @@ export function useAgent(options: CLIOptions): UseAgentReturn {
     agent.start().catch((err: Error) => setError(err));
 
     return () => {
+      // Intentionally suppress cleanup errors — agent resources are best-effort released
       agent.end().catch(() => {});
     };
   }, []);
+  // Note: empty deps is intentional — agent is created once on mount
 
   const sendMessage = useCallback(async (message: string) => {
     const agent = agentRef.current;

@@ -34,7 +34,7 @@ export const BASE_THEME: ThemeMap = {
   complete: {
     emoji: "✅",
     messageEn: "Complete!",
-    messageAr: "!اكتمل",
+    messageAr: "اكتمل!",
   },
   error: {
     emoji: "❌",
