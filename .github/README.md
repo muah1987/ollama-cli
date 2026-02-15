@@ -127,19 +127,19 @@ Seamlessly switch between providers — your conversation context is preserved:
 
 ```bash
 # Use Ollama (default, local)
-qarin-cli --provider ollama
+qarin --provider ollama
 
 # Use Claude
-qarin-cli --provider claude
+qarin --provider claude
 
 # Use Gemini
-qarin-cli --provider gemini
+qarin --provider gemini
 
 # Use OpenAI Codex
-qarin-cli --provider codex
+qarin --provider codex
 
 # Use Hugging Face
-qarin-cli --provider hf
+qarin --provider hf
 ```
 
 Switch mid-session with `/provider claude` in the REPL.
@@ -327,7 +327,7 @@ Save and resume conversations across sessions:
 >>> /load my-project
 
 # Or use the CLI flag
-qarin-cli --resume
+qarin --resume
 ```
 
 ### Agent Model Assignment
@@ -425,7 +425,6 @@ uv run ruff format .
 ## Support
 
 - **GitHub Issues:** [Report bugs or request features](https://github.com/muah1987/qarin-cli/issues)
-- **Ollama:** [Official Ollama website](https://ollama.ai)
 
 ## License
 
