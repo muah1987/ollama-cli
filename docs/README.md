@@ -1,6 +1,6 @@
 # Qarin CLI
 
-**A full-featured AI coding assistant powered by Ollama with multi-provider support.**
+**A full-featured AI coding assistant powered by Ai Models with multi-provider support.**
 
 [![PyPI version](https://badge.fury.io/py/qarin-cli.svg)](https://badge.fury.io/py/qarin-cli)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
