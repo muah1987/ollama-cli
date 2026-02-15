@@ -19,6 +19,96 @@ Current task tracker for Qarin CLI development. Items are grouped by system and 
 - [ ] **Multi-intent detection** -- support prompts that span two intents (e.g. "write tests and review the auth module") by returning ranked intent list
 - [ ] **Context-aware classification** -- factor in recent conversation history, not just the current prompt, when classifying intent
 
+## Chain Controller (Primary Orchestrator)
+
+The chain controller replaces the old sequential 4-wave model (Diagnostic → Analysis → Solution → Verification) with a parallel fan-out architecture. Each wave spawns multiple sub-agents concurrently, merges their outputs into a Shared State, then passes that state to the next wave.
+
+### Shared State Object
+
+- [ ] **Define SharedState type** -- create `types/chain.js` with the SharedState interface: `problem_statement`, `success_criteria`, `constraints`, `assumptions`, `risks`, `plan`, `artifacts_to_update`, `final_answer_outline`
+- [ ] **SharedState lifecycle** -- initialize at Wave 0, update deterministically after each wave merge, serialize for caching/resume
+- [ ] **SharedState persistence** -- save/restore SharedState to `.qarin/sessions/` so chain runs can be resumed mid-wave
+
+### Wave 0: Ingest
+
+- [ ] **Restate and extract** -- Primary restates user request in 1-2 lines, extracts explicit + inferred constraints, defines success criteria
+- [ ] **Initialize SharedState** -- populate `problem_statement`, `success_criteria`, `constraints` from the ingested prompt
+- [ ] **Render TOP region** -- ASCII banner + startup info + warnings (if `.qarin/warnings` file exists)
+- [ ] **Render BOTTOM region** -- cwd, run_uuid, model/status, and optional metrics (cpu/gpu/tokens/latency)
+
+### Wave 1: Analysis Fan-out
+
+- [ ] **Analyzer-A sub-agent** -- interprets requirements from a technical/architectural angle; returns `key_insights`, `constraints_found`, `assumptions`, `risks`, `questions_to_clarify`, `recommendations_for_next_wave`
+- [ ] **Analyzer-B sub-agent** -- interprets requirements from a UX/risk/edge-case angle; same return contract
+- [ ] **Parallel spawn** -- run Analyzer-A and Analyzer-B concurrently via Promise.allSettled
+- [ ] **Merge 1** -- deduplicate insights, resolve conflicts by evidence, produce SharedState v1
+
+### Wave 2: Plan / Validate / Optimize Fan-out
+
+- [ ] **Planner sub-agent** -- produces `step_by_step_plan`, `deliverables`, `dependencies/tools_needed`, `acceptance_checks`, `recommendations_for_execution`
+- [ ] **Validator sub-agent** -- checks completeness, contradictions, safety/constraints; returns `contradictions_or_gaps`, `risk_register`, `edge_cases`, `must_not_do`, `readiness_score` (0-100)
+- [ ] **Optimizer sub-agent** -- returns `simplifications`, `modularization_suggestions`, `clarity_improvements`, `performance/maintenance considerations`
+- [ ] **Parallel spawn** -- run Planner, Validator, Optimizer concurrently
+- [ ] **Merge 2** -- integrate plan with validator risks and optimizer suggestions, produce SharedState v2
+
+### Wave 3: Execution Fan-out
+
+- [ ] **Executor-1 sub-agent** -- produces concrete outputs (specs, code, config); returns `concrete_output`, `integration_steps`, `tests_or_checks`
+- [ ] **Executor-2 sub-agent** -- produces complementary outputs (alternative approach or second file set); same return contract
+- [ ] **Tool call delegation** -- Executors can propose tool calls (file_write, shell_exec, etc.) but do not invent tool results
+- [ ] **Parallel spawn** -- run Executor-1 and Executor-2 concurrently
+- [ ] **Merge 3** -- combine executor outputs, resolve overlapping file edits, produce SharedState v3
+
+### Wave 4: Finalization Fan-out
+
+- [ ] **Monitor sub-agent** -- verify final outputs against success criteria from SharedState; list remaining risks
+- [ ] **Reporter sub-agent** -- produce the user-facing response formatted for MID region
+- [ ] **Cleaner sub-agent** -- polish formatting, remove noise/duplicates, ensure consistency with CLI regions (TOP/MID/BOTTOM)
+- [ ] **Parallel spawn** -- run Monitor, Reporter, Cleaner concurrently
+- [ ] **Final Merge** -- assemble the delivered answer; update BOTTOM with timings, tokens, uuid, exit status
+
+### Merge Engine
+
+- [ ] **Deterministic dedup** -- deduplicate repeated points across sub-agent outputs using content hashing
+- [ ] **Conflict resolution** -- when sub-agents disagree, resolve by evidence/constraints; if unresolved, present best option + fallback
+- [ ] **Structured merge output** -- every merge produces a clean SharedState update, not raw concatenation
+
+### Chain Config
+
+- [ ] **Chain config schema** -- define the chain configuration format in `.qarin/settings.json` under a `chain` key
+- [ ] **Per-wave agent list** -- configure which agents run in each wave, what model/provider/maxTokens each uses
+- [ ] **Merge policy** -- configurable merge strategy per wave (deterministic_dedup_conflict_resolve, or custom)
+- [ ] **Wave skip rules** -- configure which waves to skip based on intent or SharedState readiness_score
+
+```yaml
+# Target config shape
+chain:
+  merge_policy: deterministic_dedup_conflict_resolve
+  waves:
+    - name: analysis
+      agents: [analyzer_a, analyzer_b]
+    - name: plan_validate_optimize
+      agents: [planner, validator, optimizer]
+    - name: execution
+      agents: [executor_1, executor_2]
+    - name: finalize
+      agents: [monitor, reporter, cleaner]
+```
+
+### Sub-agent Contracts
+
+- [ ] **Enforce return contracts** -- validate that each sub-agent returns its required fields (e.g. Analyzer must return `key_insights`, `risks`, etc.) using Zod schemas
+- [ ] **Contract violation handling** -- if a sub-agent omits required fields, retry once with a reminder prompt; if it fails again, fill with `null` and flag in the merge
+- [ ] **Contract documentation** -- generate contract docs from the Zod schemas for each role
+
+## CLI UI Regions (TOP / MID / BOTTOM)
+
+- [ ] **TOP region component** -- new Ink component that renders ASCII banner, startup info, and warnings from `.qarin/warnings` file
+- [ ] **MID region** -- refactor ChatView to be the MID region; user prompt input + final answer output
+- [ ] **BOTTOM region component** -- new Ink component showing cwd, run_uuid, model/status, and live metrics (tokens, latency, cost)
+- [ ] **BOTTOM live updates** -- update BOTTOM in real time as waves complete (timings, token counts, exit status)
+- [ ] **Region layout manager** -- coordinate TOP/MID/BOTTOM rendering in app.js with proper spacing and overflow handling
+
 ## Runners / Tool Execution
 
 - [ ] **Sandboxed shell_exec** -- run commands in a restricted environment (cgroups, nsjail, or Docker) to limit blast radius
@@ -35,15 +125,7 @@ Current task tracker for Qarin CLI development. Items are grouped by system and 
 - [ ] **Hook error reporting** -- surface hook stderr/failures in the UI instead of silently swallowing them
 - [ ] **Built-in hooks library** -- ship default hooks for common workflows (auto-lint on file_write, auto-test on code change)
 - [ ] **Hook dry-run mode** -- preview what hooks would fire for a given action without executing them
-
-## Sub-agents
-
-- [ ] **Configurable sub-agent models** -- allow each wave to use a different model/provider via settings.json or CLI flags
-- [ ] **Custom wave prompts** -- let QARIN.md override the default system prompts for Diagnostic, Analysis, Solution, Verification agents
-- [ ] **Wave skip logic** -- skip unnecessary waves (e.g. skip Verification for documentation tasks)
-- [ ] **Parallel wave execution** -- run independent waves concurrently when their inputs don't depend on prior outputs
-- [ ] **Sub-agent token budgets** -- enforce per-wave token limits to control cost in multi-agent runs
-- [ ] **Sub-agent result caching** -- cache wave outputs so re-running the same task doesn't repeat completed waves
+- [ ] **Chain lifecycle hooks** -- new hook events: `ChainStart`, `WaveStart`, `WaveComplete`, `MergeComplete`, `ChainComplete` so external tools can observe orchestration
 
 ## Session & Context
 
@@ -53,6 +135,7 @@ Current task tracker for Qarin CLI development. Items are grouped by system and 
 - [ ] **Session export** -- export conversation to Markdown, JSON, or PDF
 - [ ] **Session search** -- search across saved sessions by keyword or date
 - [ ] **Auto-save interval** -- periodically save the session to prevent data loss on crash
+- [ ] **Chain run metadata** -- save chain run UUID, wave timings, and per-agent token usage in session data
 
 ## Long-term Memory
 
@@ -67,6 +150,7 @@ Current task tracker for Qarin CLI development. Items are grouped by system and 
 - [ ] **Multi-file diff view** -- extend DiffViewer to show changes across multiple files in one view
 - [ ] **Scrollable chat history** -- allow scrolling through long conversations in the terminal
 - [ ] **Notification toasts** -- show brief non-blocking notifications for background events (hook results, sub-agent completions)
+- [ ] **Wave progress indicator** -- show which wave is active, which agents are running, and a live merge status during chain runs
 - [ ] **Accessibility** -- ensure all UI elements work with screen readers and high-contrast terminals
 
 ## CLI & Configuration
@@ -76,11 +160,15 @@ Current task tracker for Qarin CLI development. Items are grouped by system and 
 - [ ] **Global config file** -- support `~/.config/qarin/config.json` for default model, provider, theme, and other settings
 - [ ] **Model discovery** -- `qarin models` command to list available models for the active provider
 - [ ] **Provider validation** -- verify API key and connectivity on startup, show clear error if missing
+- [ ] **--chain flag** -- explicitly enable chain orchestration mode (vs single-agent mode) from the CLI
+- [ ] **run_uuid generation** -- generate a unique run ID per invocation, display in BOTTOM, use as cache/session key
 
 ## Testing
 
 - [ ] **Unit tests for core/** -- agent, models, context, tokens, intent, tools, hooks, subagents, session
-- [ ] **Component tests** -- snapshot or integration tests for Ink components
+- [ ] **Chain controller tests** -- test wave sequencing, parallel spawn, merge logic, SharedState transitions
+- [ ] **Sub-agent contract tests** -- verify each role returns its required fields against Zod schemas
+- [ ] **Component tests** -- snapshot or integration tests for Ink components (including TOP/BOTTOM regions)
 - [ ] **E2E test harness** -- run the CLI against a mock LLM server and assert on output
 - [ ] **CI pipeline** -- GitHub Actions workflow for lint, test, build on every PR
 
