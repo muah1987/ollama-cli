@@ -15,10 +15,30 @@ import { StatusBar } from "./components/StatusBar.js";
 import { ChatView } from "./components/ChatView.js";
 import { ProgressTheme } from "./components/ProgressTheme.js";
 import { InputArea } from "./components/InputArea.js";
+import { Session } from "./core/session.js";
 
 interface QarinAppProps {
   task?: string;
   options: CLIOptions;
+}
+
+/** Load the latest session's messages from .qarin/sessions/ */
+async function loadLatestSession(): Promise<Message[]> {
+  const { readdir, readFile } = await import("node:fs/promises");
+  const { join, resolve } = await import("node:path");
+
+  const sessionsDir = resolve(".qarin/sessions");
+  try {
+    const files = await readdir(sessionsDir);
+    const jsonFiles = files.filter((f) => f.endsWith(".json")).sort().reverse();
+    if (jsonFiles.length === 0) return [];
+
+    const content = await readFile(join(sessionsDir, jsonFiles[0]), "utf-8");
+    const data = JSON.parse(content) as { contextManager?: { messages?: Message[] } };
+    return data.contextManager?.messages ?? [];
+  } catch {
+    return [];
+  }
 }
 
 export default function QarinApp({ task, options }: QarinAppProps): React.ReactElement {
@@ -34,14 +54,43 @@ export default function QarinApp({ task, options }: QarinAppProps): React.ReactE
     tokenDisplay,
     error,
     sendMessage,
+    endSession,
   } = useAgent(options);
 
   const [messages, setMessages] = useState<Message[]>([]);
+  const [resumeLoaded, setResumeLoaded] = useState(false);
+
+  // Handle --resume: load the latest session on mount
+  React.useEffect(() => {
+    if (options.resume && !resumeLoaded) {
+      setResumeLoaded(true);
+      loadLatestSession().then((msgs) => {
+        if (msgs.length > 0) {
+          setMessages(msgs);
+        } else {
+          setMessages([{ role: "system", content: "No previous session found." }]);
+        }
+      }).catch(() => {
+        setMessages([{ role: "system", content: "Failed to load previous session." }]);
+      });
+    }
+  }, []);
 
   const handleSubmit = useCallback(
     async (text: string) => {
       if (text === "/quit" || text === "/exit") {
+        await endSession();
         exit();
+        return;
+      }
+
+      if (text === "/save") {
+        const session = new Session({
+          model: options.model,
+          provider: options.provider,
+        });
+        const savePath = await session.save();
+        setMessages((prev) => [...prev, { role: "system", content: `Session saved to ${savePath}` }]);
         return;
       }
 
@@ -64,7 +113,7 @@ export default function QarinApp({ task, options }: QarinAppProps): React.ReactE
       // Send to agent
       await sendMessage(text);
     },
-    [sendMessage, nextTheme, exit, status],
+    [sendMessage, endSession, nextTheme, exit, status],
   );
 
   // If a task was passed as an argument, execute it immediately
@@ -137,7 +186,7 @@ export default function QarinApp({ task, options }: QarinAppProps): React.ReactE
       {/* Input Area */}
       <InputArea
         onSubmit={handleSubmit}
-        placeholder="Type a message... (/quit, /theme, /status)"
+        placeholder="Type a message... (/quit, /theme, /status, /save)"
         disabled={isProcessing}
       />
     </Box>

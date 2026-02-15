@@ -11,6 +11,8 @@ import { EventEmitter } from "node:events";
 import type { Message, ModelResponse } from "../types/message.js";
 import { Provider } from "../types/message.js";
 import type { CLIOptions, IntentResult, SessionStatus, ToolResult } from "../types/agent.js";
+import { BUILT_IN_TOOLS } from "../types/agent.js";
+import type { ToolCall, ToolDefinition } from "../types/message.js";
 import { OperationPhase } from "../types/theme.js";
 import { ContextManager } from "./context.js";
 import { ModelOrchestrator } from "./models.js";
@@ -355,14 +357,164 @@ export class QarinAgent extends EventEmitter {
     return this.intentClassifier.classify(prompt);
   }
 
+  /**
+   * Execute a request with an agentic tool-call loop.
+   *
+   * When the model responds with tool calls, this method:
+   * 1. Executes each tool via runTool()
+   * 2. Appends tool results to the conversation
+   * 3. Re-queries the model until it produces a final text response
+   *
+   * Matches the Python Session._route_with_tools() pattern.
+   *
+   * @param maxRounds - Maximum tool-call rounds to prevent runaway loops
+   * @returns The final text response from the model
+   */
+  async executeWithTools(
+    userInput: string,
+    maxRounds = 10,
+  ): Promise<string> {
+    if (!this.running) {
+      await this.start();
+    }
+
+    this._messageCount++;
+
+    // Classify intent
+    const intent = this.intentClassifier.classify(userInput);
+    this.emit("intent", intent);
+
+    this.context.addMessage("user", userInput);
+
+    this.emit("progress", {
+      phase: OperationPhase.IMPLEMENTING,
+      details: `Intent: ${intent.agentType} — executing with tools...`,
+    });
+
+    const accumulatedContent: string[] = [];
+    let lastMetrics: { promptTokens: number; completionTokens: number } | undefined;
+
+    for (let round = 0; round < maxRounds; round++) {
+      const response = await this.orchestrator.complete(
+        this.provider,
+        this.context.getMessagesForApi(),
+      );
+
+      if (response.usage) {
+        lastMetrics = {
+          promptTokens: response.usage.promptTokens,
+          completionTokens: response.usage.completionTokens,
+        };
+      }
+
+      // No tool calls — return the final text
+      if (!response.toolCalls || response.toolCalls.length === 0) {
+        if (accumulatedContent.length > 0) {
+          accumulatedContent.push(response.content);
+          const fullResponse = accumulatedContent.join("\n");
+          this.context.addMessage("assistant", fullResponse);
+          this.finalizeResponse(fullResponse, lastMetrics);
+          return fullResponse;
+        }
+
+        this.context.addMessage("assistant", response.content);
+        this.finalizeResponse(response.content, lastMetrics);
+        return response.content;
+      }
+
+      // Model wants to call tools — execute them
+      if (response.content) {
+        accumulatedContent.push(response.content);
+        this.emit("stream", response.content);
+      }
+
+      // Record the assistant message with tool calls
+      this.context.addMessage("assistant", response.content || "", {
+        toolCalls: response.toolCalls,
+      });
+
+      // Execute each tool call and append results
+      for (const tc of response.toolCalls) {
+        const toolName = tc.function.name;
+        let args: Record<string, unknown>;
+        try {
+          args = JSON.parse(tc.function.arguments);
+        } catch {
+          args = {};
+        }
+
+        this.emit("progress", {
+          phase: OperationPhase.TESTING,
+          details: `Executing tool: ${toolName}`,
+        });
+
+        const result = await this.runTool(toolName, args);
+        const resultStr = JSON.stringify(
+          { success: result.success, output: result.output, error: result.error },
+        ).slice(0, 3000);
+
+        this.context.addMessage("tool", resultStr, { toolCallId: tc.id });
+      }
+    }
+
+    // Max rounds reached — return what we have
+    const fallback = accumulatedContent.length > 0
+      ? accumulatedContent.join("\n")
+      : "[max tool-call rounds reached]";
+
+    this.context.addMessage("assistant", fallback);
+    this.finalizeResponse(fallback, lastMetrics);
+    return fallback;
+  }
+
+  /** Finalize a response by updating token counter and emitting events */
+  private finalizeResponse(
+    response: string,
+    metrics?: { promptTokens: number; completionTokens: number },
+  ): void {
+    if (metrics) {
+      this.tokenCounter.update({
+        promptTokens: metrics.promptTokens,
+        completionTokens: metrics.completionTokens,
+        totalTokens: metrics.promptTokens + metrics.completionTokens,
+      });
+      this.context.updateMetrics(metrics.promptTokens, metrics.completionTokens);
+    }
+
+    const contextUsage = this.context.getContextUsage();
+    this.tokenCounter.setContext(contextUsage.used, contextUsage.max);
+
+    this.emit("progress", {
+      phase: OperationPhase.COMPLETE,
+      details: `Response ready ${this.tokenCounter.formatDisplay()}`,
+    });
+
+    this.emit("success", { message: "Response is ready" });
+  }
+
+  /** Get the tool definitions for API calls */
+  getToolDefinitions(): ToolDefinition[] {
+    return BUILT_IN_TOOLS;
+  }
+
   /** Build the default system prompt */
   private buildDefaultSystemPrompt(): string {
+    const toolList = BUILT_IN_TOOLS
+      .map((t) => `- ${t.name}: ${t.description}`)
+      .join("\n");
+
     return [
       "You are Qarin (قرين), an AI coding assistant.",
       "You help developers write, debug, test, and improve code.",
-      "You have access to file operations, shell commands, and web search.",
       "Be concise, accurate, and helpful.",
       "When writing code, follow the project's existing conventions.",
+      "",
+      "You have access to the following tools:",
+      toolList,
+      "",
+      "When a user asks you to perform an action (reading files, editing code,",
+      "running shell commands, searching files, or fetching URLs), use the",
+      "appropriate tool call to execute the action.",
     ].join("\n");
   }
 }
