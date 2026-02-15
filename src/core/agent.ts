@@ -186,7 +186,24 @@ export class QarinAgent extends EventEmitter {
     const response = chunks.join("");
     this.context.addMessage("assistant", response);
 
-    // Update token counter with estimated usage
+    /**
+     * Update token counter with estimated usage.
+     *
+     * NOTE: This TypeScript implementation uses a simple 4-character-per-token
+     * heuristic for token estimation, which is less accurate than the Python
+     * implementation (runner/token_counter.py). The Python version extracts
+     * actual token counts from provider-specific API responses via methods like
+     * _extract_ollama(), _extract_anthropic(), etc.
+     *
+     * This rough estimate may deviate from actual token counts, especially for:
+     * - Non-English text (Unicode characters may have different tokenization)
+     * - Code or technical content (tokens may be shorter or longer than 4 chars)
+     * - Different tokenizer implementations across providers
+     *
+     * Cost estimates derived from these token counts will also be less accurate.
+     * For production use, consider implementing provider-specific token extraction
+     * from actual API responses, similar to the Python implementation.
+     */
     const estimatedPromptTokens = Math.ceil(
       this.context
         .getMessagesForApi()

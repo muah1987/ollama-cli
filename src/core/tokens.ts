@@ -3,6 +3,22 @@
  *
  * Ports the Python runner/token_counter.py into TypeScript.
  * Real-time token tracking with cost estimation across providers.
+ *
+ * **IMPORTANT LIMITATION**: Unlike the Python implementation, this TypeScript
+ * version does NOT extract actual token counts from provider API responses.
+ * The Python version includes provider-specific token extraction methods
+ * (_extract_ollama, _extract_anthropic, _extract_openai, etc.) that parse
+ * actual token usage from API responses.
+ *
+ * This TypeScript version relies on the caller (typically core/agent.ts) to
+ * provide token counts, which are currently estimated using a simple
+ * 4-character-per-token heuristic. This makes token counts and cost estimates
+ * less accurate than the Python implementation.
+ *
+ * For production use, consider:
+ * 1. Implementing provider-specific token extraction from API responses
+ * 2. Using actual token counts from API metadata when available
+ * 3. Documenting the estimation method to users when actual counts aren't available
  */
 
 import type { TokenUsage } from "../types/message.js";
