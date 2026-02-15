@@ -263,7 +263,6 @@ export class IntentClassifier {
             explanation: `Classified as '${bestType}' with confidence ${confidence.toFixed(2)} based on ${matchedPatterns.length} pattern match(es): ${matchedPatterns.join(", ")}.`,
         };
     }
-}
     /**
      * Tier 2: LLM-based classification fallback.
      *
