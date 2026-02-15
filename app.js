@@ -14,7 +14,7 @@ import { ChatView } from "./components/ChatView.js";
 import { ProgressTheme } from "./components/ProgressTheme.js";
 import { InputArea } from "./components/InputArea.js";
 import { Session } from "./core/session.js";
-/** Load the latest session's messages from .qarin/sessions/ */
+/** Load the latest session with full context from .qarin/sessions/ */
 async function loadLatestSession() {
     const { readdir, readFile } = await import("node:fs/promises");
     const { join, resolve } = await import("node:path");
@@ -23,13 +23,16 @@ async function loadLatestSession() {
         const files = await readdir(sessionsDir);
         const jsonFiles = files.filter((f) => f.endsWith(".json")).sort().reverse();
         if (jsonFiles.length === 0)
-            return [];
+            return { messages: [], sessionData: null };
         const content = await readFile(join(sessionsDir, jsonFiles[0]), "utf-8");
         const data = JSON.parse(content);
-        return data.contextManager?.messages ?? [];
+        return {
+            messages: data.contextManager?.messages ?? [],
+            sessionData: data,
+        };
     }
     catch {
-        return [];
+        return { messages: [], sessionData: null };
     }
 }
 export default function QarinApp({ task, options }) {
@@ -42,9 +45,18 @@ export default function QarinApp({ task, options }) {
     React.useEffect(() => {
         if (options.resume && !resumeLoaded) {
             setResumeLoaded(true);
-            loadLatestSession().then((msgs) => {
+            loadLatestSession().then(({ messages: msgs, sessionData }) => {
                 if (msgs.length > 0) {
                     setMessages(msgs);
+                    if (sessionData) {
+                        const info = [
+                            `Resumed session ${sessionData.sessionId}`,
+                            `Model: ${sessionData.provider}/${sessionData.model}`,
+                            `Messages: ${sessionData.messageCount}`,
+                            sessionData.tokenCounter ? `Tokens: ${sessionData.tokenCounter.totalTokens?.toLocaleString() ?? 0}` : null,
+                        ].filter(Boolean).join(" | ");
+                        setMessages((prev) => [{ role: "system", content: info }, ...prev]);
+                    }
                 }
                 else {
                     setMessages([{ role: "system", content: "No previous session found." }]);

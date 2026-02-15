@@ -55,7 +55,7 @@ export function useAgent(options) {
         setStreamOutput("");
         setError(null);
         try {
-            await agent.executeTask(message);
+            await agent.executeWithTools(message);
             setStatus(agent.getStatus());
             setTokenDisplay(agent.getTokenCounter().formatDisplay());
         }

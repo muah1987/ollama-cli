@@ -17,7 +17,7 @@ program
     .option("--resume", "Resume the latest session")
     .option("--system-prompt <prompt>", "Custom system prompt")
     .option("--output-format <format>", "Output format: text, json, markdown", "text")
-    .action((task, opts) => {
+    .action(async (task, opts) => {
     const options = {
         model: opts.model,
         provider: opts.provider,
@@ -27,6 +27,50 @@ program
         systemPrompt: opts.systemPrompt,
         outputFormat: opts.outputFormat,
     };
+    // --print mode: non-interactive, stream to stdout, exit on completion
+    if (opts.print && task) {
+        const { QarinAgent } = await import("./core/agent.js");
+        const agent = new QarinAgent(options);
+        agent.on("stream", (chunk) => {
+            process.stdout.write(chunk);
+        });
+        agent.on("toolUse", ({ tool, args }) => {
+            if (opts.outputFormat === "json") {
+                process.stderr.write(JSON.stringify({ event: "tool_use", tool, args }) + "\n");
+            }
+            else {
+                process.stderr.write(`[tool: ${tool}]\n`);
+            }
+        });
+        try {
+            const response = await agent.executeWithTools(task);
+            if (opts.outputFormat === "json") {
+                const status = agent.getStatus();
+                process.stdout.write("\n" + JSON.stringify({
+                    response,
+                    tokens: status.tokenUsage,
+                    model: status.model,
+                    provider: status.provider,
+                }) + "\n");
+            }
+            else if (opts.outputFormat === "markdown") {
+                // Response already streamed; add trailing newline
+                process.stdout.write("\n");
+            }
+            else {
+                process.stdout.write("\n");
+            }
+            await agent.end();
+            process.exit(0);
+        }
+        catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            process.stderr.write(`Error: ${message}\n`);
+            process.exit(1);
+        }
+        return;
+    }
+    // Interactive mode: render Ink UI
     render(_jsx(QarinApp, { task: task, options: options }));
 });
 program.parse();

@@ -295,18 +295,36 @@ export class QarinAgent extends EventEmitter {
             await this.start();
         }
         this._messageCount++;
-        // Classify intent
+        // Phase 1: Analyzing (with intent classification)
+        this.emit("progress", {
+            phase: OperationPhase.ANALYZING,
+            details: "Reading your request...",
+        });
         const intent = this.intentClassifier.classify(userInput);
         this.emit("intent", intent);
         this.context.addMessage("user", userInput);
+        // Fire UserPromptSubmit hook
+        if (this.hookRunner.isEnabled()) {
+            await this.hookRunner.runHook("UserPromptSubmit", {
+                session_id: this.sessionId,
+                message: userInput,
+                intent,
+            });
+        }
+        // Phase 2: Planning
+        this.emit("progress", {
+            phase: OperationPhase.PLANNING,
+            details: `Intent: ${intent.agentType} (${(intent.confidence * 100).toFixed(0)}%)`,
+        });
+        // Phase 3: Implementing with tools
         this.emit("progress", {
             phase: OperationPhase.IMPLEMENTING,
-            details: `Intent: ${intent.agentType} — executing with tools...`,
+            details: "Generating response...",
         });
         const accumulatedContent = [];
         let lastMetrics;
         for (let round = 0; round < maxRounds; round++) {
-            const response = await this.orchestrator.complete(this.provider, this.context.getMessagesForApi());
+            const response = await this.orchestrator.complete(this.provider, this.context.getMessagesForApi(), this.getToolDefinitions());
             if (response.usage) {
                 lastMetrics = {
                     promptTokens: response.usage.promptTokens,
@@ -315,6 +333,10 @@ export class QarinAgent extends EventEmitter {
             }
             // No tool calls — return the final text
             if (!response.toolCalls || response.toolCalls.length === 0) {
+                // Emit stream so the UI displays the response
+                if (response.content) {
+                    this.emit("stream", response.content);
+                }
                 if (accumulatedContent.length > 0) {
                     accumulatedContent.push(response.content);
                     const fullResponse = accumulatedContent.join("\n");
