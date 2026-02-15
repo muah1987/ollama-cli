@@ -1,8 +1,8 @@
 [![Auto Release](https://github.com/muah1987/qarin-cli/actions/workflows/autorelease.yml/badge.svg?branch=main)](https://github.com/muah1987/qarin-cli/actions/workflows/autorelease.yml) [![Release](https://github.com/muah1987/qarin-cli/actions/workflows/release.yml/badge.svg)](https://github.com/muah1987/qarin-cli/actions/workflows/release.yml) [![Deploy to PyPI](https://github.com/muah1987/qarin-cli/actions/workflows/pypi-publish.yml/badge.svg)](https://github.com/muah1987/qarin-cli/actions/workflows/pypi-publish.yml) [![Dependabot Updates](https://github.com/muah1987/qarin-cli/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/muah1987/qarin-cli/actions/workflows/dependabot/dependabot-updates) [![Build and Test](https://github.com/muah1987/qarin-cli/actions/workflows/build-test.yml/badge.svg)](https://github.com/muah1987/qarin-cli/actions/workflows/build-test.yml)
 
-# Cli Ollama
+# Qarin Cli
 
-An open-source AI coding assistant with Textual TUI interface that runs in your terminal, powered by [Ollama](https://ollama.ai) with multi-provider support for Claude, Gemini, OpenAI Codex, and Hugging Face.
+An open-source AI coding assistant with Textual TUI interface that runs in your terminal, with multi-provider support for Claude, Gemini, OpenAI Codex, and Hugging Face.
 
 <p align="center">
   <strong>Local-first</strong> · <strong>Multi-provider</strong> · <strong>14 lifecycle hooks</strong> · <strong>MCP integration</strong> · <strong>Chain orchestration</strong> · <strong>Built-in tools</strong>
