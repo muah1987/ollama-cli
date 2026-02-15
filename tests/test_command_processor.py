@@ -1113,8 +1113,8 @@ class TestCommandHandlerInit:
         (tmp_path / "CLAUDE.md").write_text("# Claude Instructions\nBe helpful.", encoding="utf-8")
         proc = _make_rich_processor()
         await proc.dispatch("/init")
-        ollama_md = (tmp_path / "QARIN.md").read_text(encoding="utf-8")
-        assert "imported: CLAUDE.md" in ollama_md
+        qarin_md = (tmp_path / "QARIN.md").read_text(encoding="utf-8")
+        assert "imported: CLAUDE.md" in qarin_md
 
 
 class TestCommandHandlerConfig:

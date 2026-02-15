@@ -70,10 +70,10 @@ def _build_banner(session=None, warnings: list[str] | None = None) -> str:
     # Check for QARIN.md size warning
     warning_line = ""
     memory_line = ""
-    ollama_md = os.path.join(cwd_path, "QARIN.md")
-    if os.path.isfile(ollama_md):
+    qarin_md = os.path.join(cwd_path, "QARIN.md")
+    if os.path.isfile(qarin_md):
         try:
-            with open(ollama_md, encoding="utf-8", errors="replace") as fh:
+            with open(qarin_md, encoding="utf-8", errors="replace") as fh:
                 chars = len(fh.read())
             limit = 40_000
             if chars > limit:

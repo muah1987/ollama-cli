@@ -50,19 +50,19 @@ def generate_summary(payload: dict) -> dict:
 # ---------------------------------------------------------------------------
 
 
-def append_to_ollama_md(summary: dict) -> bool:
+def append_to_qarin_md(summary: dict) -> bool:
     """Append session summary to QARIN.md if it exists."""
     project_dir = os.environ.get(
         "QARIN_PROJECT_DIR",
         str(Path(__file__).resolve().parent.parent.parent),
     )
-    ollama_md = Path(project_dir) / "QARIN.md"
+    qarin_md = Path(project_dir) / "QARIN.md"
 
-    if not ollama_md.exists():
+    if not qarin_md.exists():
         return False
 
     try:
-        content = ollama_md.read_text(encoding="utf-8")
+        content = qarin_md.read_text(encoding="utf-8")
 
         # Append a session log entry
         session_entry = (
@@ -75,7 +75,7 @@ def append_to_ollama_md(summary: dict) -> bool:
 
         # Only append if it won't make the file excessively large
         if len(content) < 50_000:
-            ollama_md.write_text(content + session_entry, encoding="utf-8")
+            qarin_md.write_text(content + session_entry, encoding="utf-8")
             return True
         return False
     except OSError:
@@ -99,7 +99,7 @@ def log_session_end(payload: dict, summary: dict, md_updated: bool) -> None:
     entry = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         **summary,
-        "ollama_md_updated": md_updated,
+        "qarin_md_updated": md_updated,
         "raw_payload": payload,
     }
 
@@ -121,7 +121,7 @@ def main() -> None:
         payload = {}
 
     summary = generate_summary(payload)
-    md_updated = append_to_ollama_md(summary)
+    md_updated = append_to_qarin_md(summary)
 
     # Log the event
     log_session_end(payload, summary, md_updated)
@@ -130,7 +130,7 @@ def main() -> None:
     result = {
         "status": "session_ended",
         **summary,
-        "ollama_md_updated": md_updated,
+        "qarin_md_updated": md_updated,
     }
     print(json.dumps(result))
 

@@ -74,10 +74,10 @@ def load_project_context() -> str | None:
         "QARIN_PROJECT_DIR",
         str(Path(__file__).resolve().parent.parent.parent),
     )
-    ollama_md = Path(project_dir) / "QARIN.md"
-    if ollama_md.exists():
+    qarin_md = Path(project_dir) / "QARIN.md"
+    if qarin_md.exists():
         try:
-            return ollama_md.read_text(encoding="utf-8")
+            return qarin_md.read_text(encoding="utf-8")
         except OSError:
             return None
     return None

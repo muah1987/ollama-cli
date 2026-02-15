@@ -1432,7 +1432,7 @@ class CommandProcessor:
         from pathlib import Path
 
         project_memory = Path("QARIN.md")
-        ollama_dir = Path(".qarin")
+        qarin_dir = Path(".qarin")
         created: list[str] = []
 
         if project_memory.exists():
@@ -1451,11 +1451,11 @@ class CommandProcessor:
             except OSError as exc:
                 return CommandResult(errors=[f"Cannot create QARIN.md: {exc}"])
 
-        if ollama_dir.exists():
+        if qarin_dir.exists():
             pass  # already exists
         else:
             try:
-                ollama_dir.mkdir(parents=True, exist_ok=True)
+                qarin_dir.mkdir(parents=True, exist_ok=True)
                 created.append(".qarin/")
             except OSError as exc:
                 return CommandResult(errors=[f"Cannot create .qarin/: {exc}"])

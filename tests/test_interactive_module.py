@@ -166,7 +166,7 @@ class TestLlamaSpinner:
 
 
 class TestImportInstructionFiles:
-    def test_import_no_ollama_md(self, tmp_path, monkeypatch):
+    def test_import_no_qarin_md(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         with patch("qarin_cmd.interactive._PROJECT_MEMORY_FILE", tmp_path / "QARIN.md"):
             result = _import_instruction_files()

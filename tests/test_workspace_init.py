@@ -17,7 +17,7 @@ from qarin_cmd.interactive import (
 class TestCmdInit:
     """Verify /init creates QARIN.md and .qarin/ directory."""
 
-    def test_init_creates_ollama_md(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_init_creates_qarin_md(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Running /init creates QARIN.md in the working directory."""
         monkeypatch.chdir(tmp_path)
 
@@ -29,13 +29,13 @@ class TestCmdInit:
         result = InteractiveMode._cmd_init(mode, "")
 
         assert result is False
-        ollama_md = tmp_path / "QARIN.md"
-        assert ollama_md.exists()
-        content = ollama_md.read_text(encoding="utf-8")
+        qarin_md = tmp_path / "QARIN.md"
+        assert qarin_md.exists()
+        content = qarin_md.read_text(encoding="utf-8")
         assert "Project Notes" in content
         assert tmp_path.name in content
 
-    def test_init_creates_ollama_dir(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_init_creates_qarin_dir(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """/init creates .qarin/ directory."""
         monkeypatch.chdir(tmp_path)
 
@@ -48,7 +48,7 @@ class TestCmdInit:
 
         assert (tmp_path / ".qarin").is_dir()
 
-    def test_init_skips_existing_ollama_md(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_init_skips_existing_qarin_md(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """/init does not overwrite an existing QARIN.md."""
         monkeypatch.chdir(tmp_path)
         existing = tmp_path / "QARIN.md"
@@ -63,7 +63,7 @@ class TestCmdInit:
 
         assert existing.read_text(encoding="utf-8") == "existing content"
 
-    def test_init_skips_existing_ollama_dir(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_init_skips_existing_qarin_dir(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """/init does not fail when .qarin/ already exists."""
         monkeypatch.chdir(tmp_path)
         (tmp_path / ".qarin").mkdir()
@@ -131,7 +131,7 @@ class TestImportInstructionFiles:
 
         assert imported == []
 
-    def test_no_ollama_md_returns_empty(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_no_qarin_md_returns_empty(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """When QARIN.md doesn't exist, nothing is imported."""
         monkeypatch.chdir(tmp_path)
         (tmp_path / "CLAUDE.md").write_text("some content", encoding="utf-8")
@@ -184,7 +184,7 @@ class TestKnownInstructionFiles:
 class TestWorkspaceTrustPrompt:
     """Verify the workspace trust prompt fires when QARIN.md is missing."""
 
-    def test_prompt_shown_when_no_ollama_md(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_prompt_shown_when_no_qarin_md(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Trust prompt appears when QARIN.md is absent."""
         monkeypatch.chdir(tmp_path)
 
@@ -197,7 +197,7 @@ class TestWorkspaceTrustPrompt:
 
         # No error = prompt ran successfully
 
-    def test_prompt_not_needed_when_ollama_md_exists(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_prompt_not_needed_when_qarin_md_exists(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """_PROJECT_MEMORY_FILE.exists() is True so trust check is skipped."""
         monkeypatch.chdir(tmp_path)
         (tmp_path / "QARIN.md").write_text("# test", encoding="utf-8")

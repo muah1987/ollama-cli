@@ -157,13 +157,13 @@ class TestSessionStaticMethods:
         assert isinstance(prompt, str)
         assert len(prompt) > 0
 
-    def test_find_ollama_md(self, tmp_path, monkeypatch):
+    def test_find_qarin_md(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         (tmp_path / "QARIN.md").write_text("# Project\n", encoding="utf-8")
-        result = Session._find_ollama_md()
+        result = Session._find_qarin_md()
         assert result is not None
 
-    def test_find_ollama_md_missing(self, tmp_path, monkeypatch):
+    def test_find_qarin_md_missing(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        result = Session._find_ollama_md()
+        result = Session._find_qarin_md()
         assert result is None

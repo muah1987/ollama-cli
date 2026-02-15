@@ -163,12 +163,12 @@ class Session:
         system_prompt = self._build_system_prompt()
 
         # Load QARIN.md as project context if it exists
-        ollama_md = self._find_ollama_md()
-        if ollama_md is not None:
+        qarin_md = self._find_qarin_md()
+        if qarin_md is not None:
             try:
-                content = ollama_md.read_text(encoding="utf-8")
+                content = qarin_md.read_text(encoding="utf-8")
                 system_prompt += "\n\nThe following project context was loaded from QARIN.md:\n\n" + content
-                logger.info("Loaded project context from %s (%d chars)", ollama_md, len(content))
+                logger.info("Loaded project context from %s (%d chars)", qarin_md, len(content))
             except OSError:
                 logger.warning("Found QARIN.md but failed to read it", exc_info=True)
 
@@ -280,9 +280,9 @@ class Session:
         self.memory_layer.save(str(Path(_MEMORY_FILE)))
 
         # Append summary to QARIN.md if the file exists
-        ollama_md = self._find_ollama_md()
-        if ollama_md is not None:
-            self._append_to_ollama_md(ollama_md, summary)
+        qarin_md = self._find_qarin_md()
+        if qarin_md is not None:
+            self._append_to_qarin_md(qarin_md, summary)
 
         logger.info("Session %s ended (%s)", self.session_id, summary.get("duration_str", "unknown"))
         return summary
@@ -737,7 +737,7 @@ class Session:
         return prompt
 
     @staticmethod
-    def _find_ollama_md() -> Path | None:
+    def _find_qarin_md() -> Path | None:
         """Look for QARIN.md in the current working directory and parent dirs.
 
         Returns
@@ -777,12 +777,12 @@ class Session:
         }
 
     @staticmethod
-    def _append_to_ollama_md(ollama_md: Path, summary: dict[str, Any]) -> None:
+    def _append_to_qarin_md(qarin_md: Path, summary: dict[str, Any]) -> None:
         """Append a short session record to QARIN.md.
 
         Parameters
         ----------
-        ollama_md:
+        qarin_md:
             Path to the QARIN.md file.
         summary:
             Session summary dict.
@@ -799,11 +799,11 @@ class Session:
         )
 
         try:
-            with open(ollama_md, "a", encoding="utf-8") as f:
+            with open(qarin_md, "a", encoding="utf-8") as f:
                 f.write(entry)
-            logger.info("Appended session summary to %s", ollama_md)
+            logger.info("Appended session summary to %s", qarin_md)
         except OSError:
-            logger.warning("Failed to append session summary to %s", ollama_md, exc_info=True)
+            logger.warning("Failed to append session summary to %s", qarin_md, exc_info=True)
 
     @staticmethod
     def _format_duration(seconds: float) -> str:
