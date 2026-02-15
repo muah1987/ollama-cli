@@ -46,6 +46,12 @@ describe("IntentClassifier", () => {
     assert.equal(result.agentType, "research");
   });
 
+  it("classifies team intents", () => {
+    const result = classifier.classify("Complete this with team build");
+    assert.equal(result.agentType, "team");
+    assert.ok(result.confidence > 0);
+  });
+
   it("returns low confidence for ambiguous prompts", () => {
     const result = classifier.classify("Hello, how are you?");
     assert.ok(result.confidence < 0.7);
@@ -76,5 +82,12 @@ describe("IntentClassifier", () => {
     const result = classifier.classify("Implement the login feature");
     assert.ok(result.explanation);
     assert.ok(result.explanation.length > 0);
+  });
+
+  it("falls back to code when below threshold", () => {
+    const lowThresholdClassifier = new IntentClassifier(0.99); // Very high threshold
+    const result = lowThresholdClassifier.classify("Fix the bug");
+    assert.equal(result.agentType, "code"); // Should fall back
+    assert.ok(result.explanation.includes("confidence threshold"));
   });
 });

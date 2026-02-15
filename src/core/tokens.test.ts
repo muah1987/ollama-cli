@@ -96,4 +96,37 @@ describe("TokenCounter", () => {
     assert.equal(tc.contextUsed, 2048);
     assert.equal(tc.contextMax, 8192);
   });
+
+  it("restores state from JSON", () => {
+    const tc = new TokenCounter("anthropic", 128_000);
+    tc.update({ promptTokens: 500, completionTokens: 250, totalTokens: 750 }, 1000);
+    tc.setContext(1000, 128_000);
+
+    const json = tc.toJSON();
+    const restored = TokenCounter.fromJSON(json);
+
+    assert.equal(restored.promptTokens, 500);
+    assert.equal(restored.completionTokens, 250);
+    assert.equal(restored.totalTokens, 750);
+    assert.equal(restored.contextUsed, 1000);
+    assert.equal(restored.contextMax, 128_000);
+    assert.equal(restored.provider, "anthropic");
+    // Cost should be recalculated
+    assert.ok(restored.costEstimate > 0);
+  });
+
+  it("handles invalid JSON values gracefully", () => {
+    const restored = TokenCounter.fromJSON({
+      promptTokens: NaN,
+      completionTokens: Infinity,
+      tokensPerSecond: NaN, // Should be set to 0, not kept as NaN
+      contextUsed: 0,
+      contextMax: 4096,
+      provider: "ollama",
+    });
+
+    assert.equal(restored.promptTokens, 0);
+    assert.equal(restored.completionTokens, 0);
+    assert.equal(restored.tokensPerSecond, 0);
+  });
 });

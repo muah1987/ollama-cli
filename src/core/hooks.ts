@@ -181,6 +181,10 @@ export class HookRunner {
         );
 
         if (child.stdin) {
+          // Handle EPIPE errors when the command doesn't read stdin
+          child.stdin.on("error", () => {
+            // Ignore EPIPE errors silently
+          });
           child.stdin.write(payloadJson);
           child.stdin.end();
         }
