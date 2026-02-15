@@ -18,6 +18,8 @@ import { HookRunner } from "./hooks.js";
 import { ChainController } from "./chain.js";
 import { MemoryStore } from "./memory.js";
 import { ProjectContext } from "./project.js";
+import { PluginRegistry } from "./plugins.js";
+import { HookPermissions } from "./builtin-hooks.js";
 /** Generate a UUID-like session ID */
 function generateSessionId() {
     return crypto.randomUUID();
@@ -51,6 +53,8 @@ export class QarinAgent extends EventEmitter {
     hookRunner;
     memory;
     projectContext;
+    pluginRegistry;
+    hookPermissions;
     provider;
     model;
     sessionId;
@@ -76,9 +80,11 @@ export class QarinAgent extends EventEmitter {
             provider: this.provider,
             model: this.model,
         });
-        // Initialize memory and project context
+        // Initialize memory, project context, plugins, and permissions
         this.memory = new MemoryStore();
         this.projectContext = new ProjectContext();
+        this.pluginRegistry = new PluginRegistry();
+        this.hookPermissions = new HookPermissions();
         // Set system prompt
         this.context.setSystemMessage(options.systemPrompt ?? this.buildDefaultSystemPrompt());
     }
@@ -86,9 +92,10 @@ export class QarinAgent extends EventEmitter {
     async start() {
         this.running = true;
         this.startTime = new Date();
-        // Load hook configuration and memory
+        // Load hook configuration, memory, and plugins
         await this.hookRunner.load();
         await this.memory.load();
+        await this.pluginRegistry.load();
         // Fire SessionStart hook
         if (this.hookRunner.isEnabled()) {
             await this.hookRunner.runHook("SessionStart", {
@@ -187,6 +194,16 @@ export class QarinAgent extends EventEmitter {
     }
     /** Execute a tool by name */
     async runTool(toolName, args) {
+        // Check hook permissions gate
+        const permCheck = this.hookPermissions.check(toolName, args);
+        if (!permCheck.allowed) {
+            await this.hookPermissions.audit(toolName, args, permCheck);
+            return {
+                success: false,
+                output: "",
+                error: `Tool ${toolName} blocked: ${permCheck.reason}`,
+            };
+        }
         // Fire PreToolUse hook
         if (this.hookRunner.isEnabled()) {
             const hookResults = await this.hookRunner.runHook("PreToolUse", {
@@ -206,7 +223,7 @@ export class QarinAgent extends EventEmitter {
             }
         }
         this.emit("toolUse", { tool: toolName, args });
-        const result = await executeTool(toolName, args);
+        const result = await executeTool(toolName, args, this.pluginRegistry);
         this.emit("toolResult", { tool: toolName, result });
         // Fire PostToolUse hook
         if (this.hookRunner.isEnabled()) {
@@ -411,9 +428,13 @@ export class QarinAgent extends EventEmitter {
         });
         this.emit("success", { message: "Response is ready" });
     }
-    /** Get the tool definitions for API calls */
+    /** Get the tool definitions for API calls (built-ins + plugins) */
     getToolDefinitions() {
-        return BUILT_IN_TOOLS;
+        return [...BUILT_IN_TOOLS, ...this.pluginRegistry.getToolDefinitions()];
+    }
+    /** Get the plugin registry */
+    getPluginRegistry() {
+        return this.pluginRegistry;
     }
     /**
      * Execute a request using the chained sub-agent orchestration.

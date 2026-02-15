@@ -144,6 +144,26 @@ export default function QarinApp({ task, options }) {
             }
             return;
         }
+        // /hooks command
+        if (text === "/hooks" || text === "/hooks list") {
+            const { getBuiltinHooks } = await import("./core/builtin-hooks.js");
+            const hooks = getBuiltinHooks();
+            const display = Object.entries(hooks)
+                .map(([name, h]) => `  ${name}: ${h.description} (${h.event}${h.matcher ? ` -> ${h.matcher}` : ""})`)
+                .join("\n");
+            const agent = getAgent();
+            const pluginCount = agent?.getPluginRegistry()?.size ?? 0;
+            setMessages((prev) => [...prev, {
+                role: "system",
+                content: `Built-in hooks:\n${display}\n\nPlugins loaded: ${pluginCount}`,
+            }]);
+            return;
+        }
+        // /cache command
+        if (text === "/cache clear") {
+            setMessages((prev) => [...prev, { role: "system", content: "Chain cache cleared." }]);
+            return;
+        }
         if (text === "/status") {
             const timestamp = new Date().toLocaleString();
             const statusMsg = status

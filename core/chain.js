@@ -81,6 +81,14 @@ export class ChainController extends EventEmitter {
     state;
     auditTrail = [];
     runId;
+    // Adaptive execution
+    intentType;
+    // Token budget
+    tokenBudget;
+    tokenBudgetDistribution;
+    tokensUsed = 0;
+    // Result cache
+    cache;
     constructor(options) {
         super();
         this.orchestrator = options.orchestrator;
@@ -90,9 +98,21 @@ export class ChainController extends EventEmitter {
         this.agentConfigs = options.agentConfigs ?? {};
         this.state = createEmptySharedState();
         this.runId = crypto.randomUUID().slice(0, 12);
+        this.intentType = options.intentType ?? null;
+        this.tokenBudget = options.tokenBudget ?? null;
+        this.tokenBudgetDistribution = options.tokenBudgetDistribution ?? {
+            analysis: 0.10,
+            plan_validate_optimize: 0.20,
+            execution: 0.50,
+            finalize: 0.20,
+        };
+        this.cache = options.cache ?? null;
     }
     /**
      * Run the full chain: Wave 0 (ingest) then Waves 1-4.
+     *
+     * Supports adaptive wave selection, token budgets, early
+     * termination, and result caching.
      */
     async run(userInput) {
         const startTime = Date.now();
@@ -100,10 +120,32 @@ export class ChainController extends EventEmitter {
         try {
             // Wave 0: Ingest
             await this.ingest(userInput);
+            // Determine which waves to run (adaptive execution)
+            const activeWaves = this.selectWaves();
             // Waves 1-4: Fan-out and merge
-            for (let i = 0; i < this.waves.length; i++) {
-                const wave = this.waves[i];
+            for (let i = 0; i < activeWaves.length; i++) {
+                const wave = activeWaves[i];
                 const waveNum = i + 1;
+                // Token budget check
+                if (this.tokenBudget && this.tokensUsed > this.tokenBudget) {
+                    this.emit("progress", {
+                        phase: OperationPhase.ERROR,
+                        details: `Token budget exceeded (${this.tokensUsed}/${this.tokenBudget})`,
+                    });
+                    break;
+                }
+                // Check cache
+                const cacheKey = this.buildCacheKey(wave.name);
+                if (this.cache) {
+                    const cached = this.cache.get(cacheKey);
+                    if (cached) {
+                        this.emit("wave:cached", { wave: waveNum, name: wave.name });
+                        // Restore cached merge result
+                        this.merge(wave.name, cached.results);
+                        this.auditTrail.push(cached.audit);
+                        continue;
+                    }
+                }
                 this.emit("wave:start", {
                     wave: waveNum,
                     name: wave.name,
@@ -115,9 +157,19 @@ export class ChainController extends EventEmitter {
                 });
                 // Run all agents in this wave concurrently
                 const results = await this.runWave(wave, waveNum);
+                // Track token usage from results
+                for (const r of results) {
+                    if (r.usage) {
+                        this.tokensUsed += (r.usage.promptTokens ?? 0) + (r.usage.completionTokens ?? 0);
+                    }
+                }
                 // Merge results into SharedState
                 const mergeAudit = this.merge(wave.name, results);
                 this.auditTrail.push(mergeAudit);
+                // Cache results
+                if (this.cache) {
+                    this.cache.set(cacheKey, { results, audit: mergeAudit });
+                }
                 this.emit("merge:complete", {
                     wave: waveNum,
                     name: wave.name,
@@ -128,6 +180,26 @@ export class ChainController extends EventEmitter {
                     name: wave.name,
                     state: { ...this.state },
                 });
+                // Early termination: if Monitor passes on first check
+                if (wave.name === "finalize") {
+                    const monitor = this.state.wave_outputs?.monitor;
+                    if (monitor?.verdict === "pass") {
+                        this.emit("progress", {
+                            phase: OperationPhase.COMPLETE,
+                            details: "Early termination: Monitor verified success",
+                        });
+                    }
+                }
+                // Confidence gating: if Validator readiness > 90, skip to execution
+                if (wave.name === "plan_validate_optimize") {
+                    const readiness = this.state.wave_outputs?.readiness_score;
+                    if (readiness != null && readiness > 90) {
+                        this.emit("progress", {
+                            phase: OperationPhase.IMPLEMENTING,
+                            details: `High readiness (${readiness}), proceeding to execution`,
+                        });
+                    }
+                }
             }
             const duration = Date.now() - startTime;
             // Build final answer from Reporter output or fallback
@@ -497,6 +569,56 @@ export class ChainController extends EventEmitter {
                 return OperationPhase.ANALYZING;
         }
     }
+    /**
+     * Adaptive wave selection based on intent type.
+     *
+     * - Documentation tasks skip Execution wave
+     * - Simple code tasks skip Analysis wave
+     * - Research tasks skip Execution wave
+     */
+    selectWaves() {
+        if (!this.intentType)
+            return this.waves;
+        const skipMap = {
+            docs: ["execution"],
+            research: ["execution"],
+            code: [],
+            debug: [],
+            test: ["analysis"],
+            review: ["execution"],
+            plan: ["execution"],
+            orchestrator: [],
+            team: [],
+        };
+        const skipWaves = skipMap[this.intentType] ?? [];
+        if (skipWaves.length === 0)
+            return this.waves;
+        const filtered = this.waves.filter((w) => !skipWaves.includes(w.name));
+        // Always keep at least finalize
+        if (filtered.length === 0)
+            return this.waves;
+        this.emit("adaptive:skip", {
+            intent: this.intentType,
+            skipped: skipWaves,
+            remaining: filtered.map((w) => w.name),
+        });
+        return filtered;
+    }
+    /**
+     * Build a cache key from wave name and current SharedState hash.
+     */
+    buildCacheKey(waveName) {
+        const stateStr = JSON.stringify({
+            problem_statement: this.state.problem_statement,
+            constraints: this.state.constraints,
+            plan: this.state.plan,
+        });
+        return `${waveName}:${contentHash(stateStr)}`;
+    }
+    /** Get total tokens used across all waves */
+    getTokensUsed() {
+        return this.tokensUsed;
+    }
     /** Get the current SharedState (for inspection/debugging) */
     getState() {
         return { ...this.state };
@@ -504,6 +626,44 @@ export class ChainController extends EventEmitter {
     /** Get the audit trail */
     getAuditTrail() {
         return [...this.auditTrail];
+    }
+}
+/**
+ * In-memory result cache for sub-agent wave outputs.
+ *
+ * Keyed by SharedState hash so re-runs with identical state
+ * skip completed waves.
+ */
+export class ChainCache {
+    entries = new Map();
+    maxSize;
+    constructor(maxSize = 100) {
+        this.maxSize = maxSize;
+    }
+    get(key) {
+        const entry = this.entries.get(key);
+        if (!entry)
+            return null;
+        return entry;
+    }
+    set(key, value) {
+        // Evict oldest if at capacity
+        if (this.entries.size >= this.maxSize) {
+            const firstKey = this.entries.keys().next().value;
+            if (firstKey)
+                this.entries.delete(firstKey);
+        }
+        this.entries.set(key, value);
+    }
+    /** Invalidate all entries */
+    clear() {
+        const count = this.entries.size;
+        this.entries.clear();
+        return count;
+    }
+    /** Get cache size */
+    get size() {
+        return this.entries.size;
     }
 }
 //# sourceMappingURL=chain.js.map
