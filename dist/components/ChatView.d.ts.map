@@ -1,0 +1,1 @@
+{"version":3,"file":"ChatView.d.ts","sourceRoot":"","sources":["../../src/components/ChatView.tsx"],"names":[],"mappings":"AAAA;;GAEG;AAEH,OAAO,KAAK,MAAM,OAAO,CAAC;AAE1B,OAAO,KAAK,EAAE,OAAO,EAAE,MAAM,qBAAqB,CAAC;AAEnD,UAAU,aAAa;IACrB,QAAQ,EAAE,OAAO,EAAE,CAAC;CACrB;AA6BD,wBAAgB,QAAQ,CAAC,EAAE,QAAQ,EAAE,EAAE,aAAa,GAAG,KAAK,CAAC,YAAY,CAkBxE"}
