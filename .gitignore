@@ -159,6 +159,13 @@ specs/
 .gemini/
 .ruff_cache/
 
+# Node.js / TypeScript (qarin-cli v0.1.0 migration)
+node_modules/
+dist/
+*.tsbuildinfo
+.turbo/
+bun.lockb
+
 # OS
 .DS_Store
 Thumbs.db

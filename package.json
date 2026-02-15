@@ -1,0 +1,42 @@
+{
+  "name": "@muah1987/qarin-cli",
+  "version": "0.1.0",
+  "description": "AI coding assistant - TypeScript port of ollama-cli with Arabic themes",
+  "type": "module",
+  "bin": {
+    "qarin-ts": "./dist/index.js"
+  },
+  "scripts": {
+    "dev": "tsx --watch src/index.tsx",
+    "build": "tsc",
+    "build:binary": "bun build src/index.tsx --compile --outfile qarin-ts",
+    "lint": "tsc --noEmit",
+    "test": "node --experimental-vm-modules node_modules/.bin/jest"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "commander": "^13.1.0",
+    "ink": "^5.2.0",
+    "ink-spinner": "^5.0.0",
+    "ollama": "^0.5.15",
+    "openai": "^4.89.0",
+    "react": "^18.3.1",
+    "simple-git": "^3.27.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.4",
+    "@types/react": "^18.3.18",
+    "typescript": "^5.7.3",
+    "tsx": "^4.19.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/muah1987/qarin-cli.git"
+  },
+  "license": "MIT",
+  "author": "Mohammed Uthmaan Al Hāshimī"
+}
