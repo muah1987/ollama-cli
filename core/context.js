@@ -62,7 +62,7 @@ export class ContextManager {
         const usage = this.getContextUsage();
         return usage.percent >= this.compactThreshold * 100;
     }
-    /** Compact the conversation by summarizing older messages */
+    /** Compact the conversation by truncation (fallback). */
     compact() {
         if (this.messages.length <= this.keepLastN)
             return;
@@ -78,6 +78,49 @@ export class ContextManager {
         };
         this.messages = [compactedMessage, ...recentMessages];
         this.estimatedContextTokens = this.estimateCurrentTokens();
+    }
+    /**
+     * Smart compaction: use LLM to summarize older messages.
+     *
+     * Falls back to truncation-based compact() if the LLM call fails.
+     *
+     * @param orchestrator - ModelOrchestrator for LLM calls
+     * @param provider - Provider to use for summarization
+     */
+    async smartCompact(orchestrator, provider) {
+        if (this.messages.length <= this.keepLastN)
+            return;
+        const oldMessages = this.messages.slice(0, -this.keepLastN);
+        const recentMessages = this.messages.slice(-this.keepLastN);
+        const conversationText = oldMessages
+            .map((m) => `[${m.role}]: ${m.content.slice(0, 500)}`)
+            .join("\n");
+        try {
+            const response = await orchestrator.complete(provider, [
+                {
+                    role: "system",
+                    content: "You are a conversation summarizer. Produce a concise summary that preserves key decisions, code changes, file paths, and technical context. Return only the summary text, no preamble.",
+                },
+                {
+                    role: "user",
+                    content: `Summarize this conversation (${oldMessages.length} messages) into a concise context block:\n\n${conversationText}`,
+                },
+            ]);
+            const summaryMessage = {
+                role: "system",
+                content: `[Smart compaction - ${oldMessages.length} messages summarized by LLM]\n${response.content}`,
+            };
+            this.messages = [summaryMessage, ...recentMessages];
+            this.estimatedContextTokens = this.estimateCurrentTokens();
+        }
+        catch {
+            // LLM summarization failed, fall back to truncation
+            this.compact();
+        }
+    }
+    /** Get the last N messages for context-aware operations */
+    getRecentMessages(n = 5) {
+        return this.messages.slice(-n);
     }
     /** Get messages formatted for API calls */
     getMessagesForApi() {

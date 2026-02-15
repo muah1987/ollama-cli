@@ -15,6 +15,11 @@ import { executeTool } from "./tools.js";
 import { IntentClassifier } from "./intent.js";
 import { TokenCounter } from "./tokens.js";
 import { HookRunner } from "./hooks.js";
+import { ChainController } from "./chain.js";
+import { MemoryStore } from "./memory.js";
+import { ProjectContext } from "./project.js";
+import { PluginRegistry } from "./plugins.js";
+import { HookPermissions } from "./builtin-hooks.js";
 /** Generate a UUID-like session ID */
 function generateSessionId() {
     return crypto.randomUUID();
@@ -46,6 +51,10 @@ export class QarinAgent extends EventEmitter {
     intentClassifier;
     tokenCounter;
     hookRunner;
+    memory;
+    projectContext;
+    pluginRegistry;
+    hookPermissions;
     provider;
     model;
     sessionId;
@@ -71,6 +80,11 @@ export class QarinAgent extends EventEmitter {
             provider: this.provider,
             model: this.model,
         });
+        // Initialize memory, project context, plugins, and permissions
+        this.memory = new MemoryStore();
+        this.projectContext = new ProjectContext();
+        this.pluginRegistry = new PluginRegistry();
+        this.hookPermissions = new HookPermissions();
         // Set system prompt
         this.context.setSystemMessage(options.systemPrompt ?? this.buildDefaultSystemPrompt());
     }
@@ -78,8 +92,10 @@ export class QarinAgent extends EventEmitter {
     async start() {
         this.running = true;
         this.startTime = new Date();
-        // Load hook configuration
+        // Load hook configuration, memory, and plugins
         await this.hookRunner.load();
+        await this.memory.load();
+        await this.pluginRegistry.load();
         // Fire SessionStart hook
         if (this.hookRunner.isEnabled()) {
             await this.hookRunner.runHook("SessionStart", {
@@ -178,6 +194,16 @@ export class QarinAgent extends EventEmitter {
     }
     /** Execute a tool by name */
     async runTool(toolName, args) {
+        // Check hook permissions gate
+        const permCheck = this.hookPermissions.check(toolName, args);
+        if (!permCheck.allowed) {
+            await this.hookPermissions.audit(toolName, args, permCheck);
+            return {
+                success: false,
+                output: "",
+                error: `Tool ${toolName} blocked: ${permCheck.reason}`,
+            };
+        }
         // Fire PreToolUse hook
         if (this.hookRunner.isEnabled()) {
             const hookResults = await this.hookRunner.runHook("PreToolUse", {
@@ -197,7 +223,7 @@ export class QarinAgent extends EventEmitter {
             }
         }
         this.emit("toolUse", { tool: toolName, args });
-        const result = await executeTool(toolName, args);
+        const result = await executeTool(toolName, args, this.pluginRegistry);
         this.emit("toolResult", { tool: toolName, result });
         // Fire PostToolUse hook
         if (this.hookRunner.isEnabled()) {
@@ -295,18 +321,36 @@ export class QarinAgent extends EventEmitter {
             await this.start();
         }
         this._messageCount++;
-        // Classify intent
+        // Phase 1: Analyzing (with intent classification)
+        this.emit("progress", {
+            phase: OperationPhase.ANALYZING,
+            details: "Reading your request...",
+        });
         const intent = this.intentClassifier.classify(userInput);
         this.emit("intent", intent);
         this.context.addMessage("user", userInput);
+        // Fire UserPromptSubmit hook
+        if (this.hookRunner.isEnabled()) {
+            await this.hookRunner.runHook("UserPromptSubmit", {
+                session_id: this.sessionId,
+                message: userInput,
+                intent,
+            });
+        }
+        // Phase 2: Planning
+        this.emit("progress", {
+            phase: OperationPhase.PLANNING,
+            details: `Intent: ${intent.agentType} (${(intent.confidence * 100).toFixed(0)}%)`,
+        });
+        // Phase 3: Implementing with tools
         this.emit("progress", {
             phase: OperationPhase.IMPLEMENTING,
-            details: `Intent: ${intent.agentType} — executing with tools...`,
+            details: "Generating response...",
         });
         const accumulatedContent = [];
         let lastMetrics;
         for (let round = 0; round < maxRounds; round++) {
-            const response = await this.orchestrator.complete(this.provider, this.context.getMessagesForApi());
+            const response = await this.orchestrator.complete(this.provider, this.context.getMessagesForApi(), this.getToolDefinitions());
             if (response.usage) {
                 lastMetrics = {
                     promptTokens: response.usage.promptTokens,
@@ -315,6 +359,10 @@ export class QarinAgent extends EventEmitter {
             }
             // No tool calls — return the final text
             if (!response.toolCalls || response.toolCalls.length === 0) {
+                // Emit stream so the UI displays the response
+                if (response.content) {
+                    this.emit("stream", response.content);
+                }
                 if (accumulatedContent.length > 0) {
                     accumulatedContent.push(response.content);
                     const fullResponse = accumulatedContent.join("\n");
@@ -380,9 +428,93 @@ export class QarinAgent extends EventEmitter {
         });
         this.emit("success", { message: "Response is ready" });
     }
-    /** Get the tool definitions for API calls */
+    /** Get the tool definitions for API calls (built-ins + plugins) */
     getToolDefinitions() {
-        return BUILT_IN_TOOLS;
+        return [...BUILT_IN_TOOLS, ...this.pluginRegistry.getToolDefinitions()];
+    }
+    /** Get the plugin registry */
+    getPluginRegistry() {
+        return this.pluginRegistry;
+    }
+    /**
+     * Execute a request using the chained sub-agent orchestration.
+     *
+     * Runs Wave 0 (Ingest) then Waves 1-4 with parallel fan-out,
+     * merging outputs into SharedState between each wave.
+     *
+     * @param chainConfig - Optional per-wave agent configs
+     * @returns The chain result with final answer and audit trail
+     */
+    async executeWithChain(userInput, chainConfig) {
+        if (!this.running) {
+            await this.start();
+        }
+        this._messageCount++;
+        // Classify intent
+        const intent = this.intentClassifier.classify(userInput);
+        this.emit("intent", intent);
+        // Fire UserPromptSubmit hook
+        if (this.hookRunner.isEnabled()) {
+            await this.hookRunner.runHook("UserPromptSubmit", {
+                session_id: this.sessionId,
+                message: userInput,
+                intent,
+            });
+        }
+        const chain = new ChainController({
+            orchestrator: this.orchestrator,
+            context: this.context,
+            provider: this.provider,
+            waves: chainConfig?.waves,
+            agentConfigs: chainConfig?.agentConfigs,
+        });
+        // Forward chain events to agent listeners
+        chain.on("progress", (data) => this.emit("progress", data));
+        chain.on("wave:start", (data) => {
+            this.emit("chain:wave", { ...data, status: "started" });
+            if (this.hookRunner.isEnabled()) {
+                this.hookRunner.runHook("SubagentStart", {
+                    session_id: this.sessionId,
+                    wave: data.wave,
+                    name: data.name,
+                    agents: data.agents,
+                }).catch(() => { });
+            }
+        });
+        chain.on("wave:complete", (data) => {
+            this.emit("chain:wave", { ...data, status: "completed" });
+            if (this.hookRunner.isEnabled()) {
+                this.hookRunner.runHook("SubagentStop", {
+                    session_id: this.sessionId,
+                    wave: data.wave,
+                    name: data.name,
+                }).catch(() => { });
+            }
+        });
+        chain.on("merge:complete", (data) => this.emit("chain:merge", data));
+        chain.on("contract:violation", (data) => this.emit("chain:contract", data));
+        const result = await chain.run(userInput);
+        // Emit the final answer as stream for UI display
+        if (result.finalAnswer) {
+            this.emit("stream", result.finalAnswer);
+        }
+        // Store in context
+        this.context.addMessage("user", userInput);
+        this.context.addMessage("assistant", result.finalAnswer);
+        this.emit("progress", {
+            phase: OperationPhase.COMPLETE,
+            details: `Chain complete ${this.tokenCounter.formatDisplay()}`,
+        });
+        this.emit("success", { message: "Chain orchestration complete" });
+        return result;
+    }
+    /** Get the memory store */
+    getMemory() {
+        return this.memory;
+    }
+    /** Get the project context */
+    getProjectContext() {
+        return this.projectContext;
     }
     /** Build the default system prompt */
     buildDefaultSystemPrompt() {

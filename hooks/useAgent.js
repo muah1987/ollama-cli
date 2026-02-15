@@ -55,7 +55,12 @@ export function useAgent(options) {
         setStreamOutput("");
         setError(null);
         try {
-            await agent.executeTask(message);
+            if (options.chain) {
+                await agent.executeWithChain(message);
+            }
+            else {
+                await agent.executeWithTools(message);
+            }
             setStatus(agent.getStatus());
             setTokenDisplay(agent.getTokenCounter().formatDisplay());
         }
@@ -79,6 +84,7 @@ export function useAgent(options) {
         const finalStatus = await agent.end();
         setStatus(finalStatus);
     }, []);
+    const getAgent = useCallback(() => agentRef.current, []);
     return {
         phase,
         details,
@@ -91,6 +97,7 @@ export function useAgent(options) {
         sendMessage,
         runTool,
         endSession,
+        getAgent,
     };
 }
 //# sourceMappingURL=useAgent.js.map
