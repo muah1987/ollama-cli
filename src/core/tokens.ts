@@ -168,7 +168,13 @@ export class TokenCounter {
     costEstimate?: number;
     provider: string;
   }): TokenCounter {
-    const provider = (json.provider as Provider) ?? Provider.OPENAI;
+    // Validate provider value - use the provided value if it's a known provider,
+    // otherwise fall back to a safe default
+    const validProviders = Object.values(Provider);
+    const provider = validProviders.includes(json.provider as Provider)
+      ? (json.provider as Provider)
+      : Provider.OPENAI;
+
     const counter = new this(provider, json.contextMax);
 
     counter._promptTokens = Number.isFinite(json.promptTokens)

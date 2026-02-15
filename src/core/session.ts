@@ -271,29 +271,33 @@ export class Session {
     let current = process.cwd();
 
     // Walk up the directory tree until we reach the filesystem root or a .git marker.
-    // At each level, prefer the nearest QARIN.md.
-    // This mirrors the Python implementation behavior but without a hard depth limit.
+    // At each level, we first check if QARIN.md exists and return it if found.
+    // Only if QARIN.md is not found at a level do we check for .git to decide
+    // whether to stop searching. This ensures we find QARIN.md in the repo root
+    // even when .git is present at the same level.
     for (;;) {
+      // Check for QARIN.md at this level first
       const candidate = join(current, QARIN_MD);
       try {
         await access(candidate);
-        return candidate;
+        return candidate; // Found it, return immediately
       } catch {
-        // Not found at this level, keep walking up.
+        // Not found at this level, continue searching
       }
 
-      // Stop if we detect a .git directory, assuming we've reached the repo root.
+      // Stop if we detect a .git directory, assuming we've reached the repo root
+      // and there's no QARIN.md here or in parent directories
       const gitDir = join(current, ".git");
       try {
         await access(gitDir);
-        break;
+        break; // Found .git, stop searching
       } catch {
-        // No .git here, continue walking up unless we're at the filesystem root.
+        // No .git here, continue walking up unless we're at the filesystem root
       }
 
       const parent = resolve(current, "..");
       if (parent === current) {
-        break;
+        break; // Reached filesystem root
       }
       current = parent;
     }
