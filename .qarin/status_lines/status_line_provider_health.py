@@ -5,7 +5,7 @@
 # ///
 
 """
-Status Line: Provider Health - Provider availability indicators for Ollama CLI.
+Status Line: Provider Health - Provider availability indicators for Qarin CLI.
 
 GOTCHA/ATLAS: Execution Layer status line.
 Displays which LLM providers are available with colored dot indicators,

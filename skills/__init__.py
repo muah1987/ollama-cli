@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Skills framework for the Ollama CLI project.
+Skills framework for the Qarin CLI project.
 
 This module provides a base class for creating reusable skills that can
 leverage the enhanced token counting and context management systems.
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 class BaseSkill(ABC):
-    """Base class for all skills in the Ollama CLI project."""
+    """Base class for all skills in the Qarin CLI project."""
 
     def __init__(self, name: str, description: str, context_manager: Optional[ContextManager] = None):
         self.name = name

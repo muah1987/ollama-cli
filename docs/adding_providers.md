@@ -1,12 +1,12 @@
-# Adding New Providers to Ollama CLI
+# Adding New Providers to Qarin CLI
 
-Guide for extending Ollama CLI with additional AI providers.
+Guide for extending Qarin CLI with additional AI providers.
 
 ---
 
 ## Overview
 
-Ollama CLI is designed with a modular architecture that makes it easy to add new providers. This guide explains how to implement a new provider that integrates seamlessly with the existing system.
+Qarin CLI is designed with a modular architecture that makes it easy to add new providers. This guide explains how to implement a new provider that integrates seamlessly with the existing system.
 
 ## Provider Architecture
 

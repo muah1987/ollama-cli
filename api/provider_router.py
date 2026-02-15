@@ -113,7 +113,7 @@ def _load_agent_model_config() -> dict[str, tuple[str, str]]:
             config[agent_type] = (provider, model)
 
     # Load from config file
-    config_file = Path(".ollama/settings.json")
+    config_file = Path(".qarin/settings.json")
     if config_file.exists():
         try:
             with open(config_file) as f:

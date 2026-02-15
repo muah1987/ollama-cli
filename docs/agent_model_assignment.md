@@ -12,19 +12,19 @@ Users can configure agent model assignments through environment variables:
 
 ```bash
 # Assign specific models to agent types
-OLLAMA_CLI_AGENT_CODE_MODEL=mistralai/Mistral-7B-Instruct-v0.3
-OLLAMA_CLI_AGENT_RESEARCH_MODEL=meta-llama/Meta-Llama-3-8B-Instruct
-OLLAMA_CLI_AGENT_WRITER_MODEL=gpt-4.1
+QARIN_CLI_AGENT_CODE_MODEL=mistralai/Mistral-7B-Instruct-v0.3
+QARIN_CLI_AGENT_RESEARCH_MODEL=meta-llama/Meta-Llama-3-8B-Instruct
+QARIN_CLI_AGENT_WRITER_MODEL=gpt-4.1
 
 # Provider assignments for agent types
-OLLAMA_CLI_AGENT_CODE_PROVIDER=hf
-OLLAMA_CLI_AGENT_RESEARCH_PROVIDER=claude
-OLLAMA_CLI_AGENT_WRITER_PROVIDER=codex
+QARIN_CLI_AGENT_CODE_PROVIDER=hf
+QARIN_CLI_AGENT_RESEARCH_PROVIDER=claude
+QARIN_CLI_AGENT_WRITER_PROVIDER=codex
 ```
 
 ### Configuration File
 
-Users can also configure agent model assignments in `.ollama/settings.json`:
+Users can also configure agent model assignments in `.qarin/settings.json`:
 
 ```json
 {
@@ -50,7 +50,7 @@ Users can also configure agent model assignments in `.ollama/settings.json`:
 Users can also specify agent model assignments directly in commands:
 
 ```bash
-cli-ollama --agent-model code:mistralai/Mistral-7B-Instruct-v0.3 --agent-provider code:hf run "Write a Python function"
+qarin-cli --agent-model code:mistralai/Mistral-7B-Instruct-v0.3 --agent-provider code:hf run "Write a Python function"
 ```
 
 ## Implementation Plan
@@ -74,7 +74,7 @@ The system supports the following agent types, each configurable with any provid
 
 ### Multi-Model Configuration
 
-Configure 5+ models with mixed providers in `.ollama/settings.json`:
+Configure 5+ models with mixed providers in `.qarin/settings.json`:
 
 ```json
 {
@@ -91,16 +91,16 @@ Configure 5+ models with mixed providers in `.ollama/settings.json`:
 Or via environment variables (up to 10 agent types):
 
 ```bash
-OLLAMA_CLI_AGENT_CODE_PROVIDER=ollama
-OLLAMA_CLI_AGENT_CODE_MODEL=codestral:latest
-OLLAMA_CLI_AGENT_REVIEW_PROVIDER=claude
-OLLAMA_CLI_AGENT_REVIEW_MODEL=claude-sonnet
-OLLAMA_CLI_AGENT_TEST_PROVIDER=gemini
-OLLAMA_CLI_AGENT_TEST_MODEL=gemini-flash
-OLLAMA_CLI_AGENT_DOCS_PROVIDER=hf
-OLLAMA_CLI_AGENT_DOCS_MODEL=mistral-7b
-OLLAMA_CLI_AGENT_ORCHESTRATOR_PROVIDER=codex
-OLLAMA_CLI_AGENT_ORCHESTRATOR_MODEL=gpt-4
+QARIN_CLI_AGENT_CODE_PROVIDER=ollama
+QARIN_CLI_AGENT_CODE_MODEL=codestral:latest
+QARIN_CLI_AGENT_REVIEW_PROVIDER=claude
+QARIN_CLI_AGENT_REVIEW_MODEL=claude-sonnet
+QARIN_CLI_AGENT_TEST_PROVIDER=gemini
+QARIN_CLI_AGENT_TEST_MODEL=gemini-flash
+QARIN_CLI_AGENT_DOCS_PROVIDER=hf
+QARIN_CLI_AGENT_DOCS_MODEL=mistral-7b
+QARIN_CLI_AGENT_ORCHESTRATOR_PROVIDER=codex
+QARIN_CLI_AGENT_ORCHESTRATOR_MODEL=gpt-4
 ```
 
 ### 1. Provider Router
@@ -128,8 +128,8 @@ def _load_agent_model_config() -> dict[str, tuple[str, str]]:
 
     # Load from environment variables
     for agent_type in ["code", "research", "writer"]:
-        provider_var = f"OLLAMA_CLI_AGENT_{agent_type.upper()}_PROVIDER"
-        model_var = f"OLLAMA_CLI_AGENT_{agent_type.upper()}_MODEL"
+        provider_var = f"QARIN_CLI_AGENT_{agent_type.upper()}_PROVIDER"
+        model_var = f"QARIN_CLI_AGENT_{agent_type.upper()}_MODEL"
 
         provider = os.environ.get(provider_var)
         model = os.environ.get(model_var)
@@ -138,7 +138,7 @@ def _load_agent_model_config() -> dict[str, tuple[str, str]]:
             config[agent_type] = (provider, model)
 
     # Load from config file
-    config_file = Path(".ollama/settings.json")
+    config_file = Path(".qarin/settings.json")
     if config_file.exists():
         try:
             with open(config_file) as f:
@@ -184,7 +184,7 @@ class Session:
 Add command line options for specifying agent model assignments:
 
 ```python
-# In ollama_cmd/root.py or relevant command files
+# In qarin_cmd/root.py or relevant command files
 parser.add_argument(
     "--agent-model",
     action="append",
@@ -205,17 +205,17 @@ parser.add_argument(
 ### Setting Agent Models via Environment
 
 ```bash
-export OLLAMA_CLI_AGENT_CODE_MODEL=mistralai/Mistral-7B-Instruct-v0.3
-export OLLAMA_CLI_AGENT_CODE_PROVIDER=hf
-export OLLAMA_CLI_AGENT_RESEARCH_MODEL=meta-llama/Meta-Llama-3-8B-Instruct
-export OLLAMA_CLI_AGENT_RESEARCH_PROVIDER=claude
+export QARIN_CLI_AGENT_CODE_MODEL=mistralai/Mistral-7B-Instruct-v0.3
+export QARIN_CLI_AGENT_CODE_PROVIDER=hf
+export QARIN_CLI_AGENT_RESEARCH_MODEL=meta-llama/Meta-Llama-3-8B-Instruct
+export QARIN_CLI_AGENT_RESEARCH_PROVIDER=claude
 
-cli-ollama run "Write a Python function to calculate factorial"
+qarin-cli run "Write a Python function to calculate factorial"
 ```
 
 ### Setting Agent Models via Configuration File
 
-Create `.ollama/settings.json`:
+Create `.qarin/settings.json`:
 
 ```json
 {
@@ -235,7 +235,7 @@ Create `.ollama/settings.json`:
 ### Setting Agent Models Inline
 
 ```bash
-cli-ollama --agent-model code:mistralai/Mistral-7B-Instruct-v0.3 --agent-provider code:hf run "Write a Python function"
+qarin-cli --agent-model code:mistralai/Mistral-7B-Instruct-v0.3 --agent-provider code:hf run "Write a Python function"
 ```
 
 ## Orchestrator Auto-Allocation
@@ -256,7 +256,7 @@ with specific models, the orchestrator will use them automatically:
 
 The `--model` flag sets only the **primary/default** model for the session.
 Agent-specific models configured via `/set-agent-model`, environment variables,
-or `.ollama/settings.json` take priority when the orchestrator dispatches work.
+or `.qarin/settings.json` take priority when the orchestrator dispatches work.
 
 ## Benefits
 

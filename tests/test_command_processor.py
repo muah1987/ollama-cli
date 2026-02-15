@@ -866,7 +866,7 @@ class TestCommandHandlerMemory:
     @pytest.mark.asyncio
     async def test_memory_add_note(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        (tmp_path / "OLLAMA.md").write_text("# Test\n", encoding="utf-8")
+        (tmp_path / "QARIN.md").write_text("# Test\n", encoding="utf-8")
         proc = _make_rich_processor()
         result = await proc.dispatch("/memory always use type hints")
         assert any("Added" in line for line in result.output)
@@ -1077,7 +1077,7 @@ class TestCommandHandlerResume:
         import json
 
         monkeypatch.chdir(tmp_path)
-        tasks_dir = tmp_path / ".ollama" / "tasks"
+        tasks_dir = tmp_path / ".qarin" / "tasks"
         tasks_dir.mkdir(parents=True)
         task = {"id": "test-task", "type": "test", "description": "A task", "status": "planned"}
         (tasks_dir / "test-task.json").write_text(json.dumps(task), encoding="utf-8")
@@ -1095,14 +1095,14 @@ class TestCommandHandlerInit:
         proc = _make_rich_processor()
         result = await proc.dispatch("/init")
         assert any("initialized" in line.lower() or "created" in line.lower() for line in result.output)
-        assert (tmp_path / "OLLAMA.md").exists()
-        assert (tmp_path / ".ollama").exists()
+        assert (tmp_path / "QARIN.md").exists()
+        assert (tmp_path / ".qarin").exists()
 
     @pytest.mark.asyncio
     async def test_init_idempotent(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        (tmp_path / "OLLAMA.md").write_text("# test\n", encoding="utf-8")
-        (tmp_path / ".ollama").mkdir()
+        (tmp_path / "QARIN.md").write_text("# test\n", encoding="utf-8")
+        (tmp_path / ".qarin").mkdir()
         proc = _make_rich_processor()
         result = await proc.dispatch("/init")
         assert any("already" in line.lower() or "nothing" in line.lower() for line in result.output)
@@ -1113,7 +1113,7 @@ class TestCommandHandlerInit:
         (tmp_path / "CLAUDE.md").write_text("# Claude Instructions\nBe helpful.", encoding="utf-8")
         proc = _make_rich_processor()
         await proc.dispatch("/init")
-        ollama_md = (tmp_path / "OLLAMA.md").read_text(encoding="utf-8")
+        ollama_md = (tmp_path / "QARIN.md").read_text(encoding="utf-8")
         assert "imported: CLAUDE.md" in ollama_md
 
 

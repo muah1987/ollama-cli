@@ -30,9 +30,9 @@ def test_install_script_executable() -> None:
 
 def test_ollama_detection_command() -> None:
     """Test that ollama detection is implemented."""
-    # Test that the install_ollama.py hook exists
-    hook_path = PROJECT_ROOT / ".ollama" / "hooks" / "install_ollama.py"
-    assert hook_path.exists(), "install_ollama.py hook should exist"
+    # Test that the install_qarin.py hook exists
+    hook_path = PROJECT_ROOT / ".qarin" / "hooks" / "install_qarin.py"
+    assert hook_path.exists(), "install_qarin.py hook should exist"
 
 
 def test_pyproject_only_has_qarin_cli_entry_point() -> None:

@@ -58,7 +58,7 @@ def validate_prompt(prompt: str) -> tuple[bool, str]:
 def log_event(payload: dict, is_valid: bool, reason: str) -> None:
     """Log prompt submission event."""
     project_dir = os.environ.get(
-        "OLLAMA_PROJECT_DIR",
+        "QARIN_PROJECT_DIR",
         str(Path(__file__).resolve().parent.parent.parent),
     )
     log_path = Path(project_dir) / "logs" / "user_prompt_submit.json"

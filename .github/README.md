@@ -1,4 +1,4 @@
-[![Auto Release](https://github.com/muah1987/cli-ollama/actions/workflows/autorelease.yml/badge.svg?branch=main)](https://github.com/muah1987/cli-ollama/actions/workflows/autorelease.yml) [![Release](https://github.com/muah1987/cli-ollama/actions/workflows/release.yml/badge.svg)](https://github.com/muah1987/cli-ollama/actions/workflows/release.yml) [![Deploy to PyPI](https://github.com/muah1987/cli-ollama/actions/workflows/pypi-publish.yml/badge.svg)](https://github.com/muah1987/cli-ollama/actions/workflows/pypi-publish.yml) [![Dependabot Updates](https://github.com/muah1987/cli-ollama/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/muah1987/cli-ollama/actions/workflows/dependabot/dependabot-updates) [![Build and Test](https://github.com/muah1987/cli-ollama/actions/workflows/build-test.yml/badge.svg)](https://github.com/muah1987/cli-ollama/actions/workflows/build-test.yml)
+[![Auto Release](https://github.com/muah1987/qarin-cli/actions/workflows/autorelease.yml/badge.svg?branch=main)](https://github.com/muah1987/qarin-cli/actions/workflows/autorelease.yml) [![Release](https://github.com/muah1987/qarin-cli/actions/workflows/release.yml/badge.svg)](https://github.com/muah1987/qarin-cli/actions/workflows/release.yml) [![Deploy to PyPI](https://github.com/muah1987/qarin-cli/actions/workflows/pypi-publish.yml/badge.svg)](https://github.com/muah1987/qarin-cli/actions/workflows/pypi-publish.yml) [![Dependabot Updates](https://github.com/muah1987/qarin-cli/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/muah1987/qarin-cli/actions/workflows/dependabot/dependabot-updates) [![Build and Test](https://github.com/muah1987/qarin-cli/actions/workflows/build-test.yml/badge.svg)](https://github.com/muah1987/qarin-cli/actions/workflows/build-test.yml)
 
 # Cli Ollama
 
@@ -15,33 +15,33 @@ An open-source AI coding assistant with Textual TUI interface that runs in your 
 ### Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/muah1987/cli-ollama/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/muah1987/qarin-cli/main/install.sh | bash
 ```
 
-This installs `cli-ollama` to `~/.local/bin/`, sets up dependencies, and installs Ollama if needed.
+This installs `qarin-cli` to `~/.local/bin/`, sets up dependencies, and installs Ollama if needed.
 
 ### Start chatting
 
 ```bash
 # Start interactive session (default)
-cli-ollama
+qarin-cli
 
 # Or with a direct prompt
-cli-ollama "Explain this codebase to me"
+qarin-cli "Explain this codebase to me"
 
 # Non-interactive mode
-cli-ollama -p "Write a Python function that reverses a string"
+qarin-cli -p "Write a Python function that reverses a string"
 
 # Resume last session
-cli-ollama --resume
+qarin-cli --resume
 ```
 
 ### Pipe input
 
 ```bash
-echo "Fix the bug in this code" | cli-ollama
-cat error.log | cli-ollama -p "What went wrong?"
-git diff | cli-ollama -p "Review these changes"
+echo "Fix the bug in this code" | qarin-cli
+cat error.log | qarin-cli -p "What went wrong?"
+git diff | qarin-cli -p "Review these changes"
 ```
 
 ---
@@ -49,7 +49,7 @@ git diff | cli-ollama -p "Review these changes"
 ## Usage
 
 ```
-Usage: cli-ollama [options] [command] [prompt]
+Usage: qarin-cli [options] [command] [prompt]
 
 Options:
   -v, --version                   Show version
@@ -95,7 +95,7 @@ Inside the REPL, use slash commands:
 | `/save [name]` | Save session to file |
 | `/load <name>` | Load session from file |
 | `/history` | Show conversation history |
-| `/memory [note]` | View or add to project memory (OLLAMA.md) |
+| `/memory [note]` | View or add to project memory (QARIN.md) |
 | `/tools` | List available built-in tools |
 | `/tool <name> ...` | Invoke a tool (file_read, shell_exec, grep_search, ...) |
 | `/diff` | Show git diff of working directory |
@@ -127,26 +127,26 @@ Seamlessly switch between providers — your conversation context is preserved:
 
 ```bash
 # Use Ollama (default, local)
-cli-ollama --provider ollama
+qarin-cli --provider ollama
 
 # Use Claude
-cli-ollama --provider claude
+qarin-cli --provider claude
 
 # Use Gemini
-cli-ollama --provider gemini
+qarin-cli --provider gemini
 
 # Use OpenAI Codex
-cli-ollama --provider codex
+qarin-cli --provider codex
 
 # Use Hugging Face
-cli-ollama --provider hf
+qarin-cli --provider hf
 ```
 
 Switch mid-session with `/provider claude` in the REPL.
 
 ### Auto-Compact Context Management
 
-Ollama CLI automatically manages your context window. When token usage exceeds the configured threshold (default 85%), older messages are summarized and compacted to free space while preserving recent context.
+Qarin CLI automatically manages your context window. When token usage exceeds the configured threshold (default 85%), older messages are summarized and compacted to free space while preserving recent context.
 
 ```bash
 # Check context status
@@ -199,12 +199,12 @@ Available tools:
 **Tool permissions:** Use `--allowed-tools` to restrict which tools are available:
 
 ```bash
-cli-ollama --allowed-tools file_read,grep_search
+qarin-cli --allowed-tools file_read,grep_search
 ```
 
-### Project Memory (OLLAMA.md)
+### Project Memory (QARIN.md)
 
-Like Claude's `CLAUDE.md` and Gemini's `GEMINI.md`, cli-ollama reads `OLLAMA.md` from your project root to load persistent context:
+Like Claude's `CLAUDE.md` and Gemini's `GEMINI.md`, qarin-cli reads `QARIN.md` from your project root to load persistent context:
 
 ```bash
 # View project memory
@@ -234,12 +234,12 @@ Generate structured implementation plans and execute them:
 >>> /resume add-user-auth
 ```
 
-### `.ollamaignore`
+### `.qarinignore`
 
-Create a `.ollamaignore` file to prevent tools from accessing sensitive files:
+Create a `.qarinignore` file to prevent tools from accessing sensitive files:
 
 ```
-# .ollamaignore
+# .qarinignore
 .env
 *.key
 secrets/
@@ -266,7 +266,7 @@ secrets/
 | `SubagentStop` | When a subagent finishes |
 | `Notification` | On notable events |
 
-Hooks are configured in `.ollama/settings.json` and run as shell commands via the skill→hook→.py pipeline.
+Hooks are configured in `.qarin/settings.json` and run as shell commands via the skill→hook→.py pipeline.
 
 ### MCP Integration
 
@@ -290,7 +290,7 @@ Connect to MCP (Model Context Protocol) servers for extended capabilities:
 >>> /mcp invoke github list_repos '{"owner": "myorg"}'
 ```
 
-GitHub MCP auto-enables when `GH_TOKEN` is set. Configure in `.ollama/mcp.json`.
+GitHub MCP auto-enables when `GH_TOKEN` is set. Configure in `.qarin/mcp.json`.
 
 ### Chain Orchestration
 
@@ -313,7 +313,7 @@ Run multi-wave subagent pipelines for complex tasks:
   ...
 ```
 
-Configure wave pipeline in `.ollama/chain.json`.
+Configure wave pipeline in `.qarin/chain.json`.
 
 ### Session Persistence
 
@@ -327,7 +327,7 @@ Save and resume conversations across sessions:
 >>> /load my-project
 
 # Or use the CLI flag
-cli-ollama --resume
+qarin-cli --resume
 ```
 
 ### Agent Model Assignment
@@ -367,7 +367,7 @@ See [`.env.sample`](.env.sample) for the full template.
 
 ### Tested Ollama Cloud Models
 
-The following [Ollama Cloud](https://ollama.com) models have been tested and verified to work with cli-ollama. Set `OLLAMA_HOST=https://ollama.com` and provide your `OLLAMA_API_KEY` to use them:
+The following [Ollama Cloud](https://ollama.com) models have been tested and verified to work with qarin-cli. Set `OLLAMA_HOST=https://ollama.com` and provide your `OLLAMA_API_KEY` to use them:
 
 | Model | Tag |
 |-------|-----|
@@ -401,8 +401,8 @@ The following [Ollama Cloud](https://ollama.com) models have been tested and ver
 
 ```bash
 # Clone
-git clone https://github.com/muah1987/cli-ollama.git
-cd cli-ollama
+git clone https://github.com/muah1987/qarin-cli.git
+cd qarin-cli
 
 # Install dependencies
 uv sync --dev
@@ -424,7 +424,7 @@ uv run ruff format .
 
 ## Support
 
-- **GitHub Issues:** [Report bugs or request features](https://github.com/muah1987/cli-ollama/issues)
+- **GitHub Issues:** [Report bugs or request features](https://github.com/muah1987/qarin-cli/issues)
 - **Ollama:** [Official Ollama website](https://ollama.ai)
 
 ## License

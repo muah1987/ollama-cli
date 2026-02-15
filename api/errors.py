@@ -1,4 +1,4 @@
-"""Unified error hierarchy for the Ollama CLI API layer.
+"""Unified error hierarchy for the Qarin CLI API layer.
 
 This module centralises all custom exceptions used across the API package
 so that consumers can catch errors at the desired level of granularity.
@@ -28,7 +28,7 @@ from __future__ import annotations
 
 
 class QarinCliError(Exception):
-    """Base exception for all Ollama CLI errors.
+    """Base exception for all Qarin CLI errors.
 
     Every custom exception in the project inherits from this class so that
     callers can use a single ``except QarinCliError`` clause to catch all

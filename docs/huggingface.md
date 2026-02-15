@@ -35,7 +35,7 @@ HF_TOKEN=your-huggingface-token
 echo $HF_TOKEN
 
 # Test the provider
-cli-ollama --provider hf run "Say hello"
+qarin-cli --provider hf run "Say hello"
 ```
 
 ## Usage
@@ -44,10 +44,10 @@ cli-ollama --provider hf run "Say hello"
 
 ```bash
 # Use Hugging Face for a single request
-cli-ollama --provider hf run "Explain quantum computing"
+qarin-cli --provider hf run "Explain quantum computing"
 
 # Specify a particular model
-cli-ollama --provider hf --model mistralai/Mistral-7B-Instruct-v0.3 run "Summarize this article"
+qarin-cli --provider hf --model mistralai/Mistral-7B-Instruct-v0.3 run "Summarize this article"
 ```
 
 ### Available Models
@@ -100,7 +100,7 @@ Browse models at [Hugging Face Models](https://huggingface.co/models) or use:
 
 ```bash
 # List available models (when supported by API)
-cli-ollama --provider hf list
+qarin-cli --provider hf list
 ```
 
 ## Pricing
@@ -123,7 +123,7 @@ Visit [Hugging Face Pricing](https://huggingface.co/pricing) for detailed inform
 HF_TOKEN=your-huggingface-token
 
 # Optional (to set default provider)
-OLLAMA_CLI_PROVIDER=hf
+QARIN_CLI_PROVIDER=hf
 ```
 
 ### Task-Specific Providers
@@ -132,12 +132,12 @@ You can set specific providers for different task types:
 
 ```bash
 # Coding tasks use Hugging Face
-OLLAMA_CLI_CODING_PROVIDER=hf
-OLLAMA_CLI_CODING_MODEL=mistralai/Mistral-7B-Instruct-v0.3
+QARIN_CLI_CODING_PROVIDER=hf
+QARIN_CLI_CODING_MODEL=mistralai/Mistral-7B-Instruct-v0.3
 
 # Agent tasks use Claude
-OLLAMA_CLI_AGENT_PROVIDER=claude
-OLLAMA_CLI_AGENT_MODEL=claude-sonnet-4
+QARIN_CLI_AGENT_PROVIDER=claude
+QARIN_CLI_AGENT_MODEL=claude-sonnet-4
 ```
 
 ## Troubleshooting

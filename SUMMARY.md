@@ -60,7 +60,7 @@ Technical validation report documenting:
 1. Create a GitHub Personal Access Token (classic)
    - Go to your GitHub Settings → Developer settings → Personal access tokens
    - Click "Generate new token (classic)"
-   - Name: `CLI-Ollama Release Token`
+   - Name: `Qarin CLI Release Token`
    - Select scopes:
      - ✅ `repo` (Full control of private repositories)
      - ✅ `workflow` (Update GitHub Action workflows)
@@ -103,15 +103,15 @@ This will trigger:
 ### Optional - For PyPI Publishing
 
 #### 4. Configure PyPI Trusted Publisher
-**Location:** https://pypi.org/manage/project/cli-ollama/settings/publishing/
+**Location:** https://pypi.org/manage/project/qarin-cli/settings/publishing/
 
 **Steps:**
 1. Go to PyPI project settings
 2. Click "Add a new pending publisher"
 3. Fill in:
-   - **PyPI Project Name:** `cli-ollama`
+   - **PyPI Project Name:** `qarin-cli`
    - **Owner:** `muah1987`
-   - **Repository:** `cli-ollama`
+   - **Repository:** `qarin-cli`
    - **Workflow:** `pypi-publish.yml`
    - **Environment:** (leave blank)
 4. Click "Add"
@@ -145,13 +145,13 @@ Check Actions tab:
 - ✅ Updates CHANGELOG.md
 
 ### 2. Verify GitHub Release
-- ✅ Release appears at https://github.com/muah1987/cli-ollama/releases
+- ✅ Release appears at https://github.com/muah1987/qarin-cli/releases
 - ✅ Contains `.whl` and `.tar.gz` files
 
 ### 3. Verify PyPI Publication
 ```bash
-pip install cli-ollama --upgrade
-cli-ollama --version
+pip install qarin-cli --upgrade
+qarin-cli --version
 ```
 
 **Note:** PyPI trusted publishing is already configured. The package will be automatically published to PyPI when a GitHub Release is created.

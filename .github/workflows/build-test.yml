@@ -36,7 +36,7 @@ jobs:
       - name: Validate documentation
         run: |
           echo "Checking required documentation files..."
-          files=("README.md" "CONTRIBUTING.md" "SECURITY.md" "OLLAMA.md")
+          files=("README.md" "CONTRIBUTING.md" "SECURITY.md" "QARIN.md")
           for file in "${files[@]}"; do
             if [ -f "$file" ]; then
               echo "✓ $file exists"

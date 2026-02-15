@@ -1,7 +1,7 @@
 """EXO (Execution Optimizer) integration for distributed execution acceleration.
 
 This module provides execution optimization and distributed computing capabilities
-for Ollama CLI operations across multiple nodes.
+for Qarin CLI operations across multiple nodes.
 """
 
 from __future__ import annotations

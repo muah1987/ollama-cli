@@ -31,7 +31,7 @@ from pathlib import Path
 def get_git_status() -> dict | None:
     """Retrieve current git status if inside a git repository."""
     project_dir = os.environ.get(
-        "OLLAMA_PROJECT_DIR",
+        "QARIN_PROJECT_DIR",
         str(Path(__file__).resolve().parent.parent.parent),
     )
     try:
@@ -69,7 +69,7 @@ def get_git_status() -> dict | None:
 def log_setup(payload: dict, git_status: dict | None) -> None:
     """Log setup event."""
     project_dir = os.environ.get(
-        "OLLAMA_PROJECT_DIR",
+        "QARIN_PROJECT_DIR",
         str(Path(__file__).resolve().parent.parent.parent),
     )
     log_path = Path(project_dir) / "logs" / "setup.json"

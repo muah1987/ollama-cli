@@ -372,7 +372,7 @@ class TestSkillTriggerPipeline:
 
     def test_skill_trigger_hook_in_settings(self) -> None:
         """SkillTrigger should be defined in settings.json."""
-        settings_path = Path(__file__).parent.parent / ".ollama" / "settings.json"
+        settings_path = Path(__file__).parent.parent / ".qarin" / "settings.json"
         with open(settings_path) as f:
             settings = json.load(f)
 
@@ -381,12 +381,12 @@ class TestSkillTriggerPipeline:
 
     def test_skill_trigger_hook_script_exists(self) -> None:
         """skill_trigger.py hook script should exist."""
-        hook_path = Path(__file__).parent.parent / ".ollama" / "hooks" / "skill_trigger.py"
+        hook_path = Path(__file__).parent.parent / ".qarin" / "hooks" / "skill_trigger.py"
         assert hook_path.is_file()
 
     def test_agent_models_in_settings(self) -> None:
         """agent_models should be defined in settings.json with at least 5 entries."""
-        settings_path = Path(__file__).parent.parent / ".ollama" / "settings.json"
+        settings_path = Path(__file__).parent.parent / ".qarin" / "settings.json"
         with open(settings_path) as f:
             settings = json.load(f)
 

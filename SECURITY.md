@@ -11,7 +11,7 @@
 Security vulnerabilities can be reported via:
 
 - Email: security@example.com
-- GitHub Security Advisory: [Report a vulnerability](https://github.com/muah1987/cli-ollama/security/advisories/new)
+- GitHub Security Advisory: [Report a vulnerability](https://github.com/muah1987/qarin-cli/security/advisories/new)
 
 Please include:
 - Description of the vulnerability

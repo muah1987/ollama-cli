@@ -1,6 +1,6 @@
 # Skills Manifest
 
-This document lists all available skills in the Ollama CLI project.
+This document lists all available skills in the Qarin CLI project.
 
 ## Skill: token_counter
 

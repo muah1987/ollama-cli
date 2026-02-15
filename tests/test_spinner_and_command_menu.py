@@ -174,7 +174,7 @@ class TestSystemPromptToolAwareness:
         assert "tool" in prompt.lower()
 
     def test_session_start_sets_system_message(self) -> None:
-        """Session.start() should always set a system message (even without OLLAMA.md)."""
+        """Session.start() should always set a system message (even without QARIN.md)."""
         import asyncio
         import os
         import tempfile

@@ -1,6 +1,6 @@
-# Ollama CLI — System Workflow
+# Qarin CLI — System Workflow
 
-> Complete end-to-end reference for how every layer of Ollama CLI connects.
+> Complete end-to-end reference for how every layer of Qarin CLI connects.
 > Last updated: 2026-02-14
 
 ---
@@ -13,7 +13,7 @@
 └──────────────────────────────┬──────────────────────────────────┘
                                │
                     ┌──────────▼──────────┐
-                    │   CLI Entry Point   │  ollama_cmd/root.py
+                    │   CLI Entry Point   │  qarin_cmd/root.py
                     │   (Arg Parser)      │
                     └──────┬─────────┬────┘
                            │         │
@@ -52,7 +52,7 @@
 
 ---
 
-## 1. Entry Point — `ollama_cmd/root.py`
+## 1. Entry Point — `qarin_cmd/root.py`
 
 The CLI starts at `main()`:
 
@@ -133,8 +133,8 @@ Session.__init__()
   └── ProviderRouter      (multi-provider routing)
 
 Session.start()
-  ├── Load OLLAMA.md as system prompt
-  ├── Load persistent memory from .ollama/memory.json
+  ├── Load QARIN.md as system prompt
+  ├── Load persistent memory from .qarin/memory.json
   └── Fire SessionStart hook
 
 Session.send(message)
@@ -151,8 +151,8 @@ Session.send(message)
 
 Session.end()
   ├── Save session state
-  ├── Append summary to OLLAMA.md
-  ├── Persist memory to .ollama/memory.json
+  ├── Append summary to QARIN.md
+  ├── Persist memory to .qarin/memory.json
   └── Fire SessionEnd hook
 ```
 
@@ -316,8 +316,8 @@ TeamCompletionLoop.run(task_description)
   ├── Phase 4: Spec      → spec_writer produces formal spec
   └── Phase 5: Review    → reviewer verifies spec completeness
   │
-  ├── Save spec to .ollama/spec/<slug>.md
-  ├── Save task record to .ollama/tasks/<slug>.json
+  ├── Save spec to .qarin/spec/<slug>.md
+  ├── Save task record to .qarin/tasks/<slug>.json
   └── Return TeamCompletionResult
 ```
 
@@ -350,7 +350,7 @@ executes them, feeding results back into subsequent phase context.
 | 14 | `Notification` | Notable events | — |
 
 **Pipeline:** `skill → hook → .py` — hooks are Python scripts in
-`.ollama/hooks/` that receive JSON payload via stdin and return
+`.qarin/hooks/` that receive JSON payload via stdin and return
 structured results (permissionDecision, additionalContext, updatedInput).
 
 ---
@@ -383,7 +383,7 @@ MemoryLayer
   ├── recall_relevant(query) → matching entries
   ├── get_context_block(max_tokens) → compact memory string
   ├── get_all_entries() → all stored entries
-  └── persist() / load() → .ollama/memory.json
+  └── persist() / load() → .qarin/memory.json
 ```
 
 Entries are ranked by `importance × access_frequency` for retrieval.
@@ -423,14 +423,14 @@ Built-in tool capabilities exposed to the model:
 | `web_fetch` | Fetch web pages |
 
 **Permission model:** `PreToolUse` hook validates before execution;
-`.ollamaignore` patterns exclude sensitive paths.
+`.qarinignore` patterns exclude sensitive paths.
 
 ---
 
-## 16. Configuration — `.ollama/`
+## 16. Configuration — `.qarin/`
 
 ```
-.ollama/
+.qarin/
 ├── settings.json     ← Hook config + agent_models + intent classifier
 ├── chain.json        ← Wave definitions + merge policy + UI layout
 ├── mcp.json          ← MCP server configuration
@@ -505,10 +505,10 @@ User types: "/complete_w_team Build a REST API"
    └── Phase 5: reviewer → Session.send(prompt, agent_type="review")
        └── Completeness check, final verdict
    │
-4. Save spec to .ollama/spec/build-a-rest-api.md
-5. Save task record to .ollama/tasks/build-a-rest-api.json
+4. Save spec to .qarin/spec/build-a-rest-api.md
+5. Save task record to .qarin/tasks/build-a-rest-api.json
 6. Store in MemoryLayer
-7. Display summary + "To execute: /build .ollama/spec/build-a-rest-api.md"
+7. Display summary + "To execute: /build .qarin/spec/build-a-rest-api.md"
 ```
 
 ---

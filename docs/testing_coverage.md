@@ -1,6 +1,6 @@
 # Testing and Code Coverage
 
-Ollama CLI maintains high quality standards through comprehensive testing and code coverage measurement.
+Qarin CLI maintains high quality standards through comprehensive testing and code coverage measurement.
 
 ## Running Tests
 
@@ -19,7 +19,7 @@ uv run pytest tests/ --cov=./ --cov-report=term-missing --cov-fail-under=80
 
 ## Code Coverage Policy
 
-All contributions to Ollama CLI must maintain a minimum of 80% code coverage. The CI/CD pipeline enforces this requirement automatically.
+All contributions to Qarin CLI must maintain a minimum of 80% code coverage. The CI/CD pipeline enforces this requirement automatically.
 
 Coverage reports are generated in multiple formats:
 - Terminal output with missing line indicators

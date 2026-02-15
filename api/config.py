@@ -7,7 +7,7 @@
 Configuration management for qarin.
 
 Loads settings from environment variables (via .env) and overlays
-from .ollama/config.json if it exists. Provides a singleton accessor.
+from .qarin/config.json if it exists. Provides a singleton accessor.
 """
 
 from __future__ import annotations
@@ -118,7 +118,7 @@ def load_config(env_path: str | Path | None = None, config_json_path: str | Path
     env_path:
         Path to a .env file.  Defaults to ``<cwd>/.env``.
     config_json_path:
-        Path to a JSON override file.  Defaults to ``<cwd>/.ollama/config.json``.
+        Path to a JSON override file.  Defaults to ``<cwd>/.qarin/config.json``.
     """
     # Load .env
     if env_path is None:
@@ -191,8 +191,8 @@ def load_config(env_path: str | Path | None = None, config_json_path: str | Path
     if config_json_path is None:
         # Try CWD first, then source directory (so per-project config takes priority)
         candidates = [
-            Path.cwd() / ".ollama" / "config.json",
-            Path(__file__).resolve().parent.parent / ".ollama" / "config.json",
+            Path.cwd() / ".qarin" / "config.json",
+            Path(__file__).resolve().parent.parent / ".qarin" / "config.json",
         ]
         config_json_path = None
         for candidate in candidates:
@@ -201,7 +201,7 @@ def load_config(env_path: str | Path | None = None, config_json_path: str | Path
                 break
         if config_json_path is None:
             # Use CWD as default save location for new configs
-            config_json_path = Path.cwd() / ".ollama" / "config.json"
+            config_json_path = Path.cwd() / ".qarin" / "config.json"
     else:
         config_json_path = Path(config_json_path)
 
@@ -224,7 +224,7 @@ def load_config(env_path: str | Path | None = None, config_json_path: str | Path
             pass  # ignore broken config files
 
     # Load agent_models and intent_classifier from settings.json
-    settings_path = Path(__file__).resolve().parent.parent / ".ollama" / "settings.json"
+    settings_path = Path(__file__).resolve().parent.parent / ".qarin" / "settings.json"
     if settings_path.exists():
         try:
             with open(settings_path) as f:
@@ -282,7 +282,7 @@ def save_config(config: QarinCliConfig, path: str | Path | None = None) -> Path:
     config:
         The configuration to persist.
     path:
-        Destination path.  Defaults to ``<script_dir>/../.ollama/config.json``.
+        Destination path.  Defaults to ``<script_dir>/../.qarin/config.json``.
 
     Returns
     -------
@@ -290,8 +290,8 @@ def save_config(config: QarinCliConfig, path: str | Path | None = None) -> Path:
     """
     if path is None:
         # Prefer CWD for per-project config; fall back to source directory
-        cwd_path = Path.cwd() / ".ollama" / "config.json"
-        src_path = Path(__file__).resolve().parent.parent / ".ollama" / "config.json"
+        cwd_path = Path.cwd() / ".qarin" / "config.json"
+        src_path = Path(__file__).resolve().parent.parent / ".qarin" / "config.json"
         if cwd_path.parent.exists() or not src_path.parent.exists():
             path = cwd_path
         else:

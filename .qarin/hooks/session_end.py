@@ -10,7 +10,7 @@ GOTCHA Layer: Context + Transparency
 ATLAS Phase: Stress-test
 
 Reads session_id, cost, and context_window from stdin JSON.
-Generates a session summary and appends learned patterns to OLLAMA.md.
+Generates a session summary and appends learned patterns to QARIN.md.
 """
 
 from __future__ import annotations
@@ -46,17 +46,17 @@ def generate_summary(payload: dict) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# OLLAMA.md updates
+# QARIN.md updates
 # ---------------------------------------------------------------------------
 
 
 def append_to_ollama_md(summary: dict) -> bool:
-    """Append session summary to OLLAMA.md if it exists."""
+    """Append session summary to QARIN.md if it exists."""
     project_dir = os.environ.get(
-        "OLLAMA_PROJECT_DIR",
+        "QARIN_PROJECT_DIR",
         str(Path(__file__).resolve().parent.parent.parent),
     )
-    ollama_md = Path(project_dir) / "OLLAMA.md"
+    ollama_md = Path(project_dir) / "QARIN.md"
 
     if not ollama_md.exists():
         return False
@@ -90,7 +90,7 @@ def append_to_ollama_md(summary: dict) -> bool:
 def log_session_end(payload: dict, summary: dict, md_updated: bool) -> None:
     """Log session end event."""
     project_dir = os.environ.get(
-        "OLLAMA_PROJECT_DIR",
+        "QARIN_PROJECT_DIR",
         str(Path(__file__).resolve().parent.parent.parent),
     )
     log_path = Path(project_dir) / "logs" / "session_end.json"
@@ -113,7 +113,7 @@ def log_session_end(payload: dict, summary: dict, md_updated: bool) -> None:
 
 
 def main() -> None:
-    """Read stdin, generate summary, update OLLAMA.md, log event."""
+    """Read stdin, generate summary, update QARIN.md, log event."""
     try:
         raw = sys.stdin.read()
         payload = json.loads(raw) if raw.strip() else {}

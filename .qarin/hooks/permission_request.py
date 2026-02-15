@@ -115,7 +115,7 @@ def evaluate_permission(tool_name: str, tool_input: dict) -> tuple[str, str]:
 def log_permission(payload: dict, decision: str, reason: str) -> None:
     """Log permission request event."""
     project_dir = os.environ.get(
-        "OLLAMA_PROJECT_DIR",
+        "QARIN_PROJECT_DIR",
         str(Path(__file__).resolve().parent.parent.parent),
     )
     log_path = Path(project_dir) / "logs" / "permission_request.json"

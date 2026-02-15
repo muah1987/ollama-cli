@@ -1,14 +1,14 @@
-# Copilot Instructions — Ollama CLI
+# Copilot Instructions — Qarin CLI
 
 ## Project Overview
 
-Ollama CLI is a full-featured AI coding assistant powered by Ollama with multi-provider support (Ollama, Claude, Gemini, Codex/OpenAI, Hugging Face). It is a Python 3.11+ CLI tool built with `httpx`, `rich`, and `python-dotenv`, packaged via `hatchling`, and managed with `uv`.
+Qarin CLI is a full-featured AI coding assistant powered by Ollama with multi-provider support (Ollama, Claude, Gemini, Codex/OpenAI, Hugging Face). It is a Python 3.11+ CLI tool built with `httpx`, `rich`, and `python-dotenv`, packaged via `hatchling`, and managed with `uv`.
 
 ## Repository Structure
 
 ```
-cli-ollama/
-├── ollama_cmd/    # CLI commands (root.py is the entry point)
+qarin-cli/
+├── qarin_cmd/    # CLI commands (root.py is the entry point)
 ├── api/           # API client, provider router, RDMA client, MCP client, config
 ├── model/         # Model management and sessions
 ├── server/        # Server utilities (hook runner)
@@ -17,7 +17,7 @@ cli-ollama/
 ├── specs/         # Integration specifications
 ├── tests/         # Pytest test suite
 ├── docs/          # Documentation (API, CLI, hooks, MCP, RDMA, providers, etc.)
-├── .ollama/       # Hooks, status lines, settings, MCP config
+├── .qarin/       # Hooks, status lines, settings, MCP config
 │   ├── hooks/     # 13 lifecycle hook scripts (skill→hook→.py pipeline)
 │   ├── status_lines/  # Status display modules
 │   ├── settings.json  # Hook config + agent_models
@@ -52,7 +52,7 @@ The hook system follows the skill→hook→.py pipeline:
 Up to 10+ agent types can be assigned specific providers and models:
 
 ```json
-// .ollama/settings.json
+// .qarin/settings.json
 {
   "agent_models": {
     "code": {"provider": "ollama", "model": "codestral:latest"},
@@ -64,11 +64,11 @@ Up to 10+ agent types can be assigned specific providers and models:
 }
 ```
 
-Or via environment variables: `OLLAMA_CLI_AGENT_CODE_PROVIDER=ollama`, `OLLAMA_CLI_AGENT_CODE_MODEL=codestral:latest`.
+Or via environment variables: `QARIN_CLI_AGENT_CODE_PROVIDER=ollama`, `QARIN_CLI_AGENT_CODE_MODEL=codestral:latest`.
 
 ## MCP Integration
 
-MCP (Model Context Protocol) servers are configured in `.ollama/mcp.json`:
+MCP (Model Context Protocol) servers are configured in `.qarin/mcp.json`:
 - **GitHub MCP** — Auto-enabled when `GH_TOKEN` is set
 - **Docker MCP** — Container management
 - **Filesystem MCP** — File operations
@@ -118,14 +118,14 @@ A change is "green" when all three pass: `pytest` exits 0, `ruff check .` exits 
 - **Linter/formatter**: ruff (`ruff check .` and `ruff format .`).
 - **Test mode**: pytest with `--import-mode=importlib` (configured in pyproject.toml).
 - **Commit messages**: Follow [Conventional Commits](https://www.conventionalcommits.org/) — `feat:`, `fix:`, `docs:`, `style:`, `refactor:`, `test:`, `chore:`.
-- **New CLI commands**: Add a file in `ollama_cmd/`, implement `cmd_<name>(args)`, register in `ollama_cmd/root.py` via `build_parser()` and `COMMAND_MAP`.
+- **New CLI commands**: Add a file in `qarin_cmd/`, implement `cmd_<name>(args)`, register in `qarin_cmd/root.py` via `build_parser()` and `COMMAND_MAP`.
 
 ## Dependency Policy
 
 - Use `uv` as the package manager. Add dependencies with `uv add <package>` (or `uv add --dev <package>` for dev-only).
 - The `uv.lock` file must be committed for reproducibility.
 - Only add new dependencies when strictly necessary. Prefer the standard library or existing deps (`httpx`, `rich`, `python-dotenv`).
-- Build backend is `hatchling`; wheel packages are `ollama_cmd`, `api`, `model`, `server`, `runner`.
+- Build backend is `hatchling`; wheel packages are `qarin_cmd`, `api`, `model`, `server`, `runner`.
 
 ## Security Guardrails
 

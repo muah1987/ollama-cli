@@ -159,7 +159,7 @@ class TestSessionStaticMethods:
 
     def test_find_ollama_md(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        (tmp_path / "OLLAMA.md").write_text("# Project\n", encoding="utf-8")
+        (tmp_path / "QARIN.md").write_text("# Project\n", encoding="utf-8")
         result = Session._find_ollama_md()
         assert result is not None
 

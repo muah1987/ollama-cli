@@ -163,7 +163,7 @@ class TestTeamCompletionResult:
         r = TeamCompletionResult(
             run_id="abc",
             task_description="test task",
-            spec_path=".ollama/spec/test.md",
+            spec_path=".qarin/spec/test.md",
             phases=[
                 PhaseResult(phase_name="analyst", agent_role="analyst", content="ok", duration_seconds=1.0),
             ],

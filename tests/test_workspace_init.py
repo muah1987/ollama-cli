@@ -15,10 +15,10 @@ from qarin_cmd.interactive import (
 
 
 class TestCmdInit:
-    """Verify /init creates OLLAMA.md and .ollama/ directory."""
+    """Verify /init creates QARIN.md and .qarin/ directory."""
 
     def test_init_creates_ollama_md(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Running /init creates OLLAMA.md in the working directory."""
+        """Running /init creates QARIN.md in the working directory."""
         monkeypatch.chdir(tmp_path)
 
         mode = MagicMock(spec=InteractiveMode)
@@ -29,14 +29,14 @@ class TestCmdInit:
         result = InteractiveMode._cmd_init(mode, "")
 
         assert result is False
-        ollama_md = tmp_path / "OLLAMA.md"
+        ollama_md = tmp_path / "QARIN.md"
         assert ollama_md.exists()
         content = ollama_md.read_text(encoding="utf-8")
         assert "Project Notes" in content
         assert tmp_path.name in content
 
     def test_init_creates_ollama_dir(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        """/init creates .ollama/ directory."""
+        """/init creates .qarin/ directory."""
         monkeypatch.chdir(tmp_path)
 
         mode = MagicMock(spec=InteractiveMode)
@@ -46,12 +46,12 @@ class TestCmdInit:
 
         InteractiveMode._cmd_init(mode, "")
 
-        assert (tmp_path / ".ollama").is_dir()
+        assert (tmp_path / ".qarin").is_dir()
 
     def test_init_skips_existing_ollama_md(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        """/init does not overwrite an existing OLLAMA.md."""
+        """/init does not overwrite an existing QARIN.md."""
         monkeypatch.chdir(tmp_path)
-        existing = tmp_path / "OLLAMA.md"
+        existing = tmp_path / "QARIN.md"
         existing.write_text("existing content", encoding="utf-8")
 
         mode = MagicMock(spec=InteractiveMode)
@@ -64,9 +64,9 @@ class TestCmdInit:
         assert existing.read_text(encoding="utf-8") == "existing content"
 
     def test_init_skips_existing_ollama_dir(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        """/init does not fail when .ollama/ already exists."""
+        """/init does not fail when .qarin/ already exists."""
         monkeypatch.chdir(tmp_path)
-        (tmp_path / ".ollama").mkdir()
+        (tmp_path / ".qarin").mkdir()
 
         mode = MagicMock(spec=InteractiveMode)
         mode._print_info = InteractiveMode._print_info
@@ -81,22 +81,22 @@ class TestImportInstructionFiles:
     """Verify detection and import of instruction files from other AI tools."""
 
     def test_imports_claude_md(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        """CLAUDE.md content is appended to OLLAMA.md."""
+        """CLAUDE.md content is appended to QARIN.md."""
         monkeypatch.chdir(tmp_path)
-        (tmp_path / "OLLAMA.md").write_text("# proj\n", encoding="utf-8")
+        (tmp_path / "QARIN.md").write_text("# proj\n", encoding="utf-8")
         (tmp_path / "CLAUDE.md").write_text("Use type hints everywhere.", encoding="utf-8")
 
         imported = _import_instruction_files()
 
         assert "CLAUDE.md" in imported
-        content = (tmp_path / "OLLAMA.md").read_text(encoding="utf-8")
+        content = (tmp_path / "QARIN.md").read_text(encoding="utf-8")
         assert "Use type hints everywhere." in content
         assert "<!-- imported: CLAUDE.md -->" in content
 
     def test_imports_copilot_instructions(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """.github/copilot-instructions.md is imported."""
         monkeypatch.chdir(tmp_path)
-        (tmp_path / "OLLAMA.md").write_text("# proj\n", encoding="utf-8")
+        (tmp_path / "QARIN.md").write_text("# proj\n", encoding="utf-8")
         gh_dir = tmp_path / ".github"
         gh_dir.mkdir()
         (gh_dir / "copilot-instructions.md").write_text("Follow PEP-8.", encoding="utf-8")
@@ -104,13 +104,13 @@ class TestImportInstructionFiles:
         imported = _import_instruction_files()
 
         assert ".github/copilot-instructions.md" in imported
-        content = (tmp_path / "OLLAMA.md").read_text(encoding="utf-8")
+        content = (tmp_path / "QARIN.md").read_text(encoding="utf-8")
         assert "Follow PEP-8." in content
 
     def test_skips_already_imported(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Files already imported (marker present) are not duplicated."""
         monkeypatch.chdir(tmp_path)
-        (tmp_path / "OLLAMA.md").write_text(
+        (tmp_path / "QARIN.md").write_text(
             "# proj\n<!-- imported: CLAUDE.md -->\n## Imported from CLAUDE.md\nold\n",
             encoding="utf-8",
         )
@@ -119,20 +119,20 @@ class TestImportInstructionFiles:
         imported = _import_instruction_files()
 
         assert imported == []
-        content = (tmp_path / "OLLAMA.md").read_text(encoding="utf-8")
+        content = (tmp_path / "QARIN.md").read_text(encoding="utf-8")
         assert "new content" not in content
 
     def test_no_files_returns_empty(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """When no instruction files exist, nothing is imported."""
         monkeypatch.chdir(tmp_path)
-        (tmp_path / "OLLAMA.md").write_text("# proj\n", encoding="utf-8")
+        (tmp_path / "QARIN.md").write_text("# proj\n", encoding="utf-8")
 
         imported = _import_instruction_files()
 
         assert imported == []
 
     def test_no_ollama_md_returns_empty(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        """When OLLAMA.md doesn't exist, nothing is imported."""
+        """When QARIN.md doesn't exist, nothing is imported."""
         monkeypatch.chdir(tmp_path)
         (tmp_path / "CLAUDE.md").write_text("some content", encoding="utf-8")
 
@@ -143,7 +143,7 @@ class TestImportInstructionFiles:
     def test_imports_multiple_files(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Multiple instruction files are imported in one call."""
         monkeypatch.chdir(tmp_path)
-        (tmp_path / "OLLAMA.md").write_text("# proj\n", encoding="utf-8")
+        (tmp_path / "QARIN.md").write_text("# proj\n", encoding="utf-8")
         (tmp_path / "CLAUDE.md").write_text("Claude rules", encoding="utf-8")
         (tmp_path / "GEMINI.md").write_text("Gemini rules", encoding="utf-8")
 
@@ -151,7 +151,7 @@ class TestImportInstructionFiles:
 
         assert "CLAUDE.md" in imported
         assert "GEMINI.md" in imported
-        content = (tmp_path / "OLLAMA.md").read_text(encoding="utf-8")
+        content = (tmp_path / "QARIN.md").read_text(encoding="utf-8")
         assert "Claude rules" in content
         assert "Gemini rules" in content
 
@@ -167,7 +167,7 @@ class TestImportInstructionFiles:
 
         InteractiveMode._cmd_init(mode, "")
 
-        content = (tmp_path / "OLLAMA.md").read_text(encoding="utf-8")
+        content = (tmp_path / "QARIN.md").read_text(encoding="utf-8")
         assert "Claude instructions" in content
 
 
@@ -182,10 +182,10 @@ class TestKnownInstructionFiles:
 
 
 class TestWorkspaceTrustPrompt:
-    """Verify the workspace trust prompt fires when OLLAMA.md is missing."""
+    """Verify the workspace trust prompt fires when QARIN.md is missing."""
 
     def test_prompt_shown_when_no_ollama_md(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Trust prompt appears when OLLAMA.md is absent."""
+        """Trust prompt appears when QARIN.md is absent."""
         monkeypatch.chdir(tmp_path)
 
         mode = MagicMock(spec=InteractiveMode)
@@ -200,9 +200,9 @@ class TestWorkspaceTrustPrompt:
     def test_prompt_not_needed_when_ollama_md_exists(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """_PROJECT_MEMORY_FILE.exists() is True so trust check is skipped."""
         monkeypatch.chdir(tmp_path)
-        (tmp_path / "OLLAMA.md").write_text("# test", encoding="utf-8")
+        (tmp_path / "QARIN.md").write_text("# test", encoding="utf-8")
 
-        assert _PROJECT_MEMORY_FILE == Path("OLLAMA.md")
+        assert _PROJECT_MEMORY_FILE == Path("QARIN.md")
 
     def test_prompt_marks_workspace_as_acknowledged(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """First trust prompt writes an acknowledgement marker for this folder."""
@@ -227,11 +227,11 @@ class TestWorkspaceTrustPrompt:
     def test_should_prompt_workspace_trust_respects_marker(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Trust prompt is skipped once the marker exists in .ollama."""
+        """Trust prompt is skipped once the marker exists in .qarin."""
         monkeypatch.chdir(tmp_path)
         assert InteractiveMode._should_prompt_workspace_trust() is True
-        (tmp_path / ".ollama").mkdir()
-        (tmp_path / ".ollama" / "workspace_trust_acknowledged").write_text("seen\n", encoding="utf-8")
+        (tmp_path / ".qarin").mkdir()
+        (tmp_path / ".qarin" / "workspace_trust_acknowledged").write_text("seen\n", encoding="utf-8")
         assert InteractiveMode._should_prompt_workspace_trust() is False
 
 

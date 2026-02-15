@@ -1,6 +1,6 @@
-# Contributing to Ollama CLI
+# Contributing to Qarin CLI
 
-Thank you for your interest in contributing to Ollama CLI!
+Thank you for your interest in contributing to Qarin CLI!
 
 ---
 
@@ -10,7 +10,7 @@ Thank you for your interest in contributing to Ollama CLI!
 
 If you find a bug or have a feature request:
 
-1. Check existing [issues](https://github.com/muah1987/cli-ollama/issues) first
+1. Check existing [issues](https://github.com/muah1987/qarin-cli/issues) first
 2. Create a new issue with a clear title and description
 3. Include steps to reproduce for bugs
 
@@ -73,7 +73,7 @@ Run tests with pytest:
 pytest
 
 # Run with coverage
-pytest --cov=ollama_cmd --cov=api --cov=model --cov=server --cov=runner
+pytest --cov=qarin_cmd --cov=api --cov=model --cov=server --cov=runner
 
 # Run specific test file
 pytest tests/test_api.py
@@ -85,8 +85,8 @@ pytest tests/test_api.py
 
 ```bash
 # Clone the repository
-git clone https://github.com/muah1987/cli-ollama.git
-cd cli-ollama
+git clone https://github.com/muah1987/qarin-cli.git
+cd qarin-cli
 
 # Install development dependencies
 uv sync --dev
@@ -106,9 +106,9 @@ ruff check .
 
 ## Adding Commands
 
-Follow the existing command structure in `ollama_cmd/`:
+Follow the existing command structure in `qarin_cmd/`:
 
-1. Create a new command file in `ollama_cmd/`
+1. Create a new command file in `qarin_cmd/`
 2. Import necessary modules from `api/`, `model/`, etc.
 3. Add a function following the pattern:
 ```python
@@ -116,15 +116,15 @@ def cmd_mycommand(args: argparse.Namespace) -> None:
     """Description of the command."""
     pass
 ```
-4. Add the command to `ollama_cmd/root.py` in the `build_parser()` function and `COMMAND_MAP`
+4. Add the command to `qarin_cmd/root.py` in the `build_parser()` function and `COMMAND_MAP`
 
 ---
 
 ## Project Structure
 
 ```
-cli-ollama/
-├── ollama_cmd/       # CLI entry points per command
+qarin-cli/
+├── qarin_cmd/       # CLI entry points per command
 ├── api/              # API client, provider router, MCP client, RDMA client, config
 ├── model/            # Model management and sessions
 ├── server/           # Server utilities (hook runner)
@@ -133,7 +133,7 @@ cli-ollama/
 ├── skills/           # Skill modules (EXO, MLX, RDMA) with hook trigger pipeline
 ├── docs/             # Documentation
 ├── tests/            # Test files
-├── .ollama/          # Hooks, settings, MCP config, chain config
+├── .qarin/          # Hooks, settings, MCP config, chain config
 │   ├── hooks/        # 14 lifecycle hook scripts
 │   ├── status_lines/ # Status line scripts + utilities
 │   ├── mcp.json      # MCP server configuration

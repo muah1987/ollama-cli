@@ -11,14 +11,14 @@ MCP (Model Context Protocol) client -- integrates external MCP servers.
 
 Provides a unified interface for connecting to MCP-compatible servers
 (GitHub MCP, Docker MCP, filesystem MCP, etc.) and exposing their tools
-to the Ollama CLI agent pipeline.
+to the Qarin CLI agent pipeline.
 
 MCP servers communicate via stdin/stdout JSON-RPC or HTTP, providing:
 - Tool discovery (list available tools from each server)
 - Tool invocation (call a tool on a connected MCP server)
 - Resource access (read resources exposed by MCP servers)
 
-Configuration is stored in ``.ollama/mcp.json``.
+Configuration is stored in ``.qarin/mcp.json``.
 """
 
 from __future__ import annotations
@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 # MCP configuration path
 # ---------------------------------------------------------------------------
 
-_MCP_CONFIG_FILE = ".ollama/mcp.json"
+_MCP_CONFIG_FILE = ".qarin/mcp.json"
 
 # ---------------------------------------------------------------------------
 # Default MCP server definitions
@@ -150,7 +150,7 @@ class MCPTool:
 class MCPClient:
     """Client for managing MCP server connections and tool invocations.
 
-    Loads MCP server configurations from ``.ollama/mcp.json`` and provides
+    Loads MCP server configurations from ``.qarin/mcp.json`` and provides
     methods to list, connect, and invoke tools on MCP servers.
 
     The client supports both stdio-based and HTTP-based MCP servers.

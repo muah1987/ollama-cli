@@ -16,7 +16,7 @@ from skills.tools import (
 )
 
 # ---------------------------------------------------------------------------
-# .ollamaignore tests
+# .qarinignore tests
 # ---------------------------------------------------------------------------
 
 
@@ -28,7 +28,7 @@ class TestIgnorePatterns:
 
     def test_ignore_file_pattern(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        (tmp_path / ".ollamaignore").write_text("*.env\nsecrets/\n", encoding="utf-8")
+        (tmp_path / ".qarinignore").write_text("*.env\nsecrets/\n", encoding="utf-8")
         clear_ignore_cache()
         assert is_path_ignored(".env") is True
         assert is_path_ignored("my.env") is True
@@ -36,14 +36,14 @@ class TestIgnorePatterns:
 
     def test_ignore_dir_pattern(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        (tmp_path / ".ollamaignore").write_text("secrets/\n", encoding="utf-8")
+        (tmp_path / ".qarinignore").write_text("secrets/\n", encoding="utf-8")
         (tmp_path / "secrets").mkdir()
         clear_ignore_cache()
         assert is_path_ignored("secrets/key.txt") is True
 
     def test_ignore_comment_lines(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        (tmp_path / ".ollamaignore").write_text("# comment\n*.log\n", encoding="utf-8")
+        (tmp_path / ".qarinignore").write_text("# comment\n*.log\n", encoding="utf-8")
         clear_ignore_cache()
         assert is_path_ignored("debug.log") is True
         assert is_path_ignored("# comment") is False
@@ -81,7 +81,7 @@ class TestToolFileRead:
 
     def test_read_ignored_file(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        (tmp_path / ".ollamaignore").write_text("*.secret\n", encoding="utf-8")
+        (tmp_path / ".qarinignore").write_text("*.secret\n", encoding="utf-8")
         (tmp_path / "key.secret").write_text("s3cr3t", encoding="utf-8")
         clear_ignore_cache()
         result = tool_file_read("key.secret")
@@ -111,7 +111,7 @@ class TestToolFileWrite:
 
     def test_write_ignored_path(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        (tmp_path / ".ollamaignore").write_text("*.secret\n", encoding="utf-8")
+        (tmp_path / ".qarinignore").write_text("*.secret\n", encoding="utf-8")
         clear_ignore_cache()
         result = tool_file_write("data.secret", "content")
         assert "error" in result

@@ -51,12 +51,12 @@ logger = logging.getLogger(__name__)
 # Constants
 # ---------------------------------------------------------------------------
 
-_HISTORY_DIR = Path(".ollama")
+_HISTORY_DIR = Path(".qarin")
 _HISTORY_FILE = _HISTORY_DIR / "history"
 _WORKSPACE_TRUST_FILE = _HISTORY_DIR / "workspace_trust_acknowledged"
 _VALID_PROVIDERS = ("ollama", "claude", "gemini", "codex", "hf")
 _BUG_CONTEXT_MESSAGES = 5  # number of recent messages to include in bug reports
-_PROJECT_MEMORY_FILE = Path("OLLAMA.md")
+_PROJECT_MEMORY_FILE = Path("QARIN.md")
 
 # Instruction files from other AI tools that /init can import context from
 _KNOWN_INSTRUCTION_FILES: tuple[Path, ...] = (
@@ -181,16 +181,16 @@ def _agent_color(agent_type: str, text: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Llama ASCII art – based on the Ollama brand llama
+# Qarin CLI ASCII art logo
 # ---------------------------------------------------------------------------
 
-_OLLAMA_LOGO = (
-    "  ██████╗ ██╗     ██╗      █████╗ ███╗   ███╗ █████╗     ██████╗██╗     ██╗",
-    " ██╔═══██╗██║     ██║     ██╔══██╗████╗ ████║██╔══██╗   ██╔════╝██║     ██║",
-    " ██║   ██║██║     ██║     ███████║██╔████╔██║███████║   ██║     ██║     ██║",
-    " ██║   ██║██║     ██║     ██╔══██║██║╚██╔╝██║██╔══██║   ██║     ██║     ██║",
-    " ╚██████╔╝███████╗███████╗██║  ██║██║ ╚═╝ ██║██║  ██║██╗╚██████╗███████╗██║",
-    "  ╚═════╝ ╚══════╝╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝ ╚═════╝╚══════╝╚═╝",
+_QARIN_LOGO = (
+    "  ██████╗  █████╗ ██████╗ ██╗███╗   ██╗     ██████╗██╗     ██╗",
+    " ██╔═══██╗██╔══██╗██╔══██╗██║████╗  ██║    ██╔════╝██║     ██║",
+    " ██║   ██║███████║██████╔╝██║██╔██╗ ██║    ██║     ██║     ██║",
+    " ██║▄▄ ██║██╔══██║██╔══██╗██║██║╚██╗██║    ██║     ██║     ██║",
+    " ╚██████╔╝██║  ██║██║  ██║██║██║ ╚████║██╗ ╚██████╗███████╗██║",
+    "  ╚══▀▀═╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝╚═╝  ╚═════╝╚══════╝╚═╝",
 )
 
 # Funny llama-themed spinner frames for "thinking" animation
@@ -311,12 +311,12 @@ class _LlamaSpinner:
 
 
 def _import_instruction_files() -> list[str]:
-    """Detect and import instruction files from other AI tools into OLLAMA.md.
+    """Detect and import instruction files from other AI tools into QARIN.md.
 
     Scans the current directory for known instruction files (``CLAUDE.md``,
     ``GEMINI.md``, ``AGENT.md``, ``.github/copilot-instructions.md``).  If any
     are found and their content has not already been imported, appends a
-    clearly-marked section to ``OLLAMA.md``.
+    clearly-marked section to ``QARIN.md``.
 
     Returns
     -------
@@ -482,7 +482,7 @@ class InteractiveMode:
     # -- workspace trust -----------------------------------------------------
 
     def _prompt_workspace_trust(self) -> None:
-        """Prompt the user to trust the current folder when OLLAMA.md is missing.
+        """Prompt the user to trust the current folder when QARIN.md is missing.
 
         Displays a one-time notice asking whether the folder is trusted and
         suggests running ``/init`` to create project files.  Also reports any
@@ -491,13 +491,13 @@ class InteractiveMode:
         cwd = os.getcwd()
         print()
         self._print_info(f"📁 New workspace detected: {cwd}")
-        self._print_system("No OLLAMA.md found in this folder.")
+        self._print_system("No QARIN.md found in this folder.")
 
         # Report detected instruction files
         found = [str(p) for p in _KNOWN_INSTRUCTION_FILES if p.is_file()]
         if found:
             self._print_info(f"Detected instruction files: {', '.join(found)}")
-            self._print_system("Run /init to import them into OLLAMA.md.")
+            self._print_system("Run /init to import them into QARIN.md.")
 
         try:
             # Check if bypass is enabled
@@ -700,8 +700,7 @@ class InteractiveMode:
     def _print_banner(self) -> None:
         """Print the welcome banner on REPL startup.
 
-        Uses the Ollama block-letter logo with side info panel, matching
-        the user-provided ``ollama_sideinfo_unicode.txt`` layout.
+        Uses the Qarin CLI block-letter logo with side info panel.
         """
         from .root import VERSION
 
@@ -717,7 +716,7 @@ class InteractiveMode:
 
         # Build side-info lines that appear to the right of the logo
         side: list[str] = [
-            f"Ollama CLI v{VERSION}",
+            f"Qarin CLI v{VERSION}",
             f"Model: {self.session.model}  •  Context: {ctx['max']:,}",
             f"Runtime: {self.session.provider}  •  API: {base_url}",
             f"Session: {sid_short}  •  Compact: {compact_status} ({compact_pct}%)",
@@ -734,12 +733,12 @@ class InteractiveMode:
 
         # Print the logo lines with side info
         print()
-        for idx, logo_line in enumerate(_OLLAMA_LOGO):
+        for idx, logo_line in enumerate(_QARIN_LOGO):
             info = f"   {side[idx]}" if idx < len(side) else ""
             print(_bold(logo_line) + _dim(info))
         # Extra side-info lines if there are more than logo lines
-        for idx in range(len(_OLLAMA_LOGO), len(side)):
-            padding = " " * len(_OLLAMA_LOGO[0])
+        for idx in range(len(_QARIN_LOGO), len(side)):
+            padding = " " * len(_QARIN_LOGO[0])
             print(padding + _dim(f"   {side[idx]}"))
         print()
 
@@ -886,7 +885,7 @@ class InteractiveMode:
                 ("/resume [id]", "List/resume previous tasks"),
             ],
             "Project": [
-                ("/init", "Initialize project (OLLAMA.md + .ollama/)"),
+                ("/init", "Initialize project (QARIN.md + .qarin/)"),
                 ("/config [k] [v]", "View/set configuration"),
                 ("/bug [desc]", "File a bug report"),
             ],
@@ -1173,7 +1172,7 @@ class InteractiveMode:
         Always ``False`` (continue REPL).
         """
         if arg:
-            save_path = str(Path(".ollama/sessions") / f"{arg}.json")
+            save_path = str(Path(".qarin/sessions") / f"{arg}.json")
         else:
             save_path = None  # Session.save() uses default path
 
@@ -1270,7 +1269,7 @@ class InteractiveMode:
         print(f"  {_cyan('/save [name]')}      Save session to file")
         print(f"  {_cyan('/load <name>')}      Load session from file")
         print(f"  {_cyan('/history')}          Show conversation history")
-        print(f"  {_cyan('/memory [note]')}    View or add to project memory (OLLAMA.md)")
+        print(f"  {_cyan('/memory [note]')}    View or add to project memory (QARIN.md)")
         print(f"  {_cyan('/tools')}            List available built-in tools")
         print(f"  {_cyan('/tool <name> ...')}  Invoke a tool (file_read, shell_exec, ...)")
         print(f"  {_cyan('/pull <model>')}     Pull/download a model (--force to re-download)")
@@ -1289,7 +1288,7 @@ class InteractiveMode:
         print(f"  {_cyan('/mcp [action]')}     Manage MCP servers (enable|disable|tools|invoke)")
         print(f"  {_cyan('/chain <prompt>')}   Run multi-wave chain orchestration (analyze→plan→execute→finalize)")
         print(f"  {_cyan('/intent [sub]')}    Inspect/configure intent classifier (on|off|show|threshold|test)")
-        print(f"  {_cyan('/init')}             Initialize project (creates OLLAMA.md and .ollama/)")
+        print(f"  {_cyan('/init')}             Initialize project (creates QARIN.md and .qarin/)")
         print(f"  {_cyan('/help')}             Show this help message")
         print(f"  {_cyan('/quit')}             Exit the session")
         print()
@@ -1441,7 +1440,7 @@ class InteractiveMode:
         return False
 
     def _cmd_memory(self, arg: str) -> bool:
-        """Read or append to OLLAMA.md project memory file.
+        """Read or append to QARIN.md project memory file.
 
         Usage: ``/memory`` to view, ``/memory <note>`` to append a note.
 
@@ -1449,40 +1448,40 @@ class InteractiveMode:
         -------
         Always ``False`` (continue REPL).
         """
-        memory_file = Path("OLLAMA.md")
+        memory_file = Path("QARIN.md")
 
         if not arg:
             # Display current memory
             if memory_file.is_file():
                 try:
                     content = memory_file.read_text(encoding="utf-8")
-                    self._print_info("--- Project Memory (OLLAMA.md) ---")
+                    self._print_info("--- Project Memory (QARIN.md) ---")
                     print(content[:2000])
                     if len(content) > 2000:
                         print("...")
                 except OSError as exc:
-                    self._print_error(f"Cannot read OLLAMA.md: {exc}")
+                    self._print_error(f"Cannot read QARIN.md: {exc}")
             else:
-                self._print_system("No OLLAMA.md found. Use /memory <note> to create one.")
+                self._print_system("No QARIN.md found. Use /memory <note> to create one.")
             return False
 
         # Append a note
         try:
             with open(memory_file, "a", encoding="utf-8") as f:
                 f.write(f"\n- {arg}\n")
-            self._print_info(f"Added to OLLAMA.md: {arg}")
+            self._print_info(f"Added to QARIN.md: {arg}")
         except OSError as exc:
-            self._print_error(f"Cannot write to OLLAMA.md: {exc}")
+            self._print_error(f"Cannot write to QARIN.md: {exc}")
         return False
 
     def _cmd_init(self, _arg: str) -> bool:
         """Initialize the current folder as a qarin project.
 
-        Creates ``OLLAMA.md`` (project memory) and ``.ollama/`` (local config
+        Creates ``QARIN.md`` (project memory) and ``.qarin/`` (local config
         directory) if they do not already exist.  Also detects instruction
         files from other AI tools (``CLAUDE.md``, ``GEMINI.md``, ``AGENT.md``,
         ``.github/copilot-instructions.md``) and imports their content into
-        ``OLLAMA.md``.  Safe to run multiple times.
+        ``QARIN.md``.  Safe to run multiple times.
 
         Returns
         -------
@@ -1490,9 +1489,9 @@ class InteractiveMode:
         """
         created: list[str] = []
 
-        # 1. Create OLLAMA.md
+        # 1. Create QARIN.md
         if _PROJECT_MEMORY_FILE.exists():
-            self._print_system("OLLAMA.md already exists — skipping.")
+            self._print_system("QARIN.md already exists — skipping.")
         else:
             project_name = Path.cwd().name
             template = (
@@ -1503,19 +1502,19 @@ class InteractiveMode:
             )
             try:
                 _PROJECT_MEMORY_FILE.write_text(template, encoding="utf-8")
-                created.append("OLLAMA.md")
+                created.append("QARIN.md")
             except OSError as exc:
-                self._print_error(f"Cannot create OLLAMA.md: {exc}")
+                self._print_error(f"Cannot create QARIN.md: {exc}")
 
-        # 2. Create .ollama/ directory
+        # 2. Create .qarin/ directory
         if _HISTORY_DIR.exists():
-            self._print_system(".ollama/ directory already exists — skipping.")
+            self._print_system(".qarin/ directory already exists — skipping.")
         else:
             try:
                 _HISTORY_DIR.mkdir(parents=True, exist_ok=True)
-                created.append(".ollama/")
+                created.append(".qarin/")
             except OSError as exc:
-                self._print_error(f"Cannot create .ollama/: {exc}")
+                self._print_error(f"Cannot create .qarin/: {exc}")
 
         # 3. Detect and import instruction files from other AI tools
         imported = _import_instruction_files()
@@ -1916,7 +1915,7 @@ class InteractiveMode:
     def _cmd_bug(self, arg: str) -> bool:
         """File a bug report about the current session.
 
-        Saves session context and a description to ``.ollama/bugs/``.
+        Saves session context and a description to ``.qarin/bugs/``.
 
         Returns
         -------
@@ -1926,7 +1925,7 @@ class InteractiveMode:
         from datetime import datetime, timezone
 
         description = arg or "No description provided"
-        bug_dir = Path(".ollama/bugs")
+        bug_dir = Path(".qarin/bugs")
         bug_dir.mkdir(parents=True, exist_ok=True)
 
         bug_id = datetime.now(tz=timezone.utc).strftime("%Y%m%d_%H%M%S")
@@ -2101,7 +2100,7 @@ class InteractiveMode:
             "timestamp": datetime.now(tz=timezone.utc).isoformat(),
             "status": "planned",
         }
-        tasks_dir = Path(".ollama/tasks")
+        tasks_dir = Path(".qarin/tasks")
         tasks_dir.mkdir(parents=True, exist_ok=True)
         task_file = tasks_dir / f"{slug}.json"
         try:
@@ -2166,7 +2165,7 @@ class InteractiveMode:
         self.session.create_sub_context(builder_ctx_id)
 
         # Update task status if a matching task record exists
-        task_file = Path(".ollama/tasks") / f"{task_id}.json"
+        task_file = Path(".qarin/tasks") / f"{task_id}.json"
         if task_file.is_file():
             try:
                 task_data = _json.loads(task_file.read_text(encoding="utf-8"))
@@ -2270,7 +2269,7 @@ class InteractiveMode:
 
         Usage: ``/resume`` to list, ``/resume <task-id>`` to resume.
 
-        Scans ``.ollama/tasks/`` for saved task records and lets the user
+        Scans ``.qarin/tasks/`` for saved task records and lets the user
         pick one to continue working on.
 
         Returns
@@ -2279,7 +2278,7 @@ class InteractiveMode:
         """
         import json as _json
 
-        tasks_dir = Path(".ollama/tasks")
+        tasks_dir = Path(".qarin/tasks")
         if not tasks_dir.is_dir():
             self._print_system("No previous tasks found.")
             return False
@@ -2372,7 +2371,7 @@ class InteractiveMode:
         # Update the session file's extras object.
         # Only update an existing, valid session file to avoid creating
         # incomplete JSON that --resume or Session.save() would clobber.
-        session_dir = Path(".ollama/sessions")
+        session_dir = Path(".qarin/sessions")
         session_file = session_dir / f"{self.session.session_id}.json"
 
         if not session_file.is_file():
@@ -2893,7 +2892,7 @@ class InteractiveMode:
         self._running = True
         self._print_banner()
 
-        # Workspace trust check — prompt when OLLAMA.md is missing
+        # Workspace trust check — prompt when QARIN.md is missing
         if self._should_prompt_workspace_trust():
             self._prompt_workspace_trust()
 
@@ -3004,7 +3003,7 @@ if __name__ == "__main__":
         repl._cmd_help("")
 
         # Verify readline history file path
-        assert _HISTORY_FILE == Path(".ollama/history")
+        assert _HISTORY_FILE == Path(".qarin/history")
 
         print()
         print(_green("All interactive REPL tests passed."))

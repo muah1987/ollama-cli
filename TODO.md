@@ -1,6 +1,6 @@
-# Ollama CLI TODO List
+# Qarin CLI TODO List
 
-Current task priorities and pending work for the Ollama CLI project.
+Current task priorities and pending work for the Qarin CLI project.
 
 ---
 
@@ -31,7 +31,7 @@ Current task priorities and pending work for the Ollama CLI project.
 
 ### Infrastructure — Completed
 - [x] `install.sh` — automatic Ollama installation script
-- [x] `.ollama/hooks/install_ollama.py` — installation hook
+- [x] `.qarin/hooks/install_qarin.py` — installation hook
 - [x] `.github/workflows/build-test.yml` — runs tests, lint, security scan, coverage, structure validation
 - [x] `.github/workflows/autorelease.yml` — automated releases
 - [x] `.github/workflows/release.yml` — manual release workflow
@@ -76,7 +76,7 @@ Current task priorities and pending work for the Ollama CLI project.
 - [x] `test_cli_integration.py` — CLI integration tests
 - [x] `test_cli_parser.py` — CLI argument parsing
 - [x] `test_basic.py` — basic sanity tests
-- [x] `test_ollama_cli_comprehensive.py` — comprehensive module tests
+- [x] `test_qarin_cli_comprehensive.py` — comprehensive module tests
 - [x] `test_context_manager_subagents.py` — context manager sub-agent tests
 - [x] `test_auto_compact.py` — auto-compaction tests
 - [x] `test_build_and_integration.py` — build and integration tests
@@ -108,7 +108,7 @@ Current task priorities and pending work for the Ollama CLI project.
 - [x] `SECURITY.md` — security policy
 - [x] `ROADMAP.md` — project roadmap with completed milestones
 - [x] `CHANGELOG.md` — changelog
-- [x] `OLLAMA.md` — project context for AI assistants
+- [x] `QARIN.md` — project context for AI assistants
 - [x] `.github/README.md` — documentation index with all features
 - [x] `.github/copilot-instructions.md` — Copilot instructions with hooks, MCP, chain
 - [x] `docs/hooks.md` — all 13 lifecycle hooks documented

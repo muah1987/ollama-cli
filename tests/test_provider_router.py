@@ -52,10 +52,10 @@ class TestLoadAgentModelConfig:
                 "review": {"provider": "claude", "model": "claude-sonnet"},
             }
         }
-        settings_file = tmp_path / ".ollama" / "settings.json"
+        settings_file = tmp_path / ".qarin" / "settings.json"
         settings_file.parent.mkdir(parents=True)
         settings_file.write_text(json.dumps(settings), encoding="utf-8")
-        monkeypatch.setenv("OLLAMA_PROJECT_DIR", str(tmp_path))
+        monkeypatch.setenv("QARIN_PROJECT_DIR", str(tmp_path))
         monkeypatch.chdir(tmp_path)
         result = _load_agent_model_config()
         assert "code" in result
@@ -64,7 +64,7 @@ class TestLoadAgentModelConfig:
         assert result["review"][0] == "claude"
 
     def test_load_empty_config(self, tmp_path, monkeypatch):
-        monkeypatch.setenv("OLLAMA_PROJECT_DIR", str(tmp_path))
+        monkeypatch.setenv("QARIN_PROJECT_DIR", str(tmp_path))
         # Clear any agent env vars
         for key in list(os.environ):
             if key.startswith("QARIN_CLI_AGENT_"):

@@ -37,7 +37,7 @@ from pathlib import Path
 def log_skill_trigger(payload: dict) -> None:
     """Log the skill trigger event."""
     project_dir = os.environ.get(
-        "OLLAMA_PROJECT_DIR",
+        "QARIN_PROJECT_DIR",
         str(Path(__file__).resolve().parent.parent.parent),
     )
     log_path = Path(project_dir) / "logs" / "skill_trigger.json"

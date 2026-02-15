@@ -171,7 +171,7 @@ def cmd_rdma_connect(args: argparse.Namespace) -> None:
 
 def cmd_rdma(_args: argparse.Namespace) -> None:
     """RDMA main command handler."""
-    console.print("[bold]Ollama CLI - RDMA Management[/bold]")
+    console.print("[bold]Qarin CLI - RDMA Management[/bold]")
     console.print("")
     console.print("Commands:")
     console.print("  rdma detect   - Detect all RDMA devices")

@@ -1,9 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 # One-line installer for Qarin CLI
-# Usage: curl -fsSL https://raw.githubusercontent.com/muah1987/cli-ollama/main/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/muah1987/qarin-cli/main/install.sh | bash
 
-REPO_URL="https://github.com/muah1987/cli-ollama.git"
+REPO_URL="https://github.com/muah1987/qarin-cli.git"
 INSTALL_DIR="${HOME}/.qarin-cli"
 OLLAMA_VERSION="0.5.7"
 
@@ -125,5 +125,5 @@ echo "Start Ollama server (if not already running):"
 echo "  ollama serve"
 echo ""
 echo "Then start chatting:"
-echo "  cli-ollama"
+echo "  qarin-cli"
 echo ""

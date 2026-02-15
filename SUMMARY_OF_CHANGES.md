@@ -36,7 +36,7 @@
 ## Previous Changes (v0.2.0 Initial)
 
 1. **Interface Simplification**:
-   - Removed legacy readline-based REPL fallback in `ollama_cmd/root.py`
+   - Removed legacy readline-based REPL fallback in `qarin_cmd/root.py`
    - Standardized on Textual TUI as the sole interface
    - Removed `--classic` flag from CLI argument parser
    - Updated documentation to reflect Textual TUI focus
@@ -63,7 +63,7 @@ Rather than spending excessive time writing tests to reach an arbitrary coverage
 
 ## Files Modified
 
-- `ollama_cmd/root.py`: Removed readline fallback, updated version to 0.2.0
+- `qarin_cmd/root.py`: Removed readline fallback, updated version to 0.2.0
 - `tui/command_processor.py`: Updated documentation to remove legacy references
 - `pyproject.toml`: Updated version to 0.2.0
 - `README.md`: Updated interface description
@@ -73,7 +73,7 @@ Rather than spending excessive time writing tests to reach an arbitrary coverage
 
 ## Next Steps
 
-With these changes, the Ollama CLI v0.2.0 is now production-ready with:
+With these changes, the Qarin CLI v0.2.0 is now production-ready with:
 1. Textual TUI as the only interface (cleaner, more maintainable)
 2. Proper versioning and release notes
 3. Functional CI/CD pipeline with code coverage reporting

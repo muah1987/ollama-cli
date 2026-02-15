@@ -10,7 +10,7 @@ GOTCHA Layer: Context + Args
 ATLAS Phase: Architect
 
 Reads session_id, model, and source from stdin JSON.
-Loads OLLAMA.md for project context, detects available providers,
+Loads QARIN.md for project context, detects available providers,
 and prints a session banner.
 """
 
@@ -45,7 +45,7 @@ def detect_providers() -> dict[str, bool]:
     """Detect which AI providers are available."""
     # Load environment
     project_dir = os.environ.get(
-        "OLLAMA_PROJECT_DIR",
+        "QARIN_PROJECT_DIR",
         str(Path(__file__).resolve().parent.parent.parent),
     )
     env_path = Path(project_dir) / ".env"
@@ -69,12 +69,12 @@ def detect_providers() -> dict[str, bool]:
 
 
 def load_project_context() -> str | None:
-    """Load OLLAMA.md if it exists in the project root."""
+    """Load QARIN.md if it exists in the project root."""
     project_dir = os.environ.get(
-        "OLLAMA_PROJECT_DIR",
+        "QARIN_PROJECT_DIR",
         str(Path(__file__).resolve().parent.parent.parent),
     )
-    ollama_md = Path(project_dir) / "OLLAMA.md"
+    ollama_md = Path(project_dir) / "QARIN.md"
     if ollama_md.exists():
         try:
             return ollama_md.read_text(encoding="utf-8")
@@ -91,7 +91,7 @@ def load_project_context() -> str | None:
 def log_session_start(payload: dict, providers: dict[str, bool], context_loaded: bool) -> None:
     """Log session start event."""
     project_dir = os.environ.get(
-        "OLLAMA_PROJECT_DIR",
+        "QARIN_PROJECT_DIR",
         str(Path(__file__).resolve().parent.parent.parent),
     )
     log_path = Path(project_dir) / "logs" / "session_start.json"
@@ -139,7 +139,7 @@ def print_banner(payload: dict, providers: dict[str, bool], context_loaded: bool
     if unavailable:
         lines.append(f"  Inactive:  {', '.join(unavailable)}")
     if context_loaded:
-        lines.append("  Project:   OLLAMA.md loaded")
+        lines.append("  Project:   QARIN.md loaded")
     lines.append("=" * 60)
     lines.append("")
 

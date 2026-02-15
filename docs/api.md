@@ -1,6 +1,6 @@
 # API Reference
 
-Ollama CLI provides a REST API compatible with Ollama's OpenAI-compatible API.
+Qarin CLI provides a REST API compatible with Ollama's OpenAI-compatible API.
 
 ---
 

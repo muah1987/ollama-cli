@@ -1,6 +1,6 @@
-# cli-ollama Unit Tests
+# qarin-cli Unit Tests
 
-This directory contains comprehensive unit tests for the cli-ollama application.
+This directory contains comprehensive unit tests for the qarin-cli application.
 
 ## Test Coverage
 

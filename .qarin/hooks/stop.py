@@ -71,7 +71,7 @@ def perform_cleanup() -> list[str]:
     actions: list[str] = []
 
     project_dir = os.environ.get(
-        "OLLAMA_PROJECT_DIR",
+        "QARIN_PROJECT_DIR",
         str(Path(__file__).resolve().parent.parent.parent),
     )
 
@@ -100,7 +100,7 @@ def perform_cleanup() -> list[str]:
 def log_stop(payload: dict, summary: dict, cleanup_actions: list[str]) -> None:
     """Log the stop event."""
     project_dir = os.environ.get(
-        "OLLAMA_PROJECT_DIR",
+        "QARIN_PROJECT_DIR",
         str(Path(__file__).resolve().parent.parent.parent),
     )
     log_path = Path(project_dir) / "logs" / "stop.json"

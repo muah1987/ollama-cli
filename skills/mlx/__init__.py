@@ -1,6 +1,6 @@
 """MLX (Metal Performance Shaders) integration for Apple Silicon acceleration.
 
-This module provides Apple Metal GPU acceleration for Ollama CLI operations
+This module provides Apple Metal GPU acceleration for Qarin CLI operations
 on macOS with Apple Silicon chips.
 """
 

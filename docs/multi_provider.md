@@ -37,13 +37,13 @@ export HF_TOKEN="your-huggingface-token"
 ### 2. Set Default Provider
 
 ```bash
-export OLLAMA_CLI_PROVIDER=claude
+export QARIN_CLI_PROVIDER=claude
 ```
 
 ### 3. Verify Provider Health
 
 ```bash
-cli-ollama serve
+qarin-cli serve
 ```
 
 ---
@@ -54,23 +54,23 @@ cli-ollama serve
 
 ```bash
 # Use Claude
-cli-ollama --provider claude run "Explain this"
+qarin-cli --provider claude run "Explain this"
 
 # Use Gemini
-cli-ollama --provider gemini run "Summarize this"
+qarin-cli --provider gemini run "Summarize this"
 
 # Use Codex
-cli-ollama --provider codex run "Refactor this"
+qarin-cli --provider codex run "Refactor this"
 
 # Use Hugging Face
-cli-ollama --provider hf run "Answer this question"
+qarin-cli --provider hf run "Answer this question"
 ```
 
 ### Switching Models
 
 ```bash
 # Use a specific model with a provider
-cli-ollama --provider claude --model claude-sonnet-4 run "Hello"
+qarin-cli --provider claude --model claude-sonnet-4 run "Hello"
 ```
 
 ---
@@ -157,7 +157,7 @@ ANTHROPIC_API_KEY=sk-ant-...
 GEMINI_API_KEY=AI...
 OPENAI_API_KEY=sk-...
 HF_TOKEN=your-huggingface-token
-OLLAMA_CLI_PROVIDER=ollama
+QARIN_CLI_PROVIDER=ollama
 ```
 
 ### Best Practice: Don't Commit API Keys
@@ -266,5 +266,5 @@ curl -X GET https://api.anthropic.com/v1/models
 
 ```bash
 # Check available models for the provider
-cli-ollama --provider ollama list
+qarin-cli --provider ollama list
 ```

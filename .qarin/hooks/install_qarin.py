@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
 Auto-install Ollama if not present.
-Hook: install_ollama.py
+Hook: install_qarin.py
 
 This hook runs before the CLI starts and checks if Ollama is installed.
 If not, it prompts the user or automatically installs Ollama.
 
-Usage: uv run install_ollama.py [--prompt]
+Usage: uv run install_qarin.py [--prompt]
 
 Options:
   --prompt  Prompt user before installing (default: auto-install)

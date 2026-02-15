@@ -46,10 +46,10 @@ exo = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/muah1987/cli-ollama"
-Repository = "https://github.com/muah1987/cli-ollama"
-Issues = "https://github.com/muah1987/cli-ollama/issues"
-Documentation = "https://github.com/muah1987/cli-ollama/tree/main/docs"
+Homepage = "https://github.com/muah1987/qarin-cli"
+Repository = "https://github.com/muah1987/qarin-cli"
+Issues = "https://github.com/muah1987/qarin-cli/issues"
+Documentation = "https://github.com/muah1987/qarin-cli/tree/main/docs"
 
 [project.scripts]
 qarin = "qarin_cmd.root:main"

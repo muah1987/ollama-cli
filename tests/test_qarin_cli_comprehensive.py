@@ -1,5 +1,5 @@
 """
-Comprehensive tests for Ollama CLI components.
+Comprehensive tests for Qarin CLI components.
 """
 
 import tempfile

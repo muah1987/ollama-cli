@@ -1,6 +1,6 @@
 """RDMA (Remote Direct Memory Access) skill for high-performance networking.
 
-This module provides RDMA-based networking acceleration for Ollama CLI operations,
+This module provides RDMA-based networking acceleration for Qarin CLI operations,
 enabling low-latency, high-throughput communication between nodes.
 """
 

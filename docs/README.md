@@ -1,11 +1,11 @@
-# Ollama CLI
+# Qarin CLI
 
 **A full-featured AI coding assistant powered by Ollama with multi-provider support.**
 
-[![PyPI version](https://badge.fury.io/py/cli-ollama.svg)](https://badge.fury.io/py/cli-ollama)
+[![PyPI version](https://badge.fury.io/py/qarin-cli.svg)](https://badge.fury.io/py/qarin-cli)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Ollama CLI is a local-first AI coding assistant that runs on your machine with Ollama, with optional cloud provider support for Claude, Gemini, Codex, and Hugging Face.
+Qarin CLI is a local-first AI coding assistant that runs on your machine with Ollama, with optional cloud provider support for Claude, Gemini, Codex, and Hugging Face.
 
 ---
 
@@ -22,12 +22,12 @@ Ollama CLI is a local-first AI coding assistant that runs on your machine with O
 ### One-Line Install (Recommended)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/muah1987/cli-ollama/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/muah1987/qarin-cli/main/install.sh | bash
 ```
 
 This script will:
 1. Install `uv` if not present
-2. Clone or update cli-ollama from GitHub
+2. Clone or update qarin-cli from GitHub
 3. Install Python dependencies
 4. Detect Ollama and install it if missing
 
@@ -35,8 +35,8 @@ This script will:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/muah1987/cli-ollama.git
-cd cli-ollama
+git clone https://github.com/muah1987/qarin-cli.git
+cd qarin-cli
 
 # 2. Install dependencies with uv
 uv sync
@@ -54,25 +54,25 @@ cp .env.sample .env
 
 ```bash
 # Start an interactive chat session
-cli-ollama interactive
+qarin-cli interactive
 
 # Run a one-shot prompt
-cli-ollama run "explain this code"
+qarin-cli run "explain this code"
 
 # List available local models
-cli-ollama list
+qarin-cli list
 
 # Pull a model from registry
-cli-ollama pull llama3.2
+qarin-cli pull llama3.2
 
 # Use a specific model
-cli-ollama --model codellama run "write a fibonacci function"
+qarin-cli --model codellama run "write a fibonacci function"
 
 # Use a cloud provider
-cli-ollama --provider claude run "review this architecture"
+qarin-cli --provider claude run "review this architecture"
 
 # Show version
-cli-ollama version
+qarin-cli version
 ```
 
 ---
@@ -101,7 +101,7 @@ For detailed documentation on all features, configuration, and advanced usage, s
 ## Getting Help
 
 - Check the [Documentation Index](README.md)
-- File an issue on [GitHub](https://github.com/muah1987/cli-ollama/issues)
+- File an issue on [GitHub](https://github.com/muah1987/qarin-cli/issues)
 - Visit the [Ollama documentation](https://ollama.ai/docs)
 
 ---

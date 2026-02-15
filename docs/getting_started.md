@@ -1,12 +1,12 @@
-# Getting Started with Ollama CLI
+# Getting Started with Qarin CLI
 
-A complete guide to get up and running with Ollama CLI.
+A complete guide to get up and running with Qarin CLI.
 
 ---
 
 ## Prerequisites
 
-- **Python 3.11+** - Required for Ollama CLI
+- **Python 3.11+** - Required for Qarin CLI
 - **Ollama** - The local LLM server (automatic installation included)
 
 ---
@@ -18,27 +18,27 @@ A complete guide to get up and running with Ollama CLI.
 This script automatically installs Ollama if missing:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/muah1987/cli-ollama/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/muah1987/qarin-cli/main/install.sh | bash
 ```
 
 ### Option 2: PyPI Installation
 
 ```bash
 # Install from PyPI
-pip install cli-ollama
+pip install qarin-cli
 
 # Or with pipx for isolated installation
-pipx install cli-ollama
+pipx install qarin-cli
 ```
 
-This installs the `cli-ollama` command globally.
+This installs the `qarin-cli` command globally.
 
 ### Option 3: Manual Installation from Source
 
 ```bash
 # Clone the repository
-git clone https://github.com/muah1987/cli-ollama.git
-cd cli-ollama
+git clone https://github.com/muah1987/qarin-cli.git
+cd qarin-cli
 
 # Install with uv (recommended)
 uv sync
@@ -62,21 +62,21 @@ ollama serve
 ### 2. List Available Models
 
 ```bash
-cli-ollama list
+qarin-cli list
 ```
 
 ### 3. Start an Interactive Session
 
 ```bash
-cli-ollama interactive
+qarin-cli interactive
 # or
-cli-ollama i
+qarin-cli i
 ```
 
 ### 4. Run a One-Shot Prompt
 
 ```bash
-cli-ollama run "Explain quantum computing in simple terms"
+qarin-cli run "Explain quantum computing in simple terms"
 ```
 
 ---
@@ -86,14 +86,14 @@ cli-ollama run "Explain quantum computing in simple terms"
 ### 1. Check Installation
 
 ```bash
-cli-ollama version
-# Should output: cli-ollama v0.1.0
+qarin-cli version
+# Should output: qarin-cli v0.1.0
 ```
 
 ### 2. Verify Ollama Server
 
 ```bash
-cli-ollama serve
+qarin-cli serve
 # Should show: Ollama is running at http://localhost:11434
 ```
 
@@ -116,11 +116,11 @@ ollama pull llama3.2
 
 | Command | Description |
 |---------|-------------|
-| `cli-ollama interactive` | Start interactive chat session |
-| `cli-ollama run "prompt"` | Run a one-shot prompt |
-| `cli-ollama list` | List available models |
-| `cli-ollama serve` | Check Ollama server status |
-| `cli-ollama version` | Show CLI version |
+| `qarin-cli interactive` | Start interactive chat session |
+| `qarin-cli run "prompt"` | Run a one-shot prompt |
+| `qarin-cli list` | List available models |
+| `qarin-cli serve` | Check Ollama server status |
+| `qarin-cli version` | Show CLI version |
 
 ---
 
@@ -128,7 +128,7 @@ ollama pull llama3.2
 
 ```bash
 # Use a specific model for one command
-cli-ollama --model codellama run "Write a Python function"
+qarin-cli --model codellama run "Write a Python function"
 
 # Pull a model from registry
 ollama pull llama3.2
@@ -187,5 +187,5 @@ ollama list
 ## Getting Help
 
 - Check the [Documentation Index](README.md)
-- File an issue on [GitHub](https://github.com/muah1987/cli-ollama/issues)
+- File an issue on [GitHub](https://github.com/muah1987/qarin-cli/issues)
 - Visit the [Ollama documentation](https://ollama.ai/docs)
