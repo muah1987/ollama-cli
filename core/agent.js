@@ -15,6 +15,7 @@ import { executeTool } from "./tools.js";
 import { IntentClassifier } from "./intent.js";
 import { TokenCounter } from "./tokens.js";
 import { HookRunner } from "./hooks.js";
+import { ChainController } from "./chain.js";
 /** Generate a UUID-like session ID */
 function generateSessionId() {
     return crypto.randomUUID();
@@ -405,6 +406,78 @@ export class QarinAgent extends EventEmitter {
     /** Get the tool definitions for API calls */
     getToolDefinitions() {
         return BUILT_IN_TOOLS;
+    }
+    /**
+     * Execute a request using the chained sub-agent orchestration.
+     *
+     * Runs Wave 0 (Ingest) then Waves 1-4 with parallel fan-out,
+     * merging outputs into SharedState between each wave.
+     *
+     * @param chainConfig - Optional per-wave agent configs
+     * @returns The chain result with final answer and audit trail
+     */
+    async executeWithChain(userInput, chainConfig) {
+        if (!this.running) {
+            await this.start();
+        }
+        this._messageCount++;
+        // Classify intent
+        const intent = this.intentClassifier.classify(userInput);
+        this.emit("intent", intent);
+        // Fire UserPromptSubmit hook
+        if (this.hookRunner.isEnabled()) {
+            await this.hookRunner.runHook("UserPromptSubmit", {
+                session_id: this.sessionId,
+                message: userInput,
+                intent,
+            });
+        }
+        const chain = new ChainController({
+            orchestrator: this.orchestrator,
+            context: this.context,
+            provider: this.provider,
+            waves: chainConfig?.waves,
+            agentConfigs: chainConfig?.agentConfigs,
+        });
+        // Forward chain events to agent listeners
+        chain.on("progress", (data) => this.emit("progress", data));
+        chain.on("wave:start", (data) => {
+            this.emit("chain:wave", { ...data, status: "started" });
+            if (this.hookRunner.isEnabled()) {
+                this.hookRunner.runHook("SubagentStart", {
+                    session_id: this.sessionId,
+                    wave: data.wave,
+                    name: data.name,
+                    agents: data.agents,
+                }).catch(() => { });
+            }
+        });
+        chain.on("wave:complete", (data) => {
+            this.emit("chain:wave", { ...data, status: "completed" });
+            if (this.hookRunner.isEnabled()) {
+                this.hookRunner.runHook("SubagentStop", {
+                    session_id: this.sessionId,
+                    wave: data.wave,
+                    name: data.name,
+                }).catch(() => { });
+            }
+        });
+        chain.on("merge:complete", (data) => this.emit("chain:merge", data));
+        chain.on("contract:violation", (data) => this.emit("chain:contract", data));
+        const result = await chain.run(userInput);
+        // Emit the final answer as stream for UI display
+        if (result.finalAnswer) {
+            this.emit("stream", result.finalAnswer);
+        }
+        // Store in context
+        this.context.addMessage("user", userInput);
+        this.context.addMessage("assistant", result.finalAnswer);
+        this.emit("progress", {
+            phase: OperationPhase.COMPLETE,
+            details: `Chain complete ${this.tokenCounter.formatDisplay()}`,
+        });
+        this.emit("success", { message: "Chain orchestration complete" });
+        return result;
     }
     /** Build the default system prompt */
     buildDefaultSystemPrompt() {

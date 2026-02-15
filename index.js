@@ -17,6 +17,7 @@ program
     .option("--resume", "Resume the latest session")
     .option("--system-prompt <prompt>", "Custom system prompt")
     .option("--output-format <format>", "Output format: text, json, markdown", "text")
+    .option("--chain", "Use chained sub-agent orchestration (multi-wave fan-out)")
     .action(async (task, opts) => {
     const options = {
         model: opts.model,
@@ -26,6 +27,7 @@ program
         resume: opts.resume,
         systemPrompt: opts.systemPrompt,
         outputFormat: opts.outputFormat,
+        chain: opts.chain,
     };
     // --print mode: non-interactive, stream to stdout, exit on completion
     if (opts.print && task) {
@@ -43,7 +45,9 @@ program
             }
         });
         try {
-            const response = await agent.executeWithTools(task);
+            const response = opts.chain
+                ? (await agent.executeWithChain(task)).finalAnswer
+                : await agent.executeWithTools(task);
             if (opts.outputFormat === "json") {
                 const status = agent.getStatus();
                 process.stdout.write("\n" + JSON.stringify({

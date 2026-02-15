@@ -55,7 +55,12 @@ export function useAgent(options) {
         setStreamOutput("");
         setError(null);
         try {
-            await agent.executeWithTools(message);
+            if (options.chain) {
+                await agent.executeWithChain(message);
+            }
+            else {
+                await agent.executeWithTools(message);
+            }
             setStatus(agent.getStatus());
             setTokenDisplay(agent.getTokenCounter().formatDisplay());
         }
