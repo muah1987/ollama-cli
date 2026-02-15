@@ -65,7 +65,7 @@ def handle_status(args: argparse.Namespace) -> None:
             pass  # Running-model info is optional — degrade gracefully
 
     # Gather session info
-    sessions_dir = Path(".ollama/sessions")
+    sessions_dir = Path(".qarin/sessions")
     session_count = len(list(sessions_dir.glob("*.json"))) if sessions_dir.is_dir() else 0
 
     status_data = {

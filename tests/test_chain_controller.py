@@ -204,6 +204,6 @@ class TestChainCommand:
         assert result.stdout.strip() == "True"
 
     def test_chain_config_file_exists(self) -> None:
-        """.ollama/chain.json should exist."""
-        path = Path(__file__).parent.parent / ".ollama" / "chain.json"
+        """.qarin/chain.json should exist."""
+        path = Path(__file__).parent.parent / ".qarin" / "chain.json"
         assert path.is_file()

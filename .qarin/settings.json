@@ -13,7 +13,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.local/bin/uv run $OLLAMA_PROJECT_DIR/.ollama/hooks/setup.py"
+            "command": "$HOME/.local/bin/uv run $QARIN_PROJECT_DIR/.qarin/hooks/setup.py"
           }
         ]
       }
@@ -24,7 +24,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.local/bin/uv run $OLLAMA_PROJECT_DIR/.ollama/hooks/session_start.py"
+            "command": "$HOME/.local/bin/uv run $QARIN_PROJECT_DIR/.qarin/hooks/session_start.py"
           }
         ]
       }
@@ -35,7 +35,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.local/bin/uv run $OLLAMA_PROJECT_DIR/.ollama/hooks/session_end.py"
+            "command": "$HOME/.local/bin/uv run $QARIN_PROJECT_DIR/.qarin/hooks/session_end.py"
           }
         ]
       }
@@ -46,7 +46,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.local/bin/uv run $OLLAMA_PROJECT_DIR/.ollama/hooks/user_prompt_submit.py"
+            "command": "$HOME/.local/bin/uv run $QARIN_PROJECT_DIR/.qarin/hooks/user_prompt_submit.py"
           }
         ]
       }
@@ -57,7 +57,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.local/bin/uv run $OLLAMA_PROJECT_DIR/.ollama/hooks/pre_tool_use.py"
+            "command": "$HOME/.local/bin/uv run $QARIN_PROJECT_DIR/.qarin/hooks/pre_tool_use.py"
           }
         ]
       }
@@ -68,7 +68,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.local/bin/uv run $OLLAMA_PROJECT_DIR/.ollama/hooks/post_tool_use.py"
+            "command": "$HOME/.local/bin/uv run $QARIN_PROJECT_DIR/.qarin/hooks/post_tool_use.py"
           }
         ]
       }
@@ -79,7 +79,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.local/bin/uv run $OLLAMA_PROJECT_DIR/.ollama/hooks/post_tool_use_failure.py"
+            "command": "$HOME/.local/bin/uv run $QARIN_PROJECT_DIR/.qarin/hooks/post_tool_use_failure.py"
           }
         ]
       }
@@ -90,7 +90,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.local/bin/uv run $OLLAMA_PROJECT_DIR/.ollama/hooks/skill_trigger.py"
+            "command": "$HOME/.local/bin/uv run $QARIN_PROJECT_DIR/.qarin/hooks/skill_trigger.py"
           }
         ]
       }
@@ -101,7 +101,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.local/bin/uv run $OLLAMA_PROJECT_DIR/.ollama/hooks/permission_request.py"
+            "command": "$HOME/.local/bin/uv run $QARIN_PROJECT_DIR/.qarin/hooks/permission_request.py"
           }
         ]
       }
@@ -112,7 +112,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.local/bin/uv run $OLLAMA_PROJECT_DIR/.ollama/hooks/pre_compact.py"
+            "command": "$HOME/.local/bin/uv run $QARIN_PROJECT_DIR/.qarin/hooks/pre_compact.py"
           }
         ]
       }
@@ -123,7 +123,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.local/bin/uv run $OLLAMA_PROJECT_DIR/.ollama/hooks/stop.py"
+            "command": "$HOME/.local/bin/uv run $QARIN_PROJECT_DIR/.qarin/hooks/stop.py"
           }
         ]
       }
@@ -134,7 +134,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.local/bin/uv run $OLLAMA_PROJECT_DIR/.ollama/hooks/subagent_start.py"
+            "command": "$HOME/.local/bin/uv run $QARIN_PROJECT_DIR/.qarin/hooks/subagent_start.py"
           }
         ]
       }
@@ -145,7 +145,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.local/bin/uv run $OLLAMA_PROJECT_DIR/.ollama/hooks/subagent_stop.py"
+            "command": "$HOME/.local/bin/uv run $QARIN_PROJECT_DIR/.qarin/hooks/subagent_stop.py"
           }
         ]
       }
@@ -156,7 +156,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.local/bin/uv run $OLLAMA_PROJECT_DIR/.ollama/hooks/notification.py"
+            "command": "$HOME/.local/bin/uv run $QARIN_PROJECT_DIR/.qarin/hooks/notification.py"
           }
         ]
       }

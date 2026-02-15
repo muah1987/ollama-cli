@@ -5,7 +5,7 @@
 # ///
 
 """
-Status Line: Token Counter - Token usage display for Ollama CLI.
+Status Line: Token Counter - Token usage display for Qarin CLI.
 
 GOTCHA/ATLAS: Execution Layer status line.
 Displays model name, token counts, generation speed, and a color-coded

@@ -1,4 +1,4 @@
-# Ollama CLI — Improvement Plan
+# Qarin CLI — Improvement Plan
 
 > Generated: 2024-02-13 | Updated: 2026-02-14 | Based on project analysis and existing TODO/ROADMAP
 
@@ -6,7 +6,7 @@
 
 ## Executive Summary
 
-Ollama CLI is a mature v0.2.0 production-ready project with:
+Qarin CLI is a mature v0.2.0 production-ready project with:
 - ✅ Multi-provider support (Ollama, Claude, Gemini, Codex, HF)
 - ✅ 13 lifecycle hooks with skill→hook→.py pipeline
 - ✅ MCP integration, chain orchestration, session persistence
@@ -243,7 +243,7 @@ This plan outlines improvements across **6 priority tiers**.
 
 1. **~~Add coverage badge to README~~** ✅ Done
    ```markdown
-   [![codecov](https://codecov.io/gh/muah1987/cli-ollama/branch/main/graph/badge.svg)](https://codecov.io/gh/muah1987/cli-ollama)
+   [![codecov](https://codecov.io/gh/muah1987/qarin-cli/branch/main/graph/badge.svg)](https://codecov.io/gh/muah1987/qarin-cli)
    ```
 
 2. **~~Add pre-commit config~~** ✅ Done (`.pre-commit-config.yaml` with ruff, black, mypy, bandit)

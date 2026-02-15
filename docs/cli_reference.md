@@ -1,6 +1,6 @@
 # CLI Reference
 
-All available commands in Ollama CLI.
+All available commands in Qarin CLI.
 
 ---
 
@@ -8,11 +8,11 @@ All available commands in Ollama CLI.
 
 | Command | Description | Example |
 |---------|-------------|---------|
-| `interactive` | Start interactive chat session | `cli-ollama interactive` |
-| `run` | Run a one-shot prompt | `cli-ollama run "Hello!"` |
-| `list` | List available local models | `cli-ollama list` |
-| `serve` | Check Ollama server status | `cli-ollama serve` |
-| `version` | Show CLI version | `cli-ollama version` |
+| `interactive` | Start interactive chat session | `qarin-cli interactive` |
+| `run` | Run a one-shot prompt | `qarin-cli run "Hello!"` |
+| `list` | List available local models | `qarin-cli list` |
+| `serve` | Check Ollama server status | `qarin-cli serve` |
+| `version` | Show CLI version | `qarin-cli version` |
 
 ---
 
@@ -20,10 +20,10 @@ All available commands in Ollama CLI.
 
 | Command | Description | Example |
 |---------|-------------|---------|
-| `install` | Install Ollama automatically | `cli-ollama install` |
-| `check` | Check Ollama installation | `cli-ollama check` |
-| `rdma` | RDMA device management | `cli-ollama rdma detect` |
-| `accelerate` | Hardware acceleration | `cli-ollama accelerate check` |
+| `install` | Install Ollama automatically | `qarin-cli install` |
+| `check` | Check Ollama installation | `qarin-cli check` |
+| `rdma` | RDMA device management | `qarin-cli rdma detect` |
+| `accelerate` | Hardware acceleration | `qarin-cli accelerate check` |
 
 ---
 ## Agent Commands
@@ -43,13 +43,13 @@ Examples:
 
 Setting agent models for subsequent sessions:
 ```bash
-export OLLAMA_CLI_AGENT_CODE_PROVIDER=hf
-export OLLAMA_CLI_AGENT_CODE_MODEL=mistralai/Mistral-7B-Instruct-v0.3
-export OLLAMA_CLI_AGENT_RESEARCH_PROVIDER=claude
-export OLLAMA_CLI_AGENT_RESEARCH_MODEL=claude-sonnet-4-20250514
+export QARIN_CLI_AGENT_CODE_PROVIDER=hf
+export QARIN_CLI_AGENT_CODE_MODEL=mistralai/Mistral-7B-Instruct-v0.3
+export QARIN_CLI_AGENT_RESEARCH_PROVIDER=claude
+export QARIN_CLI_AGENT_RESEARCH_MODEL=claude-sonnet-4-20250514
 ```
 
-Or in `.ollama/settings.json`:
+Or in `.qarin/settings.json`:
 ```json
 {
   "agent_models": {
@@ -211,35 +211,35 @@ Type `/` in the REPL to see the full command menu. Key commands:
 
 ### Chat with a specific model
 ```bash
-cli-ollama --model codellama interactive
+qarin-cli --model codellama interactive
 ```
 
 ### Run with cloud provider
 ```bash
-cli-ollama --provider claude run "Review my code"
+qarin-cli --provider claude run "Review my code"
 ```
 
 ### Use a custom API host
 ```bash
-cli-ollama --api http://myserver:11434 --model llama3.2 interactive
+qarin-cli --api http://myserver:11434 --model llama3.2 interactive
 ```
 
 ### Combine model, provider, and API
 ```bash
-cli-ollama --model glm-5:cloud --provider hf --api http://remote:8080 interactive
+qarin-cli --model glm-5:cloud --provider hf --api http://remote:8080 interactive
 ```
 
 ### JSON output
 ```bash
-cli-ollama --provider gemini list --json
+qarin-cli --provider gemini list --json
 ```
 
 ### Check RDMA
 ```bash
-cli-ollama rdma detect
+qarin-cli rdma detect
 ```
 
 ### Enable MLX acceleration
 ```bash
-cli-ollama accelerate enable mlx
+qarin-cli accelerate enable mlx
 ```

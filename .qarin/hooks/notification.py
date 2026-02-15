@@ -82,7 +82,7 @@ def handle_notification(payload: dict) -> dict:
 def log_notification(payload: dict, processed: dict) -> None:
     """Log the notification event."""
     project_dir = os.environ.get(
-        "OLLAMA_PROJECT_DIR",
+        "QARIN_PROJECT_DIR",
         str(Path(__file__).resolve().parent.parent.parent),
     )
     log_path = Path(project_dir) / "logs" / "notification.json"

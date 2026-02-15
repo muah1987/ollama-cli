@@ -2,11 +2,11 @@
 
 ## Project Structure
 
-Ollama CLI follows the directory structure of the [official Ollama project](https://github.com/ollama/ollama):
+Qarin CLI follows the directory structure of the [official Ollama project](https://github.com/ollama/ollama):
 
 ```
-cli-ollama/
-├── ollama_cmd/       # CLI entry points per command
+qarin-cli/
+├── qarin_cmd/       # CLI entry points per command
 │   ├── root.py       # Main entry point and argument parser
 │   ├── run.py        # Run model interactively
 │   ├── create.py     # Create from Modelfile
@@ -55,7 +55,7 @@ cli-ollama/
 │   └── rdma/                # RDMA networking skill
 ├── docs/             # Documentation
 ├── tests/            # Test files
-├── .ollama/          # Hooks, settings, MCP config, chain config
+├── .qarin/          # Hooks, settings, MCP config, chain config
 │   ├── hooks/        # 14 lifecycle hook scripts
 │   ├── status_lines/ # Status line scripts + utilities
 │   ├── settings.json # Hook config + agent_models + TUI settings
@@ -71,7 +71,7 @@ cli-ollama/
 
 ### Command Pattern
 
-Each command in `ollama_cmd/` follows this pattern:
+Each command in `qarin_cmd/` follows this pattern:
 
 1. Import necessary modules
 2. Define a function with signature `(args: argparse.Namespace) -> None`
@@ -79,7 +79,7 @@ Each command in `ollama_cmd/` follows this pattern:
 
 ### Example
 
-Create `ollama_cmd/mycommand.py`:
+Create `qarin_cmd/mycommand.py`:
 
 ```python
 #!/usr/bin/env python
@@ -97,7 +97,7 @@ def cmd_mycommand(args: argparse.Namespace) -> None:
     console.print("Running my command!")
 ```
 
-Add to `ollama_cmd/root.py`:
+Add to `qarin_cmd/root.py`:
 
 ```python
 def build_parser() -> argparse.ArgumentParser:
@@ -115,7 +115,7 @@ COMMAND_MAP = {
 
 ## Hook System
 
-Ollama CLI provides 14 lifecycle hooks that execute at specific points:
+Qarin CLI provides 14 lifecycle hooks that execute at specific points:
 
 ### Available Hooks
 
@@ -138,7 +138,7 @@ Ollama CLI provides 14 lifecycle hooks that execute at specific points:
 
 ### Configuration
 
-Hooks are configured in `.ollama/settings.json`:
+Hooks are configured in `.qarin/settings.json`:
 
 ```json
 {
@@ -149,7 +149,7 @@ Hooks are configured in `.ollama/settings.json`:
         "hooks": [
           {
             "type": "command",
-            "command": "python .ollama/hooks/session_start.py"
+            "command": "python .qarin/hooks/session_start.py"
           }
         ]
       }
@@ -187,14 +187,14 @@ Status line scripts provide real-time visibility:
 
 ### Location
 
-Status lines are in `.ollama/status_lines/` and can be customized.
+Status lines are in `.qarin/status_lines/` and can be customized.
 
 ---
 
 ## Got in Touch
 
-- GitHub: [https://github.com/muah1987/cli-ollama](https://github.com/muah1987/cli-ollama)
-- Issues: [https://github.com/muah1987/cli-ollama/issues](https://github.com/muah1987/cli-ollama/issues)
+- GitHub: [https://github.com/muah1987/qarin-cli](https://github.com/muah1987/qarin-cli)
+- Issues: [https://github.com/muah1987/qarin-cli/issues](https://github.com/muah1987/qarin-cli/issues)
 
 ---
 

@@ -29,7 +29,7 @@ from pathlib import Path
 def get_log_dir() -> Path:
     """Return the logs directory, creating it if needed."""
     project_dir = os.environ.get(
-        "OLLAMA_PROJECT_DIR",
+        "QARIN_PROJECT_DIR",
         str(Path(__file__).resolve().parent.parent.parent),
     )
     log_dir = Path(project_dir) / "logs"

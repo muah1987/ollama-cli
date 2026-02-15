@@ -1,8 +1,8 @@
-# Ollama CLI
+# Qarin CLI
 
-[![PyPI version](https://img.shields.io/pypi/v/cli-ollama.svg)](https://pypi.org/project/cli-ollama/)
-[![Build & Test](https://github.com/muah1987/cli-ollama/actions/workflows/build-test.yml/badge.svg)](https://github.com/muah1987/cli-ollama/actions/workflows/build-test.yml)
-[![codecov](https://codecov.io/gh/muah1987/cli-ollama/branch/main/graph/badge.svg)](https://codecov.io/gh/muah1987/cli-ollama)
+[![PyPI version](https://img.shields.io/pypi/v/qarin-cli.svg)](https://pypi.org/project/qarin-cli/)
+[![Build & Test](https://github.com/muah1987/qarin-cli/actions/workflows/build-test.yml/badge.svg)](https://github.com/muah1987/qarin-cli/actions/workflows/build-test.yml)
+[![codecov](https://codecov.io/gh/muah1987/qarin-cli/branch/main/graph/badge.svg)](https://codecov.io/gh/muah1987/qarin-cli)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
@@ -21,43 +21,43 @@ An open-source AI coding assistant with Textual TUI interface that runs in your 
 **Via installer script (recommended):**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/muah1987/cli-ollama/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/muah1987/qarin-cli/main/install.sh | bash
 ```
 
-This installs `cli-ollama` to `~/.local/bin/`, sets up dependencies, and installs Ollama if needed.
+This installs `qarin` to `~/.local/bin/`, sets up dependencies, and installs Ollama if needed.
 
 **Via PyPI:**
 
 ```bash
-pip install cli-ollama
+pip install qarin-cli
 # or
-pipx install cli-ollama
+pipx install qarin-cli
 ```
 
-This installs the `cli-ollama` command globally.
+This installs the `qarin` command globally.
 
 ### Start chatting
 
 ```bash
 # Start interactive session (default)
-cli-ollama
+qarin
 
 # Or with a direct prompt
-cli-ollama "Explain this codebase to me"
+qarin "Explain this codebase to me"
 
 # Non-interactive mode
-cli-ollama -p "Write a Python function that reverses a string"
+qarin -p "Write a Python function that reverses a string"
 
 # Resume last session
-cli-ollama --resume
+qarin --resume
 ```
 
 ### Pipe input
 
 ```bash
-echo "Fix the bug in this code" | cli-ollama
-cat error.log | cli-ollama -p "What went wrong?"
-git diff | cli-ollama -p "Review these changes"
+echo "Fix the bug in this code" | qarin
+cat error.log | qarin -p "What went wrong?"
+git diff | qarin -p "Review these changes"
 ```
 
 ---
@@ -65,7 +65,7 @@ git diff | cli-ollama -p "Review these changes"
 ## Usage
 
 ```
-Usage: cli-ollama [options] [command] [prompt]
+Usage: qarin [options] [command] [prompt]
 
 Options:
   -v, --version                   Show version
@@ -111,7 +111,7 @@ Inside the REPL, use slash commands:
 | `/save [name]` | Save session to file |
 | `/load <name>` | Load session from file |
 | `/history` | Show conversation history |
-| `/memory [note]` | View or add to project memory (OLLAMA.md) |
+| `/memory [note]` | View or add to project memory (QARIN.md) |
 | `/tools` | List available built-in tools |
 | `/tool <name> ...` | Invoke a tool (file_read, shell_exec, grep_search, ...) |
 | `/diff` | Show git diff of working directory |
@@ -143,26 +143,26 @@ Seamlessly switch between providers — your conversation context is preserved:
 
 ```bash
 # Use Ollama (default, local)
-cli-ollama --provider ollama
+qarin --provider ollama
 
 # Use Claude
-cli-ollama --provider claude
+qarin --provider claude
 
 # Use Gemini
-cli-ollama --provider gemini
+qarin --provider gemini
 
 # Use OpenAI Codex
-cli-ollama --provider codex
+qarin --provider codex
 
 # Use Hugging Face
-cli-ollama --provider hf
+qarin --provider hf
 ```
 
 Switch mid-session with `/provider claude` in the REPL.
 
 ### Auto-Compact Context Management
 
-Ollama CLI automatically manages your context window. When token usage exceeds the configured threshold (default 85%), older messages are summarized and compacted to free space while preserving recent context.
+Qarin CLI automatically manages your context window. When token usage exceeds the configured threshold (default 85%), older messages are summarized and compacted to free space while preserving recent context.
 
 ```bash
 # Check context status
@@ -215,12 +215,12 @@ Available tools:
 **Tool permissions:** Use `--allowed-tools` to restrict which tools are available:
 
 ```bash
-cli-ollama --allowed-tools file_read,grep_search
+qarin --allowed-tools file_read,grep_search
 ```
 
-### Project Memory (OLLAMA.md)
+### Project Memory (QARIN.md)
 
-Like Claude's `CLAUDE.md` and Gemini's `GEMINI.md`, cli-ollama reads `OLLAMA.md` from your project root to load persistent context:
+Like Claude's `CLAUDE.md` and Gemini's `GEMINI.md`, qarin reads `QARIN.md` from your project root to load persistent context:
 
 ```bash
 # View project memory
@@ -250,12 +250,12 @@ Generate structured implementation plans and execute them:
 >>> /resume add-user-auth
 ```
 
-### `.ollamaignore`
+### `.qarinignore`
 
-Create a `.ollamaignore` file to prevent tools from accessing sensitive files:
+Create a `.qarinignore` file to prevent tools from accessing sensitive files:
 
 ```
-# .ollamaignore
+# .qarinignore
 .env
 *.key
 secrets/
@@ -282,7 +282,7 @@ secrets/
 | `SubagentStop` | When a subagent finishes |
 | `Notification` | On notable events |
 
-Hooks are configured in `.ollama/settings.json` and run as shell commands via the skill→hook→.py pipeline.
+Hooks are configured in `.qarin/settings.json` and run as shell commands via the skill→hook→.py pipeline.
 
 ### MCP Integration
 
@@ -306,7 +306,7 @@ Connect to MCP (Model Context Protocol) servers for extended capabilities:
 >>> /mcp invoke github list_repos '{"owner": "myorg"}'
 ```
 
-GitHub MCP auto-enables when `GH_TOKEN` is set. Configure in `.ollama/mcp.json`.
+GitHub MCP auto-enables when `GH_TOKEN` is set. Configure in `.qarin/mcp.json`.
 
 ### Chain Orchestration
 
@@ -329,7 +329,7 @@ Run multi-wave subagent pipelines for complex tasks:
   ...
 ```
 
-Configure wave pipeline in `.ollama/chain.json`.
+Configure wave pipeline in `.qarin/chain.json`.
 
 ### Session Persistence
 
@@ -343,7 +343,7 @@ Save and resume conversations across sessions:
 >>> /load my-project
 
 # Or use the CLI flag
-cli-ollama --resume
+qarin --resume
 ```
 
 ### Agent Model Assignment
@@ -383,7 +383,7 @@ See [`.env.sample`](.env.sample) for the full template.
 
 ### Tested Ollama Cloud Models
 
-The following [Ollama Cloud](https://ollama.com) models have been tested and verified to work with cli-ollama. Set `OLLAMA_HOST=https://ollama.com` and provide your `OLLAMA_API_KEY` to use them:
+The following [Ollama Cloud](https://ollama.com) models have been tested and verified to work with qarin. Set `OLLAMA_HOST=https://ollama.com` and provide your `OLLAMA_API_KEY` to use them:
 
 | Model | Tag |
 |-------|-----|
@@ -417,8 +417,8 @@ The following [Ollama Cloud](https://ollama.com) models have been tested and ver
 
 ```bash
 # Clone
-git clone https://github.com/muah1987/cli-ollama.git
-cd cli-ollama
+git clone https://github.com/muah1987/qarin-cli.git
+cd qarin-cli
 
 # Install dependencies
 uv sync --dev
@@ -440,7 +440,7 @@ uv run ruff format .
 
 ## Support
 
-- **GitHub Issues:** [Report bugs or request features](https://github.com/muah1987/cli-ollama/issues)
+- **GitHub Issues:** [Report bugs or request features](https://github.com/muah1987/qarin-cli/issues)
 - **Ollama:** [Official Ollama website](https://ollama.ai)
 
 ## Migration Notice

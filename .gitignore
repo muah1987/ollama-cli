@@ -136,13 +136,13 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-# Ollama CLI specific
+# Qarin CLI specific
 .env
-.ollama/sessions/
-.ollama/memory/
-.ollama/bugs/
-.ollama/tasks/
-.ollama/spec/
+.qarin/sessions/
+.qarin/memory/
+.qarin/bugs/
+.qarin/tasks/
+.qarin/spec/
 logs/
 specs/
 

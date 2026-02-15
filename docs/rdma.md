@@ -19,7 +19,7 @@ Remote Direct Memory Access (RDMA) enables low-latency, high-throughput network 
 
 ## Supported Transport Protocols
 
-Ollama CLI supports multiple RDMA transport protocols:
+Qarin CLI supports multiple RDMA transport protocols:
 
 | Transport | Description | Speed | Use Case |
 |-----------|-------------|-------|----------|
@@ -66,7 +66,7 @@ sudo yum install rdma-core
 ### Detect RDMA Devices
 
 ```bash
-cli-ollama rdma detect
+qarin-cli rdma detect
 ```
 
 Expected output:
@@ -85,31 +85,31 @@ Found RDMA devices:
 ### 1. Detect RDMA Devices
 
 ```bash
-cli-ollama rdma detect
+qarin-cli rdma detect
 ```
 
 ### 2. Check RDMA Status
 
 ```bash
-cli-ollama rdma status
+qarin-cli rdma status
 ```
 
 ### 3. Connect to RDMA Device
 
 ```bash
-cli-ollama rdma connect mlx5_0
+qarin-cli rdma connect mlx5_0
 ```
 
 ### 4. Check Acceleration Status
 
 ```bash
-cli-ollama accelerate check
+qarin-cli accelerate check
 ```
 
 ### 5. Enable RDMA Acceleration
 
 ```bash
-cli-ollama accelerate enable rdma
+qarin-cli accelerate enable rdma
 ```
 
 ---
@@ -127,7 +127,7 @@ cli-ollama accelerate enable rdma
 
 ### Configuration Files
 
-Create `~/.ollama/rdma/config.json`:
+Create `~/.qarin/rdma/config.json`:
 
 ```json
 {
@@ -179,24 +179,24 @@ rdma qp add mlx5_0 qp-type rc
 
 ```bash
 # On leader node
-cli-ollama exo discover
+qarin-cli exo discover
 ```
 
 ### 2. Configure Cluster
 
 ```bash
 # Leader node
-cli-ollama exo configure --leader
+qarin-cli exo configure --leader
 
 # Worker nodes
-cli-ollama exo configure --worker --leader <leader-ip>
+qarin-cli exo configure --worker --leader <leader-ip>
 ```
 
 ### 3. Connect Cluster via RDMA
 
 ```bash
 # Enable cluster RDMA
-cli-ollama rdma connect --cluster
+qarin-cli rdma connect --cluster
 ```
 
 ---

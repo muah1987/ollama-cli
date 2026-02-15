@@ -29,7 +29,7 @@ from pathlib import Path
 def save_context_snapshot(payload: dict) -> str | None:
     """Save a context snapshot before compaction. Returns the snapshot path."""
     project_dir = os.environ.get(
-        "OLLAMA_PROJECT_DIR",
+        "QARIN_PROJECT_DIR",
         str(Path(__file__).resolve().parent.parent.parent),
     )
     snapshots_dir = Path(project_dir) / "logs" / "context_snapshots"
@@ -90,7 +90,7 @@ def determine_trigger_reason(payload: dict) -> str:
 def log_pre_compact(payload: dict, trigger_reason: str, snapshot_path: str | None) -> None:
     """Log the pre-compact event."""
     project_dir = os.environ.get(
-        "OLLAMA_PROJECT_DIR",
+        "QARIN_PROJECT_DIR",
         str(Path(__file__).resolve().parent.parent.parent),
     )
     log_path = Path(project_dir) / "logs" / "pre_compact.json"

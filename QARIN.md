@@ -1,11 +1,11 @@
-# Ollama CLI — Project Memory
+# Qarin CLI — Project Memory
 
 > This file serves as persistent project memory across sessions, similar to CLAUDE.md.
 > The session_end hook automatically appends session summaries below.
 
 ## Project Overview
 
-Ollama CLI is a full-featured AI coding assistant powered by Ollama with multi-provider support (Claude, Gemini, Codex). Built using the GOTCHA Framework and ATLAS Workflow from the ai-code-hooks ecosystem.
+Qarin CLI is a full-featured AI coding assistant powered by AI models with multi-provider support (Claude, Gemini, Codex). Built using the GOTCHA Framework and ATLAS Workflow from the ai-code-hooks ecosystem.
 
 ## Architecture
 
@@ -26,7 +26,7 @@ Ollama CLI is a full-featured AI coding assistant powered by Ollama with multi-p
 ## Source Structure
 
 ```
-cli-ollama/
+qarin-cli/
 ├── src/
 │   ├── cli.py              — Main CLI entry point (9 commands)
 │   ├── api_client.py       — Ollama API client (native + OpenAI-compatible)
@@ -36,13 +36,13 @@ cli-ollama/
 │   ├── session.py          — Session state management
 │   ├── config.py           — Configuration management
 │   └── hook_runner.py      — Hook execution engine
-├── .ollama/
+├── .qarin/
 │   ├── settings.json       — Hook configuration
 │   ├── hooks/              — 7 lifecycle hook scripts
 │   ├── status_lines/       — 3 status line scripts + utils
 │   └── memory/             — Persistent session data
 ├── production/             — GitHub release artifacts
-├── OLLAMA.md              — This file (project memory)
+├── QARIN.md              — This file (project memory)
 ├── .env.sample            — Environment variable template
 └── pyproject.toml         — Python project configuration
 ```
@@ -54,7 +54,7 @@ cli-ollama/
 | OLLAMA_HOST | http://localhost:11434 | Ollama server URL |
 | OLLAMA_MODEL | llama3.2 | Default model |
 | OLLAMA_CONTEXT_LENGTH | 4096 | Context window size |
-| OLLAMA_CLI_PROVIDER | ollama | Default provider |
+| QARIN_CLI_PROVIDER | ollama | Default provider |
 | ANTHROPIC_API_KEY | - | For Claude provider |
 | GEMINI_API_KEY | - | For Gemini provider |
 | OPENAI_API_KEY | - | For Codex provider |
@@ -245,3 +245,75 @@ cli-ollama/
 - Duration: 3s
 - Messages: 1
 - Tokens: 1,769 (prompt: 1,761, completion: 8)
+
+
+<!-- session:7c54b282af0a -->
+### Session 7c54b282af0a
+- Model: llama3.2 (ollama)
+- Duration: 3s
+- Messages: 1
+- Tokens: 1,809 (prompt: 1,801, completion: 8)
+
+
+<!-- session:6d95671770db -->
+### Session 6d95671770db
+- Model: llama3.2 (ollama)
+- Duration: 3s
+- Messages: 1
+- Tokens: 1,847 (prompt: 1,839, completion: 8)
+
+
+<!-- session:ffbccfd6fcc6 -->
+### Session ffbccfd6fcc6
+- Model: llama3.2 (ollama)
+- Duration: 3s
+- Messages: 1
+- Tokens: 1,887 (prompt: 1,879, completion: 8)
+
+
+<!-- session:bc47c83bee33 -->
+### Session bc47c83bee33
+- Model: llama3.2 (ollama)
+- Duration: 3s
+- Messages: 1
+- Tokens: 1,928 (prompt: 1,920, completion: 8)
+
+
+<!-- session:1333d7bb3554 -->
+### Session 1333d7bb3554
+- Model: llama3.2 (ollama)
+- Duration: 3s
+- Messages: 1
+- Tokens: 1,968 (prompt: 1,960, completion: 8)
+
+
+<!-- session:0c2f71f9d194 -->
+### Session 0c2f71f9d194
+- Model: llama3.2 (ollama)
+- Duration: 3s
+- Messages: 1
+- Tokens: 2,008 (prompt: 2,000, completion: 8)
+
+
+<!-- session:cb05918bfcc1 -->
+### Session cb05918bfcc1
+- Model: llama3.2 (ollama)
+- Duration: 3s
+- Messages: 1
+- Tokens: 2,048 (prompt: 2,040, completion: 8)
+
+
+<!-- session:57bc70a78c6c -->
+### Session 57bc70a78c6c
+- Model: llama3.2 (ollama)
+- Duration: 3s
+- Messages: 1
+- Tokens: 2,088 (prompt: 2,080, completion: 8)
+
+
+<!-- session:1d27f4be47ff -->
+### Session 1d27f4be47ff
+- Model: llama3.2 (ollama)
+- Duration: 3s
+- Messages: 1
+- Tokens: 2,128 (prompt: 2,120, completion: 8)

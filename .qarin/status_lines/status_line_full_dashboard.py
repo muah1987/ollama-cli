@@ -5,7 +5,7 @@
 # ///
 
 """
-Status Line: Full Dashboard - Combined status display for Ollama CLI.
+Status Line: Full Dashboard - Combined status display for Qarin CLI.
 
 GOTCHA/ATLAS: Execution Layer status line.
 Combines model info, token counter, provider health, and cost into a

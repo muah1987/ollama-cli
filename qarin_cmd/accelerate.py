@@ -104,7 +104,7 @@ def cmd_accelerate_disable(args: argparse.Namespace) -> None:
 
 def cmd_accelerate(_args: argparse.Namespace) -> None:
     """Acceleration main command handler."""
-    console.print("[bold]Ollama CLI - Acceleration Management[/bold]")
+    console.print("[bold]Qarin CLI - Acceleration Management[/bold]")
     console.print("")
     console.print("Commands:")
     console.print("  accelerate check   - Check available acceleration methods")

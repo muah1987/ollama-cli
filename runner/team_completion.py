@@ -10,7 +10,7 @@ Phases
 2. **Plan** — A planner creates a step-by-step implementation plan.
 3. **Validate** — A validator reviews the plan for gaps and risks.
 4. **Spec** — A spec writer converts the validated plan into a formal spec
-   saved to ``.ollama/spec/<slug>.md``.
+   saved to ``.qarin/spec/<slug>.md``.
 5. **Review** — A reviewer verifies the spec against acceptance criteria.
 
 Autonomous Command Execution
@@ -42,8 +42,8 @@ logger = logging.getLogger(__name__)
 # Constants
 # ---------------------------------------------------------------------------
 
-SPEC_DIR = Path(".ollama/spec")
-TASKS_DIR = Path(".ollama/tasks")
+SPEC_DIR = Path(".qarin/spec")
+TASKS_DIR = Path(".qarin/tasks")
 
 # Maximum characters to display from a command result in accumulated context
 _MAX_RESULT_DISPLAY_LEN = 200

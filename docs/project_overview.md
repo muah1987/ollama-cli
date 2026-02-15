@@ -1,8 +1,8 @@
-# Ollama CLI — Project Overview
+# Qarin CLI — Project Overview
 
-**A full-featured AI coding assistant powered by Ollama with multi-provider support.**
+**A full-featured AI coding assistant powered by AI models with multi-provider support.**
 
-Ollama CLI gives you a local-first AI coding assistant that runs on your machine with Ollama, while optionally routing to cloud providers like Claude, Gemini, and Codex when you need them. Built with the GOTCHA Framework and ATLAS Workflow for reliable, deterministic execution.
+Qarin CLI gives you a local-first AI coding assistant that runs on your machine with Ollama, while optionally routing to cloud providers like Claude, Gemini, and Codex when you need them. Built with the GOTCHA Framework and ATLAS Workflow for reliable, deterministic execution.
 
 ---
 
@@ -30,7 +30,7 @@ Ollama CLI gives you a local-first AI coding assistant that runs on your machine
 
 ## Multi-Provider Setup
 
-Ollama CLI defaults to your local Ollama instance but can route requests to cloud providers when needed. Each provider requires its own API key.
+Qarin CLI defaults to your local Ollama instance but can route requests to cloud providers when needed. Each provider requires its own API key.
 
 ### Claude (Anthropic)
 
@@ -39,7 +39,7 @@ Ollama CLI defaults to your local Ollama instance but can route requests to clou
 ANTHROPIC_API_KEY=sk-ant-...
 
 # Use it
-cli-ollama --provider claude run "explain this error"
+qarin-cli --provider claude run "explain this error"
 ```
 
 ### Gemini (Google)
@@ -49,7 +49,7 @@ cli-ollama --provider claude run "explain this error"
 GEMINI_API_KEY=AI...
 
 # Use it
-cli-ollama --provider gemini run "summarize this file"
+qarin-cli --provider gemini run "summarize this file"
 ```
 
 ### Codex (OpenAI)
@@ -59,7 +59,7 @@ cli-ollama --provider gemini run "summarize this file"
 OPENAI_API_KEY=sk-...
 
 # Use it
-cli-ollama --provider codex run "refactor this function"
+qarin-cli --provider codex run "refactor this function"
 ```
 
 ### Hugging Face
@@ -69,7 +69,7 @@ cli-ollama --provider codex run "refactor this function"
 HF_TOKEN=your-huggingface-token
 
 # Use it
-cli-ollama --provider hf run "answer this question"
+qarin-cli --provider hf run "answer this question"
 ```
 
 ### Provider Selection
@@ -78,17 +78,17 @@ You can set a default provider in `.env` or override per-command:
 
 ```bash
 # Set default in .env
-OLLAMA_CLI_PROVIDER=claude
+QARIN_CLI_PROVIDER=claude
 
 # Override per-command
-cli-ollama --provider ollama run "quick local question"
+qarin-cli --provider ollama run "quick local question"
 ```
 
 ---
 
 ## Hook System
 
-Ollama CLI provides 14 lifecycle hooks that let you extend and customize behavior at every stage of execution. Hooks follow the **skill→hook→.py pipeline** and are configured in `.ollama/settings.json`.
+Qarin CLI provides 14 lifecycle hooks that let you extend and customize behavior at every stage of execution. Hooks follow the **skill→hook→.py pipeline** and are configured in `.qarin/settings.json`.
 
 | # | Hook | When It Fires | Use Case |
 |---|------|---------------|----------|
@@ -119,7 +119,7 @@ Three built-in status line scripts provide real-time visibility into your sessio
 | **Provider Health** | Shows connectivity status for each configured provider (local Ollama, cloud endpoints) |
 | **Full Dashboard** | Combined view with token metrics, provider status, session duration, and message count |
 
-Status line scripts are located in `.ollama/status_lines/` and can be customized.
+Status line scripts are located in `.qarin/status_lines/` and can be customized.
 
 ---
 
@@ -127,7 +127,7 @@ Status line scripts are located in `.ollama/status_lines/` and can be customized
 
 ### GOTCHA Framework
 
-Ollama CLI is built on the GOTCHA Framework, a 6-layer architecture for agentic systems:
+Qarin CLI is built on the GOTCHA Framework, a 6-layer architecture for agentic systems:
 
 | Layer | Directory | Purpose |
 |-------|-----------|---------|
@@ -151,8 +151,8 @@ Development follows the ATLAS Workflow:
 ### Source Structure
 
 ```
-cli-ollama/
-  ollama_cmd/
+qarin-cli/
+  qarin_cmd/
     root.py              -- Main CLI entry point
     run.py               -- Run model with streaming
     list.py              -- List local models
@@ -201,7 +201,7 @@ cli-ollama/
     exo/                 -- EXO distributed execution skill
     mlx/                 -- Apple Silicon MLX acceleration skill
     rdma/                -- RDMA networking skill
-  .ollama/
+  .qarin/
     settings.json        -- Hook config + agent_models + TUI settings
     hooks/               -- 14 lifecycle hook scripts (skill→hook→.py pipeline)
     status_lines/        -- 3 status line scripts + utilities
@@ -219,7 +219,7 @@ Contributions are welcome. Here is how to get started:
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/my-feature`)
 3. Make your changes
-4. Run tests and linting (`uv run ruff check ollama_cmd/ api/ model/ server/ runner/`)
+4. Run tests and linting (`uv run ruff check qarin_cmd/ api/ model/ server/ runner/`)
 5. Commit your changes (`git commit -m "Add my feature"`)
 6. Push to your branch (`git push origin feature/my-feature`)
 7. Open a Pull Request
@@ -231,7 +231,7 @@ Please follow the existing code style and include tests for new functionality.
 ## Getting Help
 
 - Check the [Documentation Index](README.md)
-- File an issue on [GitHub](https://github.com/muah1987/cli-ollama/issues)
+- File an issue on [GitHub](https://github.com/muah1987/qarin-cli/issues)
 - Visit the [Ollama documentation](https://ollama.ai/docs)
 
 ---

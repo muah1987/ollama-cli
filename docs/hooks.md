@@ -1,19 +1,19 @@
 # Hooks System
 
-Customize Ollama CLI behavior with 14 lifecycle hooks.
+Customize Qarin CLI behavior with 14 lifecycle hooks.
 
 ---
 
 ## Overview
 
-Ollama CLI provides 14 lifecycle hooks that execute at specific points during execution.
+Qarin CLI provides 14 lifecycle hooks that execute at specific points during execution.
 Hooks follow the **skill→hook→.py pipeline**: a skill triggers a hook event, the hook
 dispatches to one or more `.py` scripts, and the scripts can modify behavior.
 
 | # | Hook | When It Fires | Use Cases |
 |---|------|---------------|-----------|
 | 1 | `Setup` | On init or periodic maintenance | Load git status, inject context, environment persistence |
-| 2 | `SessionStart` | When a session begins | Initialize state, load context, load OLLAMA.md |
+| 2 | `SessionStart` | When a session begins | Initialize state, load context, load QARIN.md |
 | 3 | `SessionEnd` | When a session ends | Save summaries, persist memory, cleanup |
 | 4 | `UserPromptSubmit` | Before processing user input | Validate input, security filtering, prompt logging |
 | 5 | `PreToolUse` | Before tool execution | Validate inputs, gate operations, block dangerous commands |
@@ -33,7 +33,7 @@ dispatches to one or more `.py` scripts, and the scripts can modify behavior.
 
 ### Location
 
-Configuration is in `.ollama/settings.json`:
+Configuration is in `.qarin/settings.json`:
 
 ```json
 {
@@ -109,13 +109,13 @@ Each hook receives JSON on stdin:
 Runs on init or periodic maintenance. Use cases:
 - Load git status and recent issues
 - Inject development context
-- Environment persistence via `OLLAMA_ENV_FILE`
-- Load context files (OLLAMA.md, .ollamaignore)
+- Environment persistence via `QARIN_ENV_FILE`
+- Load context files (QARIN.md, .qarinignore)
 
 ### SessionStart
 
 Runs when a session begins. Use cases:
-- Load project context from OLLAMA.md
+- Load project context from QARIN.md
 - Initialize user preferences
 - Load external knowledge bases
 
@@ -217,7 +217,7 @@ Runs on notable events. Use cases:
 ```json
 {
   "type": "command",
-  "command": "python .ollama/hooks/session_start.py",
+  "command": "python .qarin/hooks/session_start.py",
   "shell": true
 }
 ```
@@ -257,11 +257,11 @@ Hooks have access to these environment variables:
 
 | Variable | Description |
 |----------|-------------|
-| `OLLAMA_PROJECT_DIR` | Project directory |
-| `OLLAMA_SESSION_ID` | Current session ID |
+| `QARIN_PROJECT_DIR` | Project directory |
+| `QARIN_SESSION_ID` | Current session ID |
 | `OLLAMA_MODEL` | Active model |
-| `OLLAMA_PROVIDER` | Active provider |
-| `OLLAMA_HOOKS_ENABLED` | Hook system status |
+| `QARIN_PROVIDER` | Active provider |
+| `QARIN_HOOKS_ENABLED` | Hook system status |
 
 ---
 
@@ -270,14 +270,14 @@ Hooks have access to these environment variables:
 ### Logging Hook
 
 ```python
-# .ollama/hooks/logger.py
+# .qarin/hooks/logger.py
 import json
 import logging
 from pathlib import Path
 
 def on_post_tool_use(payload: dict) -> dict:
     """Log tool usage to a file."""
-    log_file = Path.home() / ".ollama" / "tool_logs.jsonl"
+    log_file = Path.home() / ".qarin" / "tool_logs.jsonl"
     log_file.parent.mkdir(parents=True, exist_ok=True)
 
     with open(log_file, "a") as f:
@@ -294,7 +294,7 @@ if __name__ == "__main__":
 ### Policy Hook
 
 ```python
-# .ollama/hooks/policy.py
+# .qarin/hooks/policy.py
 import json
 
 def on_pre_tool_use(payload: dict) -> dict:
@@ -317,7 +317,7 @@ if __name__ == "__main__":
 ### Notification Hook
 
 ```python
-# .ollama/hooks/notify.py
+# .qarin/hooks/notify.py
 import json
 import requests
 
@@ -347,20 +347,20 @@ if __name__ == "__main__":
 ### Enable Verbose Mode
 
 ```bash
-cli-ollama --verbose interactive
+qarin-cli --verbose interactive
 ```
 
 ### Test Hook Manually
 
 ```bash
 echo '{"hook": "TestHook", "data": {"test": true}}' | \
-  python .ollama/hooks/session_start.py
+  python .qarin/hooks/session_start.py
 ```
 
 ### Check Hook Configuration
 
 ```bash
-cat .ollama/settings.json | python -m json.tool
+cat .qarin/settings.json | python -m json.tool
 ```
 
 ---

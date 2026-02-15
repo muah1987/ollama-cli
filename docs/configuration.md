@@ -1,6 +1,6 @@
 # Configuration Guide
 
-Configure Ollama CLI to suit your needs.
+Configure Qarin CLI to suit your needs.
 
 ---
 
@@ -28,7 +28,7 @@ Configure Ollama CLI to suit your needs.
 | `OPENAI_API_KEY` | API key for Codex/OpenAI provider |
 | `HF_TOKEN` | API key for Hugging Face provider |
 | `GH_TOKEN` | GitHub token (auto-enables GitHub MCP server) |
-| `OLLAMA_CLI_PROVIDER` | Default provider (ollama, claude, gemini, codex, hf) |
+| `QARIN_CLI_PROVIDER` | Default provider (ollama, claude, gemini, codex, hf) |
 
 ### Context Compaction
 
@@ -43,7 +43,7 @@ Configure Ollama CLI to suit your needs.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `HOOKS_ENABLED` | `true` | Enable the hook system |
-| `OLLAMA_PROJECT_DIR` | Current directory | Project directory for hooks |
+| `QARIN_PROJECT_DIR` | Current directory | Project directory for hooks |
 
 ---
 
@@ -61,13 +61,13 @@ GEMINI_API_KEY=AI...
 OPENAI_API_KEY=sk-...
 HF_TOKEN=hf_...
 GH_TOKEN=ghp_...
-OLLAMA_CLI_PROVIDER=ollama
+QARIN_CLI_PROVIDER=ollama
 AUTO_COMPACT=true
 COMPACT_THRESHOLD=0.85
 HOOKS_ENABLED=true
 ```
 
-### `.ollama/settings.json`
+### `.qarin/settings.json`
 
 Configuration for the hook system and multi-model agent assignments:
 
@@ -99,7 +99,7 @@ Configuration for the hook system and multi-model agent assignments:
 }
 ```
 
-### `.ollama/mcp.json`
+### `.qarin/mcp.json`
 
 MCP (Model Context Protocol) server configuration:
 
@@ -129,7 +129,7 @@ MCP (Model Context Protocol) server configuration:
 
 Via environment variable:
 ```bash
-export OLLAMA_CLI_PROVIDER=claude
+export QARIN_CLI_PROVIDER=claude
 ```
 
 Via code:
@@ -143,10 +143,10 @@ cfg.provider = "claude"
 
 ```bash
 # Use Claude for one command
-cli-ollama --provider claude run "Explain this"
+qarin-cli --provider claude run "Explain this"
 
 # Use Gemini for one command
-cli-ollama --provider gemini run "Summarize this"
+qarin-cli --provider gemini run "Summarize this"
 ```
 
 ---
@@ -160,7 +160,7 @@ cli-ollama --provider gemini run "Summarize this"
 export OLLAMA_CONTEXT_LENGTH=8192
 
 # Or use a specific model with longer context
-cli-ollama --model llama3.2-8b interactive
+qarin-cli --model llama3.2-8b interactive
 ```
 
 ### Disabling Auto-Compact
@@ -214,7 +214,7 @@ Three built-in status line scripts:
 
 ```bash
 # Disable local Ollama, use only cloud providers
-OLLAMA_CLI_PROVIDER=claude
+QARIN_CLI_PROVIDER=claude
 ANTHROPIC_API_KEY=sk-ant-...
 OLLAMA_HOST=disabled
 ```
@@ -223,7 +223,7 @@ OLLAMA_HOST=disabled
 
 ```bash
 # Use local Ollama with Claude as fallback
-OLLAMA_CLI_PROVIDER=ollama
+QARIN_CLI_PROVIDER=ollama
 ANTHROPIC_API_KEY=sk-ant-...
 ```
 
@@ -231,7 +231,7 @@ ANTHROPIC_API_KEY=sk-ant-...
 
 ```bash
 # Enable verbose logging
-OLLAMA_CLI_LOG_LEVEL=debug
+QARIN_CLI_LOG_LEVEL=debug
 
 # Disable hooks for debugging
 HOOKS_ENABLED=false

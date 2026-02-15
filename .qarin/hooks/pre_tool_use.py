@@ -178,7 +178,7 @@ def make_decision(risk_score: int) -> str:
 def log_event(payload: dict, risk_score: int, decision: str, reasons: list[str]) -> None:
     """Append a log entry to the pre_tool_use log file."""
     project_dir = os.environ.get(
-        "OLLAMA_PROJECT_DIR",
+        "QARIN_PROJECT_DIR",
         str(Path(__file__).resolve().parent.parent.parent),
     )
     log_path = Path(project_dir) / "logs" / "pre_tool_use.json"

@@ -716,7 +716,7 @@ class TestBuiltInTools:
         from skills.tools import clear_ignore_cache, is_path_ignored
 
         monkeypatch.chdir(tmp_path)
-        (tmp_path / ".ollamaignore").write_text(".env\nsecrets/\n")
+        (tmp_path / ".qarinignore").write_text(".env\nsecrets/\n")
         clear_ignore_cache()
         assert is_path_ignored(".env") is True
         assert is_path_ignored("src/main.py") is False
@@ -843,12 +843,12 @@ class TestHooksIntegration:
         assert isinstance(result, bool)
 
     def test_hooks_directory_structure(self) -> None:
-        hooks_dir = Path(_PROJECT_DIR) / ".ollama" / "hooks"
+        hooks_dir = Path(_PROJECT_DIR) / ".qarin" / "hooks"
         assert hooks_dir.is_dir(), "Hooks directory missing"
 
     def test_all_hook_events_registered(self) -> None:
         """Verify all hook events are in settings.json."""
-        settings_path = Path(_PROJECT_DIR) / ".ollama" / "settings.json"
+        settings_path = Path(_PROJECT_DIR) / ".qarin" / "settings.json"
         assert settings_path.is_file()
         data = json.loads(settings_path.read_text())
         hooks = data.get("hooks", {})
@@ -858,7 +858,7 @@ class TestHooksIntegration:
 
     def test_hook_scripts_exist(self) -> None:
         """Verify each hook event has a corresponding .py script."""
-        hooks_dir = Path(_PROJECT_DIR) / ".ollama" / "hooks"
+        hooks_dir = Path(_PROJECT_DIR) / ".qarin" / "hooks"
         for _event, script in _EXPECTED_HOOK_EVENTS.items():
             assert (hooks_dir / script).is_file(), f"Missing hook script: {script}"
 
@@ -931,7 +931,7 @@ class TestHooksIntegration:
 
     def test_status_lines_directory(self) -> None:
         """Verify status_lines directory exists with expected scripts."""
-        status_dir = Path(_PROJECT_DIR) / ".ollama" / "status_lines"
+        status_dir = Path(_PROJECT_DIR) / ".qarin" / "status_lines"
         assert status_dir.is_dir(), "status_lines directory missing"
         expected = ["status_line_full_dashboard.py", "status_line_token_counter.py", "status_utils.py"]
         for script in expected:

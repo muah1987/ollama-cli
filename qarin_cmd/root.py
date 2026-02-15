@@ -651,7 +651,7 @@ def _find_latest_session() -> str | None:
     -------
     The session ID of the latest session, or ``None`` if none exist.
     """
-    sessions_dir = Path(".ollama/sessions")
+    sessions_dir = Path(".qarin/sessions")
     if not sessions_dir.is_dir():
         return None
 

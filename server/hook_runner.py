@@ -66,14 +66,14 @@ class HookRunner:
         ----------
         settings_path:
             Path to the settings.json file. Defaults to
-            ``<project_dir>/.ollama/settings.json``.
+            ``<project_dir>/.qarin/settings.json``.
         """
         if settings_path is None:
             project_dir = os.environ.get(
-                "OLLAMA_PROJECT_DIR",
+                "QARIN_PROJECT_DIR",
                 str(Path(__file__).resolve().parent.parent),
             )
-            settings_path = Path(project_dir) / ".ollama" / "settings.json"
+            settings_path = Path(project_dir) / ".qarin" / "settings.json"
         else:
             settings_path = Path(settings_path)
 
@@ -238,10 +238,10 @@ def main() -> None:
 
     # Determine settings path
     project_dir = os.environ.get(
-        "OLLAMA_PROJECT_DIR",
+        "QARIN_PROJECT_DIR",
         str(Path(__file__).resolve().parent.parent),
     )
-    settings_path = Path(project_dir) / ".ollama" / "settings.json"
+    settings_path = Path(project_dir) / ".qarin" / "settings.json"
 
     print(f"Settings path: {settings_path}")
     print(f"Settings exists: {settings_path.exists()}")

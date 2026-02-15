@@ -52,7 +52,7 @@ def classify_error(error_text: str) -> str:
 def log_failure(payload: dict, error_category: str) -> None:
     """Log tool failure details."""
     project_dir = os.environ.get(
-        "OLLAMA_PROJECT_DIR",
+        "QARIN_PROJECT_DIR",
         str(Path(__file__).resolve().parent.parent.parent),
     )
     log_path = Path(project_dir) / "logs" / "post_tool_use_failure.json"

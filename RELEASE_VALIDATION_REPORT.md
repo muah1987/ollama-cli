@@ -38,13 +38,13 @@ $ uv run semantic-release version --print
 
 **Problem:** Test `test_wheel_contains_packages` was looking for wheel file with old pattern.
 
-**Status:** The test file already has the correct pattern `cli_ollama-*.whl` (with underscore, not dash). The previous failure was from an older version of the code. Current build works correctly.
+**Status:** The test file already has the correct pattern `qarin_cli-*.whl` (with underscore, not dash). The previous failure was from an older version of the code. Current build works correctly.
 
 **Verification:**
 ```bash
 $ uv build
-Successfully built dist/cli_ollama-0.2.0-py3-none-any.whl
-Successfully built dist/cli_ollama-0.2.0.tar.gz
+Successfully built dist/qarin_cli-0.2.0-py3-none-any.whl
+Successfully built dist/qarin_cli-0.2.0.tar.gz
 
 $ uv run pytest tests/test_build_and_integration.py::TestBuild::test_wheel_contains_packages -v
 PASSED ✅
@@ -79,11 +79,11 @@ The project uses a three-stage release process:
 
 ### ✅ Working
 - Build process creates correct wheel packages
-- Package includes all required modules (ollama_cmd, api, model, runner, server, skills, tui)
+- Package includes all required modules (qarin_cmd, api, model, runner, server, skills, tui)
 - Semantic-release configuration is valid
 - All tests pass (1172 passed, 8 skipped)
 - Code linting passes
-- Wheel artifact naming is correct (`cli_ollama-0.2.0-py3-none-any.whl`)
+- Wheel artifact naming is correct (`qarin_cli-0.2.0-py3-none-any.whl`)
 
 ### 📋 Pending
 - Tag creation: Created `v0.2.0` tag locally (cannot push due to permissions)
@@ -119,7 +119,7 @@ This will:
 - [ ] Push tag to trigger release workflow (requires owner permissions)
 - [ ] Verify GitHub Release is created
 - [ ] Verify PyPI publication succeeds
-- [ ] Test installing from PyPI: `pip install cli-ollama`
+- [ ] Test installing from PyPI: `pip install qarin-cli`
 
 ## Documentation Created
 
@@ -136,14 +136,14 @@ This will:
 The repository is set up with OIDC-based trusted publishing:
 
 - **Publisher:** GitHub Actions
-- **Repository:** muah1987/cli-ollama
+- **Repository:** muah1987/qarin-cli
 - **Workflow:** pypi-publish.yml
 - **Authentication:** OIDC (no API tokens needed)
 
 When a GitHub Release is published, the `pypi-publish.yml` workflow will automatically:
 1. Build the package
 2. Authenticate using OIDC
-3. Publish to https://pypi.org/project/cli-ollama/
+3. Publish to https://pypi.org/project/qarin-cli/
 
 No additional configuration or API tokens required.
 
@@ -188,8 +188,8 @@ git push origin v0.2.0
 # - PyPI publish workflow completion (automatic)
 
 # 3. Verify release
-pip install cli-ollama==0.2.0
-cli-ollama --version
+pip install qarin-cli==0.2.0
+qarin-cli --version
 ```
 
 ---

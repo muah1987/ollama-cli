@@ -1,7 +1,7 @@
 [project]
 name = "qarin-cli"
 version = "0.2.0"
-description = "Full-featured AI coding assistant powered by Ollama with multi-provider support (Ollama, llama.cpp, vLLM, Claude, Gemini, Codex/OpenAI, Hugging Face), 13 lifecycle hooks, MCP integration, tensor parallelism, and chain orchestration"
+description = "Full-featured AI coding assistant powered by AI models with multi-provider support (Ollama, llama.cpp, vLLM, Claude, Gemini, Codex/OpenAI, Hugging Face), 13 lifecycle hooks, MCP integration, tensor parallelism, and chain orchestration"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
@@ -46,10 +46,10 @@ exo = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/muah1987/cli-ollama"
-Repository = "https://github.com/muah1987/cli-ollama"
-Issues = "https://github.com/muah1987/cli-ollama/issues"
-Documentation = "https://github.com/muah1987/cli-ollama/tree/main/docs"
+Homepage = "https://github.com/muah1987/qarin-cli"
+Repository = "https://github.com/muah1987/qarin-cli"
+Issues = "https://github.com/muah1987/qarin-cli/issues"
+Documentation = "https://github.com/muah1987/qarin-cli/tree/main/docs"
 
 [project.scripts]
 qarin = "qarin_cmd.root:main"

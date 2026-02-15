@@ -12,14 +12,14 @@ from pathlib import Path
 
 
 def test_hooks_directory_exists() -> None:
-    """Test that the .ollama/hooks directory exists."""
-    hooks_dir = Path(__file__).parent.parent / ".ollama" / "hooks"
-    assert hooks_dir.exists(), ".ollama/hooks directory should exist"
+    """Test that the .qarin/hooks directory exists."""
+    hooks_dir = Path(__file__).parent.parent / ".qarin" / "hooks"
+    assert hooks_dir.exists(), ".qarin/hooks directory should exist"
 
 
 def test_all_hooks_present() -> None:
     """Test that all expected hooks are present."""
-    hooks_dir = Path(__file__).parent.parent / ".ollama" / "hooks"
+    hooks_dir = Path(__file__).parent.parent / ".qarin" / "hooks"
     expected_hooks = [
         "pre_tool_use.py",
         "post_tool_use.py",
@@ -28,7 +28,7 @@ def test_all_hooks_present() -> None:
         "pre_compact.py",
         "stop.py",
         "notification.py",
-        "install_ollama.py",  # New hook
+        "install_qarin.py",  # New hook
     ]
 
     for hook in expected_hooks:
@@ -38,18 +38,18 @@ def test_all_hooks_present() -> None:
 
 def test_settings_json_exists() -> None:
     """Test that settings.json exists."""
-    settings_path = Path(__file__).parent.parent / ".ollama" / "settings.json"
-    assert settings_path.exists(), ".ollama/settings.json should exist"
+    settings_path = Path(__file__).parent.parent / ".qarin" / "settings.json"
+    assert settings_path.exists(), ".qarin/settings.json should exist"
 
 
 def test_install_hook_implements_detection() -> None:
-    """Test that install_ollama.py implements Ollama detection."""
-    hook_path = Path(__file__).parent.parent / ".ollama" / "hooks" / "install_ollama.py"
+    """Test that install_qarin.py implements Ollama detection."""
+    hook_path = Path(__file__).parent.parent / ".qarin" / "hooks" / "install_qarin.py"
     content = hook_path.read_text(encoding="utf-8")
 
-    assert "check_ollama_installed" in content, "install_ollama.py should have check_ollama_installed function"
-    assert "install_ollama_linux" in content, "install_ollama.py should have install_ollama_linux function"
-    assert "install_ollama_macos" in content, "install_ollama.py should have install_ollama_macos function"
+    assert "check_ollama_installed" in content, "install_qarin.py should have check_ollama_installed function"
+    assert "install_ollama_linux" in content, "install_qarin.py should have install_ollama_linux function"
+    assert "install_ollama_macos" in content, "install_qarin.py should have install_ollama_macos function"
 
 
 def test_rdma_client_implements_protocol() -> None:

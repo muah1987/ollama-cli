@@ -2,7 +2,7 @@
 
 Runs once after installation to help the user choose a provider, enter API
 keys (if needed), and pick a default model.  Saves the result to
-``.ollama/config.json`` with ``onboarding_complete: true`` so it never runs
+``.qarin/config.json`` with ``onboarding_complete: true`` so it never runs
 again unless the user deletes the config.
 """
 
@@ -93,7 +93,7 @@ def run_onboarding() -> QarinCliConfig:
             "[bold cyan]Welcome to qarin![/bold cyan]\n\n"
             "Let's get you set up. This wizard runs only once.\n"
             "You can change these settings later with [bold]/config[/bold] "
-            "or by editing [bold].ollama/config.json[/bold].",
+            "or by editing [bold].qarin/config.json[/bold].",
             title="First-Time Setup",
             border_style="cyan",
         )

@@ -2,7 +2,7 @@
 
 Covers:
 - Built-in tools (skills/tools.py): file_read, file_write, file_edit, grep_search,
-  shell_exec, web_fetch, .ollamaignore support
+  shell_exec, web_fetch, .qarinignore support
 - New CLI flags: --allowed-tools, --output-format
 - New slash commands registered in InteractiveMode: /memory, /tools, /tool,
   /diff, /config, /bug
@@ -152,10 +152,10 @@ class TestToolRegistry:
 
 
 class TestOllamaIgnore:
-    """Tests for .ollamaignore support."""
+    """Tests for .qarinignore support."""
 
     def test_ignored_path(self, tmp_path: Path, monkeypatch) -> None:
-        ignore_file = tmp_path / ".ollamaignore"
+        ignore_file = tmp_path / ".qarinignore"
         ignore_file.write_text("secret.txt\n*.key\n")
         monkeypatch.chdir(tmp_path)
 
@@ -170,7 +170,7 @@ class TestOllamaIgnore:
         clear_ignore_cache()
 
     def test_file_read_blocked_by_ignore(self, tmp_path: Path, monkeypatch) -> None:
-        (tmp_path / ".ollamaignore").write_text("blocked.txt\n")
+        (tmp_path / ".qarinignore").write_text("blocked.txt\n")
         (tmp_path / "blocked.txt").write_text("secret data")
         monkeypatch.chdir(tmp_path)
 
@@ -413,7 +413,7 @@ class TestResumeCommand:
     def test_resume_lists_tasks(self, tmp_path: Path, monkeypatch) -> None:
         """When tasks exist, /resume should list them."""
         monkeypatch.chdir(tmp_path)
-        tasks_dir = tmp_path / ".ollama" / "tasks"
+        tasks_dir = tmp_path / ".qarin" / "tasks"
         tasks_dir.mkdir(parents=True)
         import json
 
@@ -454,7 +454,7 @@ class TestUpdateStatusLine:
         """Should write key-value pair to session file."""
         monkeypatch.chdir(tmp_path)
 
-        session_dir = tmp_path / ".ollama" / "sessions"
+        session_dir = tmp_path / ".qarin" / "sessions"
         session_dir.mkdir(parents=True)
 
         # The /update_status_line command requires an existing session file.

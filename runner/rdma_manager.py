@@ -52,7 +52,7 @@ class RDMAConfiguration:
     """Manages RDMA device configuration."""
 
     def __init__(self, config_dir: Path | None = None):
-        self.config_dir = config_dir or Path.home() / ".ollama" / "rdma"
+        self.config_dir = config_dir or Path.home() / ".qarin" / "rdma"
         self.config_dir.mkdir(parents=True, exist_ok=True)
         self._loaded = False
         self._devices: list[dict[str, Any]] = []

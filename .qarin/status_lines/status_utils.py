@@ -5,11 +5,11 @@
 # ///
 
 """
-Status Line Utilities - Shared functions for Ollama CLI status lines.
+Status Line Utilities - Shared functions for Qarin CLI status lines.
 
 GOTCHA/ATLAS: Execution Layer utility module.
 Provides ANSI color helpers, progress bar generation, token/speed formatting,
-and safe stdin reading for all Ollama CLI status lines.
+and safe stdin reading for all Qarin CLI status lines.
 """
 
 import json

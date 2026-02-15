@@ -10,7 +10,7 @@
 Session manager -- GOTCHA Tools layer, ATLAS Assemble phase.
 
 Manages complete CLI sessions with state persistence.  Coordinates the
-ContextManager and TokenCounter, handles OLLAMA.md project context, and
+ContextManager and TokenCounter, handles QARIN.md project context, and
 provides session save/load for continuity across runs.
 """
 
@@ -51,9 +51,9 @@ logger = logging.getLogger(__name__)
 # Constants
 # ---------------------------------------------------------------------------
 
-_SESSIONS_DIR = ".ollama/sessions"
-_MEMORY_FILE = ".ollama/memory.json"
-_OLLAMA_MD = "OLLAMA.md"
+_SESSIONS_DIR = ".qarin/sessions"
+_MEMORY_FILE = ".qarin/memory.json"
+_QARIN_MD = "QARIN.md"
 
 # ---------------------------------------------------------------------------
 # Session
@@ -64,9 +64,9 @@ class Session:
     """Manages a complete CLI session with context, tokens, and persistence.
 
     Coordinates the :class:`ContextManager` for conversation history and the
-    :class:`TokenCounter` for usage tracking.  On start, reads ``OLLAMA.md``
+    :class:`TokenCounter` for usage tracking.  On start, reads ``QARIN.md``
     (if present) to seed the system prompt with project context.  On end,
-    optionally appends a session summary back to ``OLLAMA.md``.
+    optionally appends a session summary back to ``QARIN.md``.
 
     Parameters
     ----------
@@ -148,7 +148,7 @@ class Session:
     async def start(self) -> None:
         """Initialize the session.
 
-        Records the start time and loads ``OLLAMA.md`` project context (if
+        Records the start time and loads ``QARIN.md`` project context (if
         found in the current working directory) as the system message.
         """
         self.start_time = datetime.now(tz=timezone.utc)
@@ -162,15 +162,15 @@ class Session:
         # Build the system prompt with tool awareness
         system_prompt = self._build_system_prompt()
 
-        # Load OLLAMA.md as project context if it exists
-        ollama_md = self._find_ollama_md()
-        if ollama_md is not None:
+        # Load QARIN.md as project context if it exists
+        qarin_md = self._find_qarin_md()
+        if qarin_md is not None:
             try:
-                content = ollama_md.read_text(encoding="utf-8")
-                system_prompt += "\n\nThe following project context was loaded from OLLAMA.md:\n\n" + content
-                logger.info("Loaded project context from %s (%d chars)", ollama_md, len(content))
+                content = qarin_md.read_text(encoding="utf-8")
+                system_prompt += "\n\nThe following project context was loaded from QARIN.md:\n\n" + content
+                logger.info("Loaded project context from %s (%d chars)", qarin_md, len(content))
             except OSError:
-                logger.warning("Found OLLAMA.md but failed to read it", exc_info=True)
+                logger.warning("Found QARIN.md but failed to read it", exc_info=True)
 
         self.context_manager.set_system_message(system_prompt)
 
@@ -267,7 +267,7 @@ class Session:
         """End the session and generate a summary.
 
         Records the end time, builds a summary dict, and optionally appends
-        a brief session record to ``OLLAMA.md``.
+        a brief session record to ``QARIN.md``.
 
         Returns
         -------
@@ -279,10 +279,10 @@ class Session:
         # Save persistent memory
         self.memory_layer.save(str(Path(_MEMORY_FILE)))
 
-        # Append summary to OLLAMA.md if the file exists
-        ollama_md = self._find_ollama_md()
-        if ollama_md is not None:
-            self._append_to_ollama_md(ollama_md, summary)
+        # Append summary to QARIN.md if the file exists
+        qarin_md = self._find_qarin_md()
+        if qarin_md is not None:
+            self._append_to_qarin_md(qarin_md, summary)
 
         logger.info("Session %s ended (%s)", self.session_id, summary.get("duration_str", "unknown"))
         return summary
@@ -339,7 +339,7 @@ class Session:
         Parameters
         ----------
         path:
-            File path.  Defaults to ``.ollama/sessions/{session_id}.json``.
+            File path.  Defaults to ``.qarin/sessions/{session_id}.json``.
 
         Returns
         -------
@@ -410,7 +410,7 @@ class Session:
             The session ID to look up.
         path:
             Explicit file path.  Defaults to
-            ``.ollama/sessions/{session_id}.json``.
+            ``.qarin/sessions/{session_id}.json``.
 
         Returns
         -------
@@ -737,16 +737,16 @@ class Session:
         return prompt
 
     @staticmethod
-    def _find_ollama_md() -> Path | None:
-        """Look for OLLAMA.md in the current working directory and parent dirs.
+    def _find_qarin_md() -> Path | None:
+        """Look for QARIN.md in the current working directory and parent dirs.
 
         Returns
         -------
-        Path to OLLAMA.md if found, otherwise ``None``.
+        Path to QARIN.md if found, otherwise ``None``.
         """
         current = Path.cwd()
         for _ in range(5):  # search up to 5 levels
-            candidate = current / _OLLAMA_MD
+            candidate = current / _QARIN_MD
             if candidate.is_file():
                 return candidate
             parent = current.parent
@@ -777,13 +777,13 @@ class Session:
         }
 
     @staticmethod
-    def _append_to_ollama_md(ollama_md: Path, summary: dict[str, Any]) -> None:
-        """Append a short session record to OLLAMA.md.
+    def _append_to_qarin_md(qarin_md: Path, summary: dict[str, Any]) -> None:
+        """Append a short session record to QARIN.md.
 
         Parameters
         ----------
-        ollama_md:
-            Path to the OLLAMA.md file.
+        qarin_md:
+            Path to the QARIN.md file.
         summary:
             Session summary dict.
         """
@@ -799,11 +799,11 @@ class Session:
         )
 
         try:
-            with open(ollama_md, "a", encoding="utf-8") as f:
+            with open(qarin_md, "a", encoding="utf-8") as f:
                 f.write(entry)
-            logger.info("Appended session summary to %s", ollama_md)
+            logger.info("Appended session summary to %s", qarin_md)
         except OSError:
-            logger.warning("Failed to append session summary to %s", ollama_md, exc_info=True)
+            logger.warning("Failed to append session summary to %s", qarin_md, exc_info=True)
 
     @staticmethod
     def _format_duration(seconds: float) -> str:

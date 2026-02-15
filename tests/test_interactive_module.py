@@ -166,32 +166,32 @@ class TestLlamaSpinner:
 
 
 class TestImportInstructionFiles:
-    def test_import_no_ollama_md(self, tmp_path, monkeypatch):
+    def test_import_no_qarin_md(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        with patch("qarin_cmd.interactive._PROJECT_MEMORY_FILE", tmp_path / "OLLAMA.md"):
+        with patch("qarin_cmd.interactive._PROJECT_MEMORY_FILE", tmp_path / "QARIN.md"):
             result = _import_instruction_files()
         assert result == []
 
     def test_import_claude_md(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        (tmp_path / "OLLAMA.md").write_text("# Project\n", encoding="utf-8")
+        (tmp_path / "QARIN.md").write_text("# Project\n", encoding="utf-8")
         (tmp_path / "CLAUDE.md").write_text("# Claude\nBe helpful.", encoding="utf-8")
         with (
-            patch("qarin_cmd.interactive._PROJECT_MEMORY_FILE", tmp_path / "OLLAMA.md"),
+            patch("qarin_cmd.interactive._PROJECT_MEMORY_FILE", tmp_path / "QARIN.md"),
             patch("qarin_cmd.interactive._KNOWN_INSTRUCTION_FILES", [tmp_path / "CLAUDE.md"]),
         ):
             result = _import_instruction_files()
         assert "CLAUDE.md" in str(result)
-        content = (tmp_path / "OLLAMA.md").read_text(encoding="utf-8")
+        content = (tmp_path / "QARIN.md").read_text(encoding="utf-8")
         assert "imported: " in content
 
     def test_import_already_imported(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         marker = f"<!-- imported: {tmp_path / 'CLAUDE.md'} -->"
-        (tmp_path / "OLLAMA.md").write_text(f"# Project\n{marker}\n", encoding="utf-8")
+        (tmp_path / "QARIN.md").write_text(f"# Project\n{marker}\n", encoding="utf-8")
         (tmp_path / "CLAUDE.md").write_text("# Claude\nBe helpful.", encoding="utf-8")
         with (
-            patch("qarin_cmd.interactive._PROJECT_MEMORY_FILE", tmp_path / "OLLAMA.md"),
+            patch("qarin_cmd.interactive._PROJECT_MEMORY_FILE", tmp_path / "QARIN.md"),
             patch("qarin_cmd.interactive._KNOWN_INSTRUCTION_FILES", [tmp_path / "CLAUDE.md"]),
         ):
             result = _import_instruction_files()
@@ -199,10 +199,10 @@ class TestImportInstructionFiles:
 
     def test_import_empty_file_skipped(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        (tmp_path / "OLLAMA.md").write_text("# Project\n", encoding="utf-8")
+        (tmp_path / "QARIN.md").write_text("# Project\n", encoding="utf-8")
         (tmp_path / "EMPTY.md").write_text("", encoding="utf-8")
         with (
-            patch("qarin_cmd.interactive._PROJECT_MEMORY_FILE", tmp_path / "OLLAMA.md"),
+            patch("qarin_cmd.interactive._PROJECT_MEMORY_FILE", tmp_path / "QARIN.md"),
             patch("qarin_cmd.interactive._KNOWN_INSTRUCTION_FILES", [tmp_path / "EMPTY.md"]),
         ):
             result = _import_instruction_files()
@@ -617,13 +617,13 @@ class TestInteractiveModeAdditional:
 
     def test_cmd_memory_add(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        (tmp_path / "OLLAMA.md").write_text("# Project\n", encoding="utf-8")
+        (tmp_path / "QARIN.md").write_text("# Project\n", encoding="utf-8")
         mode = self._make_mode()
         assert mode._cmd_memory("add New note here") is False
 
     def test_cmd_memory_view(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        (tmp_path / "OLLAMA.md").write_text("# Project\nSome content\n", encoding="utf-8")
+        (tmp_path / "QARIN.md").write_text("# Project\nSome content\n", encoding="utf-8")
         mode = self._make_mode()
         assert mode._cmd_memory("") is False
 

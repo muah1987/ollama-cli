@@ -570,31 +570,31 @@ class CommandProcessor:
         return CommandResult(output=lines)
 
     def _cmd_memory(self, arg: str) -> CommandResult:
-        """View or add to project memory (OLLAMA.md)."""
+        """View or add to project memory (QARIN.md)."""
         from pathlib import Path
 
-        memory_file = Path("OLLAMA.md")
+        memory_file = Path("QARIN.md")
 
         if not arg:
             if memory_file.is_file():
                 try:
                     content = memory_file.read_text(encoding="utf-8")
-                    lines = ["--- Project Memory (OLLAMA.md) ---"]
+                    lines = ["--- Project Memory (QARIN.md) ---"]
                     display = content[:2000]
                     lines.append(display)
                     if len(content) > 2000:
                         lines.append("...")
                     return CommandResult(output=lines)
                 except OSError as exc:
-                    return CommandResult(errors=[f"Cannot read OLLAMA.md: {exc}"])
-            return CommandResult(output=["No OLLAMA.md found. Use /memory <note> to create one, or /init to set up."])
+                    return CommandResult(errors=[f"Cannot read QARIN.md: {exc}"])
+            return CommandResult(output=["No QARIN.md found. Use /memory <note> to create one, or /init to set up."])
 
         try:
             with open(memory_file, "a", encoding="utf-8") as f:
                 f.write(f"\n- {arg}\n")
-            return CommandResult(output=[f"Added to OLLAMA.md: {arg}"])
+            return CommandResult(output=[f"Added to QARIN.md: {arg}"])
         except OSError as exc:
-            return CommandResult(errors=[f"Cannot write to OLLAMA.md: {exc}"])
+            return CommandResult(errors=[f"Cannot write to QARIN.md: {exc}"])
 
     def _cmd_remember(self, arg: str) -> CommandResult:
         """Store a memory entry."""
@@ -857,7 +857,7 @@ class CommandProcessor:
                 lines = ["MCP Servers:"]
                 if not servers:
                     lines.append("  No MCP servers configured.")
-                    lines.append("  Edit .ollama/mcp.json to add servers.")
+                    lines.append("  Edit .qarin/mcp.json to add servers.")
                 else:
                     for s in servers:
                         name = s.get("name", "unknown")
@@ -1161,7 +1161,7 @@ class CommandProcessor:
             "timestamp": datetime.now(tz=timezone.utc).isoformat(),
             "status": "planned",
         }
-        tasks_dir = Path(".ollama/tasks")
+        tasks_dir = Path(".qarin/tasks")
         tasks_dir.mkdir(parents=True, exist_ok=True)
         task_file = tasks_dir / f"{slug}.json"
         try:
@@ -1208,7 +1208,7 @@ class CommandProcessor:
             self.session.create_sub_context(builder_ctx_id)
 
         # Update task status
-        task_file = Path(".ollama/tasks") / f"{task_id}.json"
+        task_file = Path(".qarin/tasks") / f"{task_id}.json"
         if task_file.is_file():
             try:
                 task_data = _json.loads(task_file.read_text(encoding="utf-8"))
@@ -1317,7 +1317,7 @@ class CommandProcessor:
         """Run the team plan-then-build completion loop.
 
         Launches a multi-phase agentic pipeline (analyse → plan → validate
-        → spec → review) and saves the resulting spec to ``.ollama/spec/``.
+        → spec → review) and saves the resulting spec to ``.qarin/spec/``.
         Each agent has knowledge of all available slash commands and may
         autonomously invoke them via ``[CMD: /command]`` directives.
         """
@@ -1326,7 +1326,7 @@ class CommandProcessor:
                 errors=[
                     "Usage: /complete_w_team <task description>",
                     "  Runs a team loop: analyse → plan → validate → spec → review",
-                    "  Output: .ollama/spec/<slug>.md (executable via /build)",
+                    "  Output: .qarin/spec/<slug>.md (executable via /build)",
                 ]
             )
 
@@ -1376,7 +1376,7 @@ class CommandProcessor:
         import json as _json
         from pathlib import Path
 
-        tasks_dir = Path(".ollama/tasks")
+        tasks_dir = Path(".qarin/tasks")
         if not tasks_dir.is_dir():
             return CommandResult(output=["No previous tasks found."])
 
@@ -1431,8 +1431,8 @@ class CommandProcessor:
         """Initialize the current folder as a qarin project."""
         from pathlib import Path
 
-        project_memory = Path("OLLAMA.md")
-        ollama_dir = Path(".ollama")
+        project_memory = Path("QARIN.md")
+        qarin_dir = Path(".qarin")
         created: list[str] = []
 
         if project_memory.exists():
@@ -1447,18 +1447,18 @@ class CommandProcessor:
             )
             try:
                 project_memory.write_text(template, encoding="utf-8")
-                created.append("OLLAMA.md")
+                created.append("QARIN.md")
             except OSError as exc:
-                return CommandResult(errors=[f"Cannot create OLLAMA.md: {exc}"])
+                return CommandResult(errors=[f"Cannot create QARIN.md: {exc}"])
 
-        if ollama_dir.exists():
+        if qarin_dir.exists():
             pass  # already exists
         else:
             try:
-                ollama_dir.mkdir(parents=True, exist_ok=True)
-                created.append(".ollama/")
+                qarin_dir.mkdir(parents=True, exist_ok=True)
+                created.append(".qarin/")
             except OSError as exc:
-                return CommandResult(errors=[f"Cannot create .ollama/: {exc}"])
+                return CommandResult(errors=[f"Cannot create .qarin/: {exc}"])
 
         # Import instruction files from other AI tools
         imported: list[str] = []
@@ -1544,12 +1544,12 @@ class CommandProcessor:
             return CommandResult(
                 errors=[
                     f"Config key '{key}' has a complex type ({type(current).__name__}). "
-                    "Edit .ollama/settings.json directly to modify it."
+                    "Edit .qarin/settings.json directly to modify it."
                 ]
             )
         if current is None:
             return CommandResult(
-                errors=[f"Config key '{key}' is unset (None). Edit .ollama/settings.json directly to set it."]
+                errors=[f"Config key '{key}' is unset (None). Edit .qarin/settings.json directly to set it."]
             )
 
         try:
@@ -1577,7 +1577,7 @@ class CommandProcessor:
         from pathlib import Path
 
         description = arg or "No description provided"
-        bug_dir = Path(".ollama/bugs")
+        bug_dir = Path(".qarin/bugs")
         bug_dir.mkdir(parents=True, exist_ok=True)
 
         bug_id = datetime.now(tz=timezone.utc).strftime("%Y%m%d_%H%M%S")
@@ -1623,7 +1623,7 @@ class CommandProcessor:
 
         key, value = parts[0], parts[1]
 
-        session_dir = Path(".ollama/sessions")
+        session_dir = Path(".qarin/sessions")
         session_id = getattr(self.session, "session_id", None)
         if not session_id:
             return CommandResult(

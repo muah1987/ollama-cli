@@ -67,25 +67,25 @@ def _build_banner(session=None, warnings: list[str] | None = None) -> str:
         if hasattr(cm, "max_tokens"):
             ctx = f"{cm.max_tokens // 1000}k"
 
-    # Check for OLLAMA.md size warning
+    # Check for QARIN.md size warning
     warning_line = ""
     memory_line = ""
-    ollama_md = os.path.join(cwd_path, "OLLAMA.md")
-    if os.path.isfile(ollama_md):
+    qarin_md = os.path.join(cwd_path, "QARIN.md")
+    if os.path.isfile(qarin_md):
         try:
-            with open(ollama_md, encoding="utf-8", errors="replace") as fh:
+            with open(qarin_md, encoding="utf-8", errors="replace") as fh:
                 chars = len(fh.read())
             limit = 40_000
             if chars > limit:
                 warning_line = (
-                    f"⚠ large OLLAMA.md may impact performance ({chars / 1000:.1f}k chars > {limit / 1000:.1f}k)"
+                    f"⚠ large QARIN.md may impact performance ({chars / 1000:.1f}k chars > {limit / 1000:.1f}k)"
                 )
                 memory_line = "• /memory to edit"
         except OSError:
             pass
 
     side_info = [
-        f"Ollama CLI v{ver}",
+        f"Qarin CLI v{ver}",
         f"Model: {model}  •  Context: {ctx}",
         f"Runtime: {provider}  •  API: {host}",
         f"{now}  •  cwd: {cwd_short}",

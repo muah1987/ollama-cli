@@ -1,6 +1,6 @@
 # GitHub Repository Settings Setup Guide
 
-This guide provides step-by-step instructions for configuring GitHub repository settings required for the cli-ollama project workflows.
+This guide provides step-by-step instructions for configuring GitHub repository settings required for the qarin-cli project workflows.
 
 ## Table of Contents
 
@@ -28,7 +28,7 @@ Navigate to: **Settings → Secrets and variables → Actions → Repository sec
 - **How to create:**
   1. Go to GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
   2. Click "Generate new token (classic)"
-  3. Name: `CLI-Ollama Release Token`
+  3. Name: `Qarin CLI Release Token`
   4. Select scopes: `repo`, `workflow`
   5. Generate token and copy the value
   6. Add to repository secrets as `GH_TOKEN`
@@ -62,7 +62,7 @@ These secrets are optional and only needed if you want to run tests with actual 
 #### 6. CODECOV_TOKEN
 - **Description:** Codecov upload token (optional)
 - **Required for:** Code coverage reporting
-- **How to get:** https://codecov.io/gh/muah1987/cli-ollama/settings
+- **How to get:** https://codecov.io/gh/muah1987/qarin-cli/settings
 
 **Note:** Tests will skip provider-specific tests if these tokens are not configured. The test suite is designed to work without them.
 
@@ -116,7 +116,7 @@ Navigate to: **Settings → Actions → General**
 The repository is configured to use OIDC-based trusted publishing:
 
 - **Publisher:** GitHub Actions
-- **Repository:** muah1987/cli-ollama
+- **Repository:** muah1987/qarin-cli
 - **Workflow:** pypi-publish.yml
 - **Authentication:** OIDC (no API tokens required)
 
@@ -126,7 +126,7 @@ When a GitHub Release is published:
 1. The `pypi-publish.yml` workflow runs
 2. GitHub generates a short-lived OIDC token
 3. PyPI verifies the token and allows the upload
-4. Package is published to https://pypi.org/project/cli-ollama/
+4. Package is published to https://pypi.org/project/qarin-cli/
 
 No manual API token management is needed.
 
@@ -209,16 +209,16 @@ Check:
 
 After release workflow completes:
 
-1. **GitHub Releases:** https://github.com/muah1987/cli-ollama/releases
+1. **GitHub Releases:** https://github.com/muah1987/qarin-cli/releases
    - Should show new release with `.whl` and `.tar.gz` files
    
-2. **PyPI:** https://pypi.org/project/cli-ollama/
+2. **PyPI:** https://pypi.org/project/qarin-cli/
    - Should show new version
    
 3. **Install Test:**
    ```bash
-   pip install cli-ollama
-   cli-ollama --version
+   pip install qarin-cli
+   qarin-cli --version
    ```
 
 ---
@@ -280,4 +280,4 @@ Use this checklist to ensure all settings are configured:
 ---
 
 **Last Updated:** 2026-02-14  
-**For:** cli-ollama v0.2.0+
+**For:** qarin-cli v0.2.0+

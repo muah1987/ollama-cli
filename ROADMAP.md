@@ -1,6 +1,6 @@
-# Ollama CLI Roadmap
+# Qarin CLI Roadmap
 
-A comprehensive roadmap for the Ollama CLI project, tracking current priorities and future development.
+A comprehensive roadmap for the Qarin CLI project, tracking current priorities and future development.
 
 ---
 
@@ -212,7 +212,7 @@ a single static binary.
 - [ ] Port chain orchestration
 - [ ] Port context management and auto-compact
 - [ ] Single-binary distribution (no Python/uv dependency)
-- [ ] Archive current Python implementation to `cli-ollama.bak/`
+- [ ] Archive current Python implementation to `qarin-cli.bak/`
 
 ---
 

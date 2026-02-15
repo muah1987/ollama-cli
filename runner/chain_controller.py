@@ -369,7 +369,7 @@ class ChainController:
         orchestrator agent role based on :data:`AGENT_ROLE_OPTIMIZATION`.
 
         Already-configured agent models (via ``/set-agent-model``, env vars,
-        or ``.ollama/settings.json``) take priority.  Unassigned roles
+        or ``.qarin/settings.json``) take priority.  Unassigned roles
         fall back to the session's current model and provider.
 
         Returns

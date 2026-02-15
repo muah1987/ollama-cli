@@ -1,6 +1,6 @@
 # API Reference
 
-Complete API documentation for Ollama CLI - including native Ollama endpoints, OpenAI-compatible endpoints, multi-provider routing, and Python client examples.
+Complete API documentation for Qarin CLI - including native Ollama endpoints, OpenAI-compatible endpoints, multi-provider routing, and Python client examples.
 
 ---
 
@@ -649,10 +649,10 @@ Response
 
 | Provider | Environment Variable | API Key Env | Default Model |
 |----------|---------------------|-------------|---------------|
-| `ollama` | `OLLAMA_CLI_PROVIDER` | None | `llama3.2` |
-| `claude` | `OLLAMA_CLI_PROVIDER` | `ANTHROPIC_API_KEY` | `claude-sonnet-4-20250514` |
-| `gemini` | `OLLAMA_CLI_PROVIDER` | `GEMINI_API_KEY` | `gemini-2.0-flash` |
-| `codex` | `OLLAMA_CLI_PROVIDER` | `OPENAI_API_KEY` | `gpt-4.1` |
+| `ollama` | `QARIN_CLI_PROVIDER` | None | `llama3.2` |
+| `claude` | `QARIN_CLI_PROVIDER` | `ANTHROPIC_API_KEY` | `claude-sonnet-4-20250514` |
+| `gemini` | `QARIN_CLI_PROVIDER` | `GEMINI_API_KEY` | `gemini-2.0-flash` |
+| `codex` | `QARIN_CLI_PROVIDER` | `OPENAI_API_KEY` | `gpt-4.1` |
 
 ---
 
@@ -738,7 +738,7 @@ print(result["content"][0]["text"])
 ```
 
 **Task Routing:**
-- Coding tasks: Uses `OLLAMA_CLI_CODING_MODEL` (default: `codestral:latest`)
+- Coding tasks: Uses `QARIN_CLI_CODING_MODEL` (default: `codestral:latest`)
 
 ---
 
@@ -763,7 +763,7 @@ result = await provider.chat([{"role": "user", "content": "Summarize this"}])
 ```
 
 **Task Routing:**
-- Coding tasks: Uses `OLLAMA_CLI_CODING_MODEL` (default: `codestral:latest`)
+- Coding tasks: Uses `QARIN_CLI_CODING_MODEL` (default: `codestral:latest`)
 
 ---
 
@@ -788,7 +788,7 @@ print(result["choices"][0]["message"]["content"])
 ```
 
 **Task Routing:**
-- Coding tasks: Uses `OLLAMA_CLI_CODING_MODEL` (default: `codestral:latest`)
+- Coding tasks: Uses `QARIN_CLI_CODING_MODEL` (default: `codestral:latest`)
 
 ---
 
@@ -860,20 +860,20 @@ The router uses environment variables to determine provider-selection per task t
 
 | Task Type | Provider Env | Model Env | Default Provider | Default Model |
 |-----------|--------------|-----------|------------------|---------------|
-| `coding` | `OLLAMA_CLI_CODING_PROVIDER` | `OLLAMA_CLI_CODING_MODEL` | `ollama` | `codestral:latest` |
-| `agent` | `OLLAMA_CLI_AGENT_PROVIDER` | `OLLAMA_CLI_AGENT_MODEL` | `ollama` | `llama3.2` |
-| `subagent` | `OLLAMA_CLI_SUBAGENT_PROVIDER` | `OLLAMA_CLI_SUBAGENT_MODEL` | `ollama` | `llama3.2:3b` |
+| `coding` | `QARIN_CLI_CODING_PROVIDER` | `QARIN_CLI_CODING_MODEL` | `ollama` | `codestral:latest` |
+| `agent` | `QARIN_CLI_AGENT_PROVIDER` | `QARIN_CLI_AGENT_MODEL` | `ollama` | `llama3.2` |
+| `subagent` | `QARIN_CLI_SUBAGENT_PROVIDER` | `QARIN_CLI_SUBAGENT_MODEL` | `ollama` | `llama3.2:3b` |
 | `embedding` | N/A | N/A | `ollama` | `nomic-embed-text` |
 
 **Example Configuration:**
 ```bash
 # Use Claude for coding, but Ollama for agent tasks
-OLLAMA_CLI_CODING_PROVIDER=claude
-OLLAMA_CLI_AGENT_PROVIDER=ollama
+QARIN_CLI_CODING_PROVIDER=claude
+QARIN_CLI_AGENT_PROVIDER=ollama
 
 # Custom models per task
-OLLAMA_CLI_CODING_MODEL=gpt-4.1
-OLLAMA_CLI_AGENT_MODEL=claude-opus-4-20250514
+QARIN_CLI_CODING_MODEL=gpt-4.1
+QARIN_CLI_AGENT_MODEL=claude-opus-4-20250514
 ```
 
 ---
@@ -1310,13 +1310,13 @@ asyncio.run(main())
 
 | Variable | Description |
 |----------|-------------|
-| `OLLAMA_CLI_PROVIDER` | Default provider: `ollama`, `claude`, `gemini`, `codex` |
-| `OLLAMA_CLI_CODING_PROVIDER` | Provider for coding tasks |
-| `OLLAMA_CLI_AGENT_PROVIDER` | Provider for agent tasks |
-| `OLLAMA_CLI_SUBAGENT_PROVIDER` | Provider for subagent tasks |
-| `OLLAMA_CLI_CODING_MODEL` | Model for coding tasks |
-| `OLLAMA_CLI_AGENT_MODEL` | Model for agent tasks |
-| `OLLAMA_CLI_SUBAGENT_MODEL` | Model for subagent tasks |
+| `QARIN_CLI_PROVIDER` | Default provider: `ollama`, `claude`, `gemini`, `codex` |
+| `QARIN_CLI_CODING_PROVIDER` | Provider for coding tasks |
+| `QARIN_CLI_AGENT_PROVIDER` | Provider for agent tasks |
+| `QARIN_CLI_SUBAGENT_PROVIDER` | Provider for subagent tasks |
+| `QARIN_CLI_CODING_MODEL` | Model for coding tasks |
+| `QARIN_CLI_AGENT_MODEL` | Model for agent tasks |
+| `QARIN_CLI_SUBAGENT_MODEL` | Model for subagent tasks |
 
 ### API Keys
 
@@ -1371,13 +1371,13 @@ COMPACT_THRESHOLD=0.9
 
 ```bash
 # Use specific provider
-cli-ollama --provider claude run "prompt"
+qarin-cli --provider claude run "prompt"
 
 # Use specific model
-cli-ollama --provider ollama --model codestral:latest run "prompt"
+qarin-cli --provider ollama --model codestral:latest run "prompt"
 
 # Switch default provider
-export OLLAMA_CLI_PROVIDER=claude
+export QARIN_CLI_PROVIDER=claude
 ```
 
 ---

@@ -135,16 +135,16 @@ class TestMCPClient:
 
 
 class TestMCPConfig:
-    """Tests for the .ollama/mcp.json configuration file."""
+    """Tests for the .qarin/mcp.json configuration file."""
 
     def test_mcp_config_file_exists(self) -> None:
-        """.ollama/mcp.json should exist on disk."""
-        config_path = Path(__file__).parent.parent / ".ollama" / "mcp.json"
+        """.qarin/mcp.json should exist on disk."""
+        config_path = Path(__file__).parent.parent / ".qarin" / "mcp.json"
         assert config_path.is_file()
 
     def test_mcp_config_has_servers(self) -> None:
         """mcp.json should have mcpServers key with expected entries."""
-        config_path = Path(__file__).parent.parent / ".ollama" / "mcp.json"
+        config_path = Path(__file__).parent.parent / ".qarin" / "mcp.json"
         with open(config_path) as f:
             data = json.load(f)
 

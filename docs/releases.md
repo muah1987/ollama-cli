@@ -1,6 +1,6 @@
 # Release Process
 
-This document describes the automated release process for cli-ollama.
+This document describes the automated release process for qarin-cli.
 
 ## Overview
 
@@ -39,8 +39,8 @@ The project uses an automated release workflow with three key components:
 - Marks the release as latest
 
 **Artifacts:**
-- `cli_ollama-{version}-py3-none-any.whl` - Python wheel package
-- `cli_ollama-{version}.tar.gz` - Source distribution (if built)
+- `qarin_cli-{version}-py3-none-any.whl` - Python wheel package
+- `qarin_cli-{version}.tar.gz` - Source distribution (if built)
 
 ### 3. PyPI Publish (`pypi-publish.yml`)
 
@@ -146,7 +146,7 @@ uv build
 ls -la dist/
 
 # Should contain:
-# - cli_ollama-X.Y.Z-py3-none-any.whl
+# - qarin_cli-X.Y.Z-py3-none-any.whl
 ```
 
 ### PyPI Publishing

@@ -17,20 +17,20 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# .ollamaignore support
+# .qarinignore support
 # ---------------------------------------------------------------------------
 
 _IGNORE_PATTERNS: list[str] | None = None
 
 
 def _load_ignore_patterns() -> list[str]:
-    """Load ignore patterns from .ollamaignore if it exists."""
+    """Load ignore patterns from .qarinignore if it exists."""
     global _IGNORE_PATTERNS
     if _IGNORE_PATTERNS is not None:
         return _IGNORE_PATTERNS
 
     patterns: list[str] = []
-    ignore_file = Path(".ollamaignore")
+    ignore_file = Path(".qarinignore")
     if ignore_file.is_file():
         try:
             for line in ignore_file.read_text(encoding="utf-8").splitlines():
@@ -38,13 +38,13 @@ def _load_ignore_patterns() -> list[str]:
                 if stripped and not stripped.startswith("#"):
                     patterns.append(stripped)
         except OSError as exc:
-            logger.debug("Failed to read .ollamaignore: %s", exc)
+            logger.debug("Failed to read .qarinignore: %s", exc)
     _IGNORE_PATTERNS = patterns
     return patterns
 
 
 def is_path_ignored(path: str | Path) -> bool:
-    """Check whether *path* matches any pattern in ``.ollamaignore``.
+    """Check whether *path* matches any pattern in ``.qarinignore``.
 
     Supports file glob patterns (``*.env``) and trailing-slash directory
     patterns (``secrets/``) which match any path under that directory.
@@ -74,7 +74,7 @@ def is_path_ignored(path: str | Path) -> bool:
 
 
 def clear_ignore_cache() -> None:
-    """Reset the cached ``.ollamaignore`` patterns so they are reloaded on next access."""
+    """Reset the cached ``.qarinignore`` patterns so they are reloaded on next access."""
     global _IGNORE_PATTERNS
     _IGNORE_PATTERNS = None
 
@@ -121,7 +121,7 @@ def tool_file_read(path: str, *, max_lines: int = 500) -> dict[str, Any]:
     or ``error`` on failure.
     """
     if is_path_ignored(path):
-        return {"error": f"Path is ignored by .ollamaignore: {path}"}
+        return {"error": f"Path is ignored by .qarinignore: {path}"}
     target = Path(path)
     if not target.is_file():
         return {"error": f"File not found: {path}"}
@@ -151,7 +151,7 @@ def tool_file_write(path: str, content: str) -> dict[str, Any]:
     Dict with ``path`` and ``bytes_written`` on success, or ``error``.
     """
     if is_path_ignored(path):
-        return {"error": f"Path is ignored by .ollamaignore: {path}"}
+        return {"error": f"Path is ignored by .qarinignore: {path}"}
     target = Path(path)
     try:
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -178,7 +178,7 @@ def tool_file_edit(path: str, old_text: str, new_text: str) -> dict[str, Any]:
     Dict with ``path`` and ``replaced`` flag, or ``error``.
     """
     if is_path_ignored(path):
-        return {"error": f"Path is ignored by .ollamaignore: {path}"}
+        return {"error": f"Path is ignored by .qarinignore: {path}"}
     target = Path(path)
     if not target.is_file():
         return {"error": f"File not found: {path}"}
@@ -215,7 +215,7 @@ def tool_grep_search(
     Dict with ``matches`` list and ``count``, or ``error``.
     """
     if is_path_ignored(path):
-        return {"error": f"Path is ignored by .ollamaignore: {path}"}
+        return {"error": f"Path is ignored by .qarinignore: {path}"}
     try:
         include_args = [f"--include={ext}" for ext in _GREP_INCLUDE_EXTENSIONS]
         proc = subprocess.run(

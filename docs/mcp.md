@@ -1,6 +1,6 @@
 # MCP Integration
 
-Connect Ollama CLI to MCP (Model Context Protocol) servers for extended capabilities.
+Connect Qarin CLI to MCP (Model Context Protocol) servers for extended capabilities.
 
 ---
 
@@ -10,7 +10,7 @@ MCP servers provide additional tools and resources to the CLI via the
 [Model Context Protocol](https://modelcontextprotocol.io/). Each server
 exposes tools that can be discovered and invoked from the interactive REPL.
 
-Ollama CLI ships with four built-in MCP server definitions:
+Qarin CLI ships with four built-in MCP server definitions:
 
 | Server | Description | Auto-enable |
 |--------|-------------|-------------|
@@ -23,7 +23,7 @@ Ollama CLI ships with four built-in MCP server definitions:
 
 ## Configuration
 
-MCP servers are configured in `.ollama/mcp.json`:
+MCP servers are configured in `.qarin/mcp.json`:
 
 ```json
 {
@@ -69,7 +69,7 @@ Requires Docker to be installed. The MCP server runs as a container:
 
 ### Custom MCP Servers
 
-Add any MCP-compatible server to `.ollama/mcp.json`:
+Add any MCP-compatible server to `.qarin/mcp.json`:
 
 ```json
 {
@@ -124,7 +124,7 @@ MCP servers communicate via JSON-RPC over stdin/stdout:
 
 ```
 ┌──────────────┐   JSON-RPC    ┌──────────────┐
-│  Ollama CLI  │ ───stdin───▶  │  MCP Server  │
+│  Qarin CLI  │ ───stdin───▶  │  MCP Server  │
 │  /mcp cmd    │ ◀──stdout──── │  (npx/docker) │
 └──────────────┘               └──────────────┘
 ```
