@@ -4,7 +4,7 @@
 # dependencies = ["python-dotenv"]
 # ///
 """
-Install Ollama and cli-ollama -- GOTCHA Tools layer, ATLAS Architect phase.
+Install Ollama and qarin -- GOTCHA Tools layer, ATLAS Architect phase.
 
 Provides commands for installing Ollama automatically or manually.
 """
@@ -163,7 +163,7 @@ def cmd_check_ollama(_args: argparse.Namespace) -> None:
             console.print("Please reinstall or check your PATH.")
     except (subprocess.TimeoutExpired, FileNotFoundError):
         console.print("[red]Ollama is not installed or not in PATH.[/red]")
-        console.print("Install with: cli-ollama install")
+        console.print("Install with: qarin install")
         console.print("Or manually from: https://ollama.ai")
 
 
@@ -175,14 +175,14 @@ def cmd_install(_args: argparse.Namespace) -> None:
 # Command to add to root.py
 def register_commands(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     """Register install commands with the main parser's subparsers action."""
-    # cli-ollama install
+    # qarin install
     install_parser = subparsers.add_parser("install", help="Install Ollama")
     install_parser.set_defaults(func=cmd_install)
 
-    # cli-ollama install ollama
+    # qarin install ollama
     install_ollama_parser = subparsers.add_parser("install-ollama", help="Install Ollama (legacy alias)")
     install_ollama_parser.set_defaults(func=cmd_install_ollama)
 
-    # cli-ollama check
+    # qarin check
     check_parser = subparsers.add_parser("check", help="Check if Ollama is installed")
     check_parser.set_defaults(func=cmd_check_ollama)

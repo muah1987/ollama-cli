@@ -26,7 +26,7 @@ api_dir = Path(__file__).resolve().parent.parent
 if str(api_dir) not in sys.path:
     sys.path.insert(0, str(api_dir))
 
-from api.config import OllamaCliConfig, get_config, save_config  # noqa: E402
+from api.config import QarinCliConfig, get_config, save_config  # noqa: E402
 
 version = "0.1.0"
 console = Console()
@@ -62,12 +62,12 @@ def handle_config(args: argparse.Namespace) -> None:
 
     if action == "set":
         if not key or value is None:
-            console.print("[red]Error:[/red] Usage: cli-ollama config set <key> <value>")
+            console.print("[red]Error:[/red] Usage: qarin config set <key> <value>")
             sys.exit(1)
         _set_config_key(cfg, key, value)
         return
 
-    # If action looks like a key name (e.g. `cli-ollama config ollama_model`)
+    # If action looks like a key name (e.g. `qarin config ollama_model`)
     if hasattr(cfg, action):
         _get_config_key(cfg, action, use_json)
         return
@@ -76,7 +76,7 @@ def handle_config(args: argparse.Namespace) -> None:
     sys.exit(1)
 
 
-def _show_config(cfg: OllamaCliConfig, use_json: bool) -> None:
+def _show_config(cfg: QarinCliConfig, use_json: bool) -> None:
     """Display the full configuration."""
     data = asdict(cfg)
 
@@ -99,7 +99,7 @@ def _show_config(cfg: OllamaCliConfig, use_json: bool) -> None:
     console.print(table)
 
 
-def _get_config_key(cfg: OllamaCliConfig, key: str, use_json: bool) -> None:
+def _get_config_key(cfg: QarinCliConfig, key: str, use_json: bool) -> None:
     """Display a single configuration value."""
     if not hasattr(cfg, key):
         console.print(f"[red]Error:[/red] Unknown config key: {key}")
@@ -115,7 +115,7 @@ def _get_config_key(cfg: OllamaCliConfig, key: str, use_json: bool) -> None:
         console.print(f"[cyan]{key}[/cyan] = [green]{val}[/green]")
 
 
-def _set_config_key(cfg: OllamaCliConfig, key: str, value: str) -> None:
+def _set_config_key(cfg: QarinCliConfig, key: str, value: str) -> None:
     """Set a configuration value and save it."""
     if not hasattr(cfg, key):
         console.print(f"[red]Error:[/red] Unknown config key: {key}")
@@ -158,15 +158,15 @@ def _set_config_key(cfg: OllamaCliConfig, key: str, value: str) -> None:
 def build_parser() -> argparse.ArgumentParser:
     """Build the config command argument parser."""
     parser = argparse.ArgumentParser(
-        prog="cli-ollama config",
+        prog="qarin config",
         description="Show/set provider configuration",
         epilog="""
 Examples:
-  cli-ollama config                         # Show all config
-  cli-ollama config get                     # Show all config
-  cli-ollama config get ollama_model        # Show specific key
-  cli-ollama config set ollama_model llama3  # Set a value
-  cli-ollama config --json                  # JSON output
+  qarin config                         # Show all config
+  qarin config get                     # Show all config
+  qarin config get ollama_model        # Show specific key
+  qarin config set ollama_model llama3  # Set a value
+  qarin config --json                  # JSON output
         """,
     )
     parser.add_argument("action", nargs="?", type=str, help="Action (get/set) or config key")

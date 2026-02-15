@@ -1,4 +1,4 @@
-"""Pytest configuration and fixtures for cli-ollama tests."""
+"""Pytest configuration and fixtures for qarin tests."""
 
 import sys
 from pathlib import Path
@@ -9,7 +9,7 @@ sys.path.insert(0, str(project_root))
 
 # Also add subpackage directories for tests that use bare imports
 # (e.g. ``from token_counter import TokenCounter``)
-for subdir in ("api", "ollama_cmd", "model", "runner", "server", "skills"):
+for subdir in ("api", "qarin_cmd", "model", "runner", "server", "skills"):
     sys.path.insert(0, str(project_root / subdir))
 
 # pytest configuration can be added here if needed

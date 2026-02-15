@@ -58,9 +58,9 @@ def handle_run(args: argparse.Namespace) -> None:
 
     if not prompt and not args.stdin:
         console.print("[red]Error:[/red] No prompt provided.")
-        console.print("Usage: cli-ollama run <prompt>")
-        console.print("       echo 'prompt' | cli-ollama run --stdin")
-        console.print("       cli-ollama run --model {model} <prompt>")
+        console.print("Usage: qarin run <prompt>")
+        console.print("       echo 'prompt' | qarin run --stdin")
+        console.print("       qarin run --model {model} <prompt>")
         sys.exit(1)
 
     # Read from stdin if --stdin flag is set
@@ -130,14 +130,14 @@ def handle_run(args: argparse.Namespace) -> None:
 def build_parser() -> argparse.ArgumentParser:
     """Build the run command argument parser."""
     parser = argparse.ArgumentParser(
-        prog="cli-ollama run",
+        prog="qarin run",
         description="Generate a response from a prompt",
         epilog="""
 Examples:
-  cli-ollama run "What is the capital of France?"
-  cli-ollama run "Tell me a joke" --model llama3.2
-  echo "Summarize this" | cli-ollama run --stdin
-  cli-ollama run "Code a python function" --temperature 0.7
+  qarin run "What is the capital of France?"
+  qarin run "Tell me a joke" --model llama3.2
+  echo "Summarize this" | qarin run --stdin
+  qarin run "Code a python function" --temperature 0.7
         """,
     )
     parser.add_argument("prompt", nargs="?", type=str, help="The prompt to send")

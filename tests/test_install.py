@@ -35,34 +35,34 @@ def test_ollama_detection_command() -> None:
     assert hook_path.exists(), "install_ollama.py hook should exist"
 
 
-def test_pyproject_only_has_cli_ollama_entry_point() -> None:
-    """Test that pyproject.toml only defines 'cli-ollama', not a bare 'ollama' entry point."""
+def test_pyproject_only_has_qarin_cli_entry_point() -> None:
+    """Test that pyproject.toml only defines 'qarin', not a bare 'ollama' entry point."""
     pyproject_path = PROJECT_ROOT / "pyproject.toml"
     with open(pyproject_path, "rb") as f:
         data = tomllib.load(f)
 
     scripts = data.get("project", {}).get("scripts", {})
-    assert "cli-ollama" in scripts, "pyproject.toml [project.scripts] must contain 'cli-ollama'"
+    assert "qarin" in scripts, "pyproject.toml [project.scripts] must contain 'qarin'"
     assert "ollama" not in scripts, (
-        "pyproject.toml [project.scripts] must NOT contain a bare 'ollama' entry (only 'cli-ollama' should exist)"
+        "pyproject.toml [project.scripts] must NOT contain a bare 'ollama' entry (only 'qarin' should exist)"
     )
 
 
-def test_install_sh_wrapper_is_cli_ollama() -> None:
-    """Test that install.sh creates a 'cli-ollama' wrapper and not a bare 'ollama' wrapper."""
+def test_install_sh_wrapper_is_qarin_cli() -> None:
+    """Test that install.sh creates a 'qarin' wrapper and not a bare 'ollama' wrapper."""
     install_script = PROJECT_ROOT / "install.sh"
     content = install_script.read_text()
 
-    # The WRAPPER variable must point to cli-ollama
-    assert 'WRAPPER="$BIN_DIR/cli-ollama"' in content, "install.sh WRAPPER variable should reference 'cli-ollama'"
+    # The WRAPPER variable must point to qarin
+    assert 'WRAPPER="$BIN_DIR/qarin"' in content, "install.sh WRAPPER variable should reference 'qarin'"
 
     # There should be no line creating a bare 'ollama' wrapper
     for line in content.splitlines():
         stripped = line.strip()
-        # Skip comments and lines that reference 'cli-ollama' (which is fine)
+        # Skip comments and lines that reference 'qarin' (which is fine)
         if stripped.startswith("#"):
             continue
-        if "cli-ollama" in stripped:
+        if "qarin" in stripped:
             continue
         # Check for wrapper creation targeting a bare 'ollama' name
         if stripped.startswith("WRAPPER=") and "/ollama" in stripped:

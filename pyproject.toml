@@ -1,12 +1,12 @@
 [project]
-name = "cli-ollama"
+name = "qarin-cli"
 version = "0.2.0"
-description = "Full-featured AI coding assistant powered by Ollama with multi-provider support, 13 lifecycle hooks, MCP integration, and chain orchestration"
+description = "Full-featured AI coding assistant powered by Ollama with multi-provider support (Ollama, llama.cpp, vLLM, Claude, Gemini, Codex/OpenAI, Hugging Face), 13 lifecycle hooks, MCP integration, tensor parallelism, and chain orchestration"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [{name = "Mohammed Uthmaan Al Hāshimī"}]
-keywords = ["ollama", "ai", "cli", "coding-assistant", "llm", "multi-provider", "mcp"]
+keywords = ["qarin", "ai", "cli", "coding-assistant", "llm", "multi-provider", "mcp", "llama-cpp", "vllm", "tensor-parallelism", "ollama"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
@@ -52,14 +52,14 @@ Issues = "https://github.com/muah1987/cli-ollama/issues"
 Documentation = "https://github.com/muah1987/cli-ollama/tree/main/docs"
 
 [project.scripts]
-cli-ollama = "ollama_cmd.root:main"
+qarin = "qarin_cmd.root:main"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["ollama_cmd", "api", "model", "server", "runner", "skills", "tui"]
+packages = ["qarin_cmd", "api", "model", "server", "runner", "skills", "tui"]
 
 [tool.ruff]
 line-length = 120

@@ -196,16 +196,16 @@ class TestBuild:
         import zipfile
 
         dist_dir = Path(_PROJECT_DIR) / "dist"
-        wheel_candidates = sorted(dist_dir.glob("cli_ollama-*.whl"))
+        wheel_candidates = sorted(dist_dir.glob("qarin_cli-*.whl"))
         if not wheel_candidates:
             subprocess.run(["uv", "build", "--wheel"], cwd=_PROJECT_DIR, capture_output=True)
-            wheel_candidates = sorted(dist_dir.glob("cli_ollama-*.whl"))
+            wheel_candidates = sorted(dist_dir.glob("qarin_cli-*.whl"))
         assert wheel_candidates, "Wheel file not found after build"
         whl_path = wheel_candidates[-1]
 
         with zipfile.ZipFile(whl_path) as zf:
             names = zf.namelist()
-        for pkg in ("ollama_cmd/root.py", "api/ollama_client.py", "model/session.py", "runner/context_manager.py"):
+        for pkg in ("qarin_cmd/root.py", "api/ollama_client.py", "model/session.py", "runner/context_manager.py"):
             assert pkg in names, f"{pkg} missing from wheel"
 
 
@@ -495,7 +495,7 @@ class TestInteractiveCommands:
             f.write("import sys, asyncio\n")
             f.write(f"sys.path.insert(0, {_PROJECT_DIR!r})\n")
             f.write("from model.session import Session\n")
-            f.write("from ollama_cmd.interactive import InteractiveMode\n\n")
+            f.write("from qarin_cmd.interactive import InteractiveMode\n\n")
             f.write(script)
             tmp = f.name
 
@@ -533,7 +533,7 @@ class TestInteractiveCommands:
         out = self._run_script(
             "import os\n"
             "# Enable bypass mode for autonomous operation\n"
-            "os.environ['OLLAMA_CLI_BYPASS_PERMISSIONS'] = 'true'\n"
+            "os.environ['QARIN_CLI_BYPASS_PERMISSIONS'] = 'true'\n"
             "async def t():\n"
             "  s = Session(model='llama3.2', provider='ollama'); await s.start()\n"
             "  r = InteractiveMode(s); r._cmd_model('codellama')\n"
@@ -870,7 +870,7 @@ class TestHooksIntegration:
                 "-c",
                 (
                     "import asyncio; import sys; sys.path.insert(0, '.');"
-                    "from model.session import Session; from ollama_cmd.interactive import InteractiveMode;"
+                    "from model.session import Session; from qarin_cmd.interactive import InteractiveMode;"
                     "s = Session(model='test', provider='ollama');"
                     "asyncio.get_event_loop().run_until_complete(s.start());"
                     "r = InteractiveMode(s);"
@@ -893,7 +893,7 @@ class TestHooksIntegration:
                 "-c",
                 (
                     "import asyncio; import sys; sys.path.insert(0, '.');"
-                    "from model.session import Session; from ollama_cmd.interactive import InteractiveMode;"
+                    "from model.session import Session; from qarin_cmd.interactive import InteractiveMode;"
                     "s = Session(model='test', provider='ollama');"
                     "asyncio.get_event_loop().run_until_complete(s.start());"
                     "r = InteractiveMode(s);"
@@ -915,7 +915,7 @@ class TestHooksIntegration:
                 "-c",
                 (
                     "import asyncio; import sys; sys.path.insert(0, '.');"
-                    "from model.session import Session; from ollama_cmd.interactive import InteractiveMode;"
+                    "from model.session import Session; from qarin_cmd.interactive import InteractiveMode;"
                     "s = Session(model='test', provider='ollama');"
                     "asyncio.get_event_loop().run_until_complete(s.start());"
                     "r = InteractiveMode(s);"
@@ -951,7 +951,7 @@ class TestCLIEntrypoint:
             [
                 sys.executable,
                 "-c",
-                "from ollama_cmd.root import build_parser; build_parser().parse_args(['--version'])",
+                "from qarin_cmd.root import build_parser; build_parser().parse_args(['--version'])",
             ],
             capture_output=True,
             text=True,
@@ -963,19 +963,19 @@ class TestCLIEntrypoint:
 
     def test_cli_help(self) -> None:
         result = subprocess.run(
-            [sys.executable, "-c", "from ollama_cmd.root import build_parser; build_parser().parse_args(['--help'])"],
+            [sys.executable, "-c", "from qarin_cmd.root import build_parser; build_parser().parse_args(['--help'])"],
             capture_output=True,
             text=True,
             cwd=_PROJECT_DIR,
         )
-        assert "cli-ollama" in result.stdout
+        assert "qarin" in result.stdout
 
     def test_cli_parser_all_subcommands(self) -> None:
         result = subprocess.run(
             [
                 sys.executable,
                 "-c",
-                "from ollama_cmd.root import build_parser; p = build_parser(); print(list(p._subparsers._group_actions[0].choices.keys()))",
+                "from qarin_cmd.root import build_parser; p = build_parser(); print(list(p._subparsers._group_actions[0].choices.keys()))",
             ],
             capture_output=True,
             text=True,
@@ -986,7 +986,7 @@ class TestCLIEntrypoint:
 
     def test_cli_command_map_complete(self) -> None:
         result = subprocess.run(
-            [sys.executable, "-c", "from ollama_cmd.root import COMMAND_MAP; print(list(COMMAND_MAP.keys()))"],
+            [sys.executable, "-c", "from qarin_cmd.root import COMMAND_MAP; print(list(COMMAND_MAP.keys()))"],
             capture_output=True,
             text=True,
             cwd=_PROJECT_DIR,
@@ -1013,9 +1013,9 @@ class TestConfig:
         assert 0 < cfg.compact_threshold <= 1.0
 
     def test_config_has_all_fields(self) -> None:
-        from api.config import OllamaCliConfig
+        from api.config import QarinCliConfig
 
-        cfg = OllamaCliConfig()
+        cfg = QarinCliConfig()
         assert hasattr(cfg, "provider")
         assert hasattr(cfg, "ollama_model")
         assert hasattr(cfg, "context_length")
@@ -1094,10 +1094,10 @@ class TestOllamaAPIKeySupport:
         assert "authorization" not in received_headers
 
     def test_config_has_ollama_api_key(self) -> None:
-        """OllamaCliConfig should have ollama_api_key field."""
-        from api.config import OllamaCliConfig
+        """QarinCliConfig should have ollama_api_key field."""
+        from api.config import QarinCliConfig
 
-        cfg = OllamaCliConfig()
+        cfg = QarinCliConfig()
         assert hasattr(cfg, "ollama_api_key")
         assert cfg.ollama_api_key == ""
 
@@ -1111,9 +1111,9 @@ class TestOllamaAPIKeySupport:
 
     def test_config_excludes_api_key_from_save(self, tmp_path) -> None:
         """ollama_api_key should NOT be persisted to config.json."""
-        from api.config import OllamaCliConfig, save_config
+        from api.config import QarinCliConfig, save_config
 
-        cfg = OllamaCliConfig(ollama_api_key="secret-key")
+        cfg = QarinCliConfig(ollama_api_key="secret-key")
         path = save_config(cfg, tmp_path / "config.json")
         saved = json.loads(Path(path).read_text())
         assert "ollama_api_key" not in saved

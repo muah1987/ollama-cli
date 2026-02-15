@@ -4,7 +4,7 @@
 # dependencies = ["python-dotenv"]
 # ///
 """
-Configuration management for cli-ollama.
+Configuration management for qarin.
 
 Loads settings from environment variables (via .env) and overlays
 from .ollama/config.json if it exists. Provides a singleton accessor.
@@ -25,7 +25,7 @@ from dotenv import load_dotenv
 
 
 @dataclass
-class OllamaCliConfig:
+class QarinCliConfig:
     """Central configuration for the CLI."""
 
     ollama_host: str = "http://localhost:11434"
@@ -42,6 +42,16 @@ class OllamaCliConfig:
     openai_api_key: str = ""
     hf_token: str = ""
     gh_token: str = ""
+    llamacpp_host: str = "http://localhost:8080"
+    llamacpp_api_key: str = ""
+    llamacpp_model: str = "default"
+    vllm_host: str = "http://localhost:8000"
+    vllm_api_key: str = ""
+    vllm_model: str = "default"
+    vllm_tensor_parallel_size: int = 1
+    other_provider_host: str = ""
+    other_provider_api_key: str = ""
+    other_provider_model: str = "default"
     search_api_key: str = ""
     search_api_provider: str = "tavily"
     hooks_enabled: bool = True
@@ -100,7 +110,7 @@ def _float_from_env(value: str | None, default: float) -> float:
 # ---------------------------------------------------------------------------
 
 
-def load_config(env_path: str | Path | None = None, config_json_path: str | Path | None = None) -> OllamaCliConfig:
+def load_config(env_path: str | Path | None = None, config_json_path: str | Path | None = None) -> QarinCliConfig:
     """Load configuration from environment variables, then overlay from config.json.
 
     Parameters
@@ -112,7 +122,7 @@ def load_config(env_path: str | Path | None = None, config_json_path: str | Path
     """
     # Load .env
     if env_path is None:
-        # Try cli-ollama directory first, then cwd
+        # Try qarin directory first, then cwd
         candidates = [
             Path(__file__).resolve().parent.parent / ".env",
             Path.cwd() / ".env",
@@ -125,43 +135,55 @@ def load_config(env_path: str | Path | None = None, config_json_path: str | Path
         load_dotenv(env_path)
 
     # Build config from env vars
-    cfg = OllamaCliConfig(
-        ollama_host=os.getenv("OLLAMA_HOST", OllamaCliConfig.ollama_host),
-        ollama_model=os.getenv("OLLAMA_MODEL", OllamaCliConfig.ollama_model),
-        provider=os.getenv("OLLAMA_CLI_PROVIDER", OllamaCliConfig.provider),
-        context_length=_int_from_env(os.getenv("OLLAMA_CONTEXT_LENGTH"), OllamaCliConfig.context_length),
-        auto_compact=_bool_from_env(os.getenv("AUTO_COMPACT"), OllamaCliConfig.auto_compact),
-        compact_threshold=_float_from_env(os.getenv("COMPACT_THRESHOLD"), OllamaCliConfig.compact_threshold),
-        cloud_host=os.getenv("OLLAMA_CLOUD_HOST", OllamaCliConfig.cloud_host),
-        cloud_api_key=os.getenv("OLLAMA_CLOUD_API_KEY", OllamaCliConfig.cloud_api_key),
-        ollama_api_key=os.getenv("OLLAMA_API_KEY", OllamaCliConfig.ollama_api_key),
-        anthropic_api_key=os.getenv("ANTHROPIC_API_KEY", OllamaCliConfig.anthropic_api_key),
-        gemini_api_key=os.getenv("GEMINI_API_KEY", OllamaCliConfig.gemini_api_key),
-        openai_api_key=os.getenv("OPENAI_API_KEY", OllamaCliConfig.openai_api_key),
-        hf_token=os.getenv("HF_TOKEN", OllamaCliConfig.hf_token),
-        gh_token=os.getenv("GH_TOKEN", OllamaCliConfig.gh_token),
-        search_api_key=os.getenv("SEARCH_API_KEY", OllamaCliConfig.search_api_key),
-        search_api_provider=os.getenv("SEARCH_API_PROVIDER", OllamaCliConfig.search_api_provider),
-        hooks_enabled=_bool_from_env(os.getenv("HOOKS_ENABLED"), OllamaCliConfig.hooks_enabled),
-        intent_enabled=_bool_from_env(os.getenv("OLLAMA_CLI_INTENT_ENABLED"), OllamaCliConfig.intent_enabled),
+    cfg = QarinCliConfig(
+        ollama_host=os.getenv("OLLAMA_HOST", QarinCliConfig.ollama_host),
+        ollama_model=os.getenv("OLLAMA_MODEL", QarinCliConfig.ollama_model),
+        provider=os.getenv("QARIN_CLI_PROVIDER", QarinCliConfig.provider),
+        context_length=_int_from_env(os.getenv("OLLAMA_CONTEXT_LENGTH"), QarinCliConfig.context_length),
+        auto_compact=_bool_from_env(os.getenv("AUTO_COMPACT"), QarinCliConfig.auto_compact),
+        compact_threshold=_float_from_env(os.getenv("COMPACT_THRESHOLD"), QarinCliConfig.compact_threshold),
+        cloud_host=os.getenv("OLLAMA_CLOUD_HOST", QarinCliConfig.cloud_host),
+        cloud_api_key=os.getenv("OLLAMA_CLOUD_API_KEY", QarinCliConfig.cloud_api_key),
+        ollama_api_key=os.getenv("OLLAMA_API_KEY", QarinCliConfig.ollama_api_key),
+        anthropic_api_key=os.getenv("ANTHROPIC_API_KEY", QarinCliConfig.anthropic_api_key),
+        gemini_api_key=os.getenv("GEMINI_API_KEY", QarinCliConfig.gemini_api_key),
+        openai_api_key=os.getenv("OPENAI_API_KEY", QarinCliConfig.openai_api_key),
+        hf_token=os.getenv("HF_TOKEN", QarinCliConfig.hf_token),
+        gh_token=os.getenv("GH_TOKEN", QarinCliConfig.gh_token),
+        llamacpp_host=os.getenv("LLAMACPP_HOST", QarinCliConfig.llamacpp_host),
+        llamacpp_api_key=os.getenv("LLAMACPP_API_KEY", QarinCliConfig.llamacpp_api_key),
+        llamacpp_model=os.getenv("LLAMACPP_MODEL", QarinCliConfig.llamacpp_model),
+        vllm_host=os.getenv("VLLM_HOST", QarinCliConfig.vllm_host),
+        vllm_api_key=os.getenv("VLLM_API_KEY", QarinCliConfig.vllm_api_key),
+        vllm_model=os.getenv("VLLM_MODEL", QarinCliConfig.vllm_model),
+        vllm_tensor_parallel_size=_int_from_env(
+            os.getenv("VLLM_TENSOR_PARALLEL_SIZE"), QarinCliConfig.vllm_tensor_parallel_size
+        ),
+        other_provider_host=os.getenv("OTHER_PROVIDER_HOST", QarinCliConfig.other_provider_host),
+        other_provider_api_key=os.getenv("OTHER_PROVIDER_API_KEY", QarinCliConfig.other_provider_api_key),
+        other_provider_model=os.getenv("OTHER_PROVIDER_MODEL", QarinCliConfig.other_provider_model),
+        search_api_key=os.getenv("SEARCH_API_KEY", QarinCliConfig.search_api_key),
+        search_api_provider=os.getenv("SEARCH_API_PROVIDER", QarinCliConfig.search_api_provider),
+        hooks_enabled=_bool_from_env(os.getenv("HOOKS_ENABLED"), QarinCliConfig.hooks_enabled),
+        intent_enabled=_bool_from_env(os.getenv("QARIN_CLI_INTENT_ENABLED"), QarinCliConfig.intent_enabled),
         intent_confidence_threshold=_float_from_env(
-            os.getenv("OLLAMA_CLI_INTENT_THRESHOLD"), OllamaCliConfig.intent_confidence_threshold
+            os.getenv("QARIN_CLI_INTENT_THRESHOLD"), QarinCliConfig.intent_confidence_threshold
         ),
         intent_llm_fallback=_bool_from_env(
-            os.getenv("OLLAMA_CLI_INTENT_LLM_FALLBACK"), OllamaCliConfig.intent_llm_fallback
+            os.getenv("QARIN_CLI_INTENT_LLM_FALLBACK"), QarinCliConfig.intent_llm_fallback
         ),
         intent_show_detection=_bool_from_env(
-            os.getenv("OLLAMA_CLI_INTENT_SHOW"), OllamaCliConfig.intent_show_detection
+            os.getenv("QARIN_CLI_INTENT_SHOW"), QarinCliConfig.intent_show_detection
         ),
-        intent_default_agent_type=os.getenv("OLLAMA_CLI_INTENT_DEFAULT_AGENT"),
-        tui_theme=os.getenv("OLLAMA_CLI_TUI_THEME", OllamaCliConfig.tui_theme),
-        tui_sidebar_visible=_bool_from_env(os.getenv("OLLAMA_CLI_TUI_SIDEBAR"), OllamaCliConfig.tui_sidebar_visible),
-        tui_show_timestamps=_bool_from_env(os.getenv("OLLAMA_CLI_TUI_TIMESTAMPS"), OllamaCliConfig.tui_show_timestamps),
-        tui_auto_scroll=_bool_from_env(os.getenv("OLLAMA_CLI_TUI_AUTOSCROLL"), OllamaCliConfig.tui_auto_scroll),
-        planning_mode=_bool_from_env(os.getenv("OLLAMA_CLI_PLANNING_MODE"), OllamaCliConfig.planning_mode),
-        work_mode=_bool_from_env(os.getenv("OLLAMA_CLI_WORK_MODE"), OllamaCliConfig.work_mode),
+        intent_default_agent_type=os.getenv("QARIN_CLI_INTENT_DEFAULT_AGENT"),
+        tui_theme=os.getenv("QARIN_CLI_TUI_THEME", QarinCliConfig.tui_theme),
+        tui_sidebar_visible=_bool_from_env(os.getenv("QARIN_CLI_TUI_SIDEBAR"), QarinCliConfig.tui_sidebar_visible),
+        tui_show_timestamps=_bool_from_env(os.getenv("QARIN_CLI_TUI_TIMESTAMPS"), QarinCliConfig.tui_show_timestamps),
+        tui_auto_scroll=_bool_from_env(os.getenv("QARIN_CLI_TUI_AUTOSCROLL"), QarinCliConfig.tui_auto_scroll),
+        planning_mode=_bool_from_env(os.getenv("QARIN_CLI_PLANNING_MODE"), QarinCliConfig.planning_mode),
+        work_mode=_bool_from_env(os.getenv("QARIN_CLI_WORK_MODE"), QarinCliConfig.work_mode),
         bypass_permissions=_bool_from_env(
-            os.getenv("OLLAMA_CLI_BYPASS_PERMISSIONS"), OllamaCliConfig.bypass_permissions
+            os.getenv("QARIN_CLI_BYPASS_PERMISSIONS"), QarinCliConfig.bypass_permissions
         ),
     )
 
@@ -219,18 +241,18 @@ def load_config(env_path: str | Path | None = None, config_json_path: str | Path
             intent_cfg = settings_data.get("intent_classifier")
             if isinstance(intent_cfg, dict):
                 # Only apply settings.json value when the env var was NOT set
-                if os.getenv("OLLAMA_CLI_INTENT_ENABLED") is None and "enabled" in intent_cfg:
+                if os.getenv("QARIN_CLI_INTENT_ENABLED") is None and "enabled" in intent_cfg:
                     cfg.intent_enabled = bool(intent_cfg["enabled"])
-                if os.getenv("OLLAMA_CLI_INTENT_THRESHOLD") is None and "confidence_threshold" in intent_cfg:
+                if os.getenv("QARIN_CLI_INTENT_THRESHOLD") is None and "confidence_threshold" in intent_cfg:
                     try:
                         cfg.intent_confidence_threshold = float(intent_cfg["confidence_threshold"])
                     except (TypeError, ValueError):
                         pass
-                if os.getenv("OLLAMA_CLI_INTENT_LLM_FALLBACK") is None and "llm_fallback" in intent_cfg:
+                if os.getenv("QARIN_CLI_INTENT_LLM_FALLBACK") is None and "llm_fallback" in intent_cfg:
                     cfg.intent_llm_fallback = bool(intent_cfg["llm_fallback"])
-                if os.getenv("OLLAMA_CLI_INTENT_SHOW") is None and "show_intent" in intent_cfg:
+                if os.getenv("QARIN_CLI_INTENT_SHOW") is None and "show_intent" in intent_cfg:
                     cfg.intent_show_detection = bool(intent_cfg["show_intent"])
-                if os.getenv("OLLAMA_CLI_INTENT_DEFAULT_AGENT") is None and "default_agent_type" in intent_cfg:
+                if os.getenv("QARIN_CLI_INTENT_DEFAULT_AGENT") is None and "default_agent_type" in intent_cfg:
                     val = intent_cfg["default_agent_type"]
                     cfg.intent_default_agent_type = str(val) if val is not None else None
 
@@ -238,13 +260,13 @@ def load_config(env_path: str | Path | None = None, config_json_path: str | Path
             # but env vars (already loaded above) take precedence.
             tui_cfg = settings_data.get("tui")
             if isinstance(tui_cfg, dict):
-                if os.getenv("OLLAMA_CLI_TUI_THEME") is None and "theme" in tui_cfg:
+                if os.getenv("QARIN_CLI_TUI_THEME") is None and "theme" in tui_cfg:
                     cfg.tui_theme = str(tui_cfg["theme"])
-                if os.getenv("OLLAMA_CLI_TUI_SIDEBAR") is None and "sidebar_visible" in tui_cfg:
+                if os.getenv("QARIN_CLI_TUI_SIDEBAR") is None and "sidebar_visible" in tui_cfg:
                     cfg.tui_sidebar_visible = bool(tui_cfg["sidebar_visible"])
-                if os.getenv("OLLAMA_CLI_TUI_TIMESTAMPS") is None and "show_timestamps" in tui_cfg:
+                if os.getenv("QARIN_CLI_TUI_TIMESTAMPS") is None and "show_timestamps" in tui_cfg:
                     cfg.tui_show_timestamps = bool(tui_cfg["show_timestamps"])
-                if os.getenv("OLLAMA_CLI_TUI_AUTOSCROLL") is None and "auto_scroll" in tui_cfg:
+                if os.getenv("QARIN_CLI_TUI_AUTOSCROLL") is None and "auto_scroll" in tui_cfg:
                     cfg.tui_auto_scroll = bool(tui_cfg["auto_scroll"])
         except (json.JSONDecodeError, OSError):
             pass
@@ -252,7 +274,7 @@ def load_config(env_path: str | Path | None = None, config_json_path: str | Path
     return cfg
 
 
-def save_config(config: OllamaCliConfig, path: str | Path | None = None) -> Path:
+def save_config(config: QarinCliConfig, path: str | Path | None = None) -> Path:
     """Save the config to a JSON file.
 
     Parameters
@@ -305,10 +327,10 @@ def save_config(config: OllamaCliConfig, path: str | Path | None = None) -> Path
 # Singleton accessor
 # ---------------------------------------------------------------------------
 
-_config_instance: OllamaCliConfig | None = None
+_config_instance: QarinCliConfig | None = None
 
 
-def get_config() -> OllamaCliConfig:
+def get_config() -> QarinCliConfig:
     """Return the singleton config, loading it on first access."""
     global _config_instance
     if _config_instance is None:

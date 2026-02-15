@@ -6,7 +6,6 @@ import pytest
 
 from api.errors import (
     ConfigurationError,
-    OllamaCliError,
     OllamaConnectionError,
     OllamaError,
     OllamaModelNotFoundError,
@@ -15,6 +14,7 @@ from api.errors import (
     ProviderRateLimitError,
     ProviderResponseError,
     ProviderUnavailableError,
+    QarinCliError,
     SessionError,
 )
 
@@ -24,7 +24,7 @@ from api.errors import (
 
 
 class TestErrorHierarchy:
-    """Verify that all errors inherit from OllamaCliError."""
+    """Verify that all errors inherit from QarinCliError."""
 
     @pytest.mark.parametrize(
         "exc_class",
@@ -41,8 +41,8 @@ class TestErrorHierarchy:
             SessionError,
         ],
     )
-    def test_subclass_of_root(self, exc_class: type[OllamaCliError]) -> None:
-        assert issubclass(exc_class, OllamaCliError)
+    def test_subclass_of_root(self, exc_class: type[QarinCliError]) -> None:
+        assert issubclass(exc_class, QarinCliError)
 
     def test_provider_subtypes(self) -> None:
         assert issubclass(ProviderUnavailableError, ProviderError)
@@ -55,7 +55,7 @@ class TestErrorHierarchy:
         assert issubclass(OllamaModelNotFoundError, OllamaError)
 
     def test_root_is_exception(self) -> None:
-        assert issubclass(OllamaCliError, Exception)
+        assert issubclass(QarinCliError, Exception)
 
 
 # ---------------------------------------------------------------------------
@@ -67,7 +67,7 @@ class TestUserMessage:
     """Verify user_message property and hint support."""
 
     def test_basic_message(self) -> None:
-        err = OllamaCliError("something broke")
+        err = QarinCliError("something broke")
         assert err.user_message == "something broke"
 
     def test_message_with_hint(self) -> None:
@@ -94,22 +94,22 @@ class TestUserMessage:
 
 
 class TestCatchAll:
-    """Verify that except OllamaCliError catches all subtypes."""
+    """Verify that except QarinCliError catches all subtypes."""
 
     def test_catch_provider_error(self) -> None:
-        with pytest.raises(OllamaCliError):
+        with pytest.raises(QarinCliError):
             raise ProviderUnavailableError("down")
 
     def test_catch_ollama_error(self) -> None:
-        with pytest.raises(OllamaCliError):
+        with pytest.raises(QarinCliError):
             raise OllamaConnectionError("unreachable")
 
     def test_catch_config_error(self) -> None:
-        with pytest.raises(OllamaCliError):
+        with pytest.raises(QarinCliError):
             raise ConfigurationError("missing key")
 
     def test_catch_session_error(self) -> None:
-        with pytest.raises(OllamaCliError):
+        with pytest.raises(QarinCliError):
             raise SessionError("load failed")
 
 
@@ -124,7 +124,6 @@ class TestReexport:
     def test_import_from_api(self) -> None:
         from api import (
             ConfigurationError,
-            OllamaCliError,
             OllamaConnectionError,
             OllamaError,
             OllamaModelNotFoundError,
@@ -133,11 +132,12 @@ class TestReexport:
             ProviderRateLimitError,
             ProviderResponseError,
             ProviderUnavailableError,
+            QarinCliError,
             SessionError,
         )
 
         # Sanity: they are the same classes
-        assert OllamaCliError is not None
+        assert QarinCliError is not None
         assert ProviderError is not None
         assert OllamaError is not None
         assert ConfigurationError is not None

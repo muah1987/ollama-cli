@@ -198,7 +198,7 @@ ProviderRouter.route(task_type, messages, agent_type, model, provider)
 All exceptions inherit from a single root for flexible catch handling:
 
 ```
-OllamaCliError (root)
+CliOllamaError (root)
 ├── ProviderError
 │   ├── ProviderUnavailableError
 │   ├── ProviderAuthError

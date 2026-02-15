@@ -45,7 +45,7 @@ def cmd_accelerate_check(_args: argparse.Namespace) -> None:
     # Check EXO (Distributed)
     console.print("\n[bold]Distributed Execution (EXO):[/bold]")
     console.print("  [green]EXO support available[/green]")
-    console.print("  Use 'cli-ollama exo discover' to find cluster nodes")
+    console.print("  Use 'qarin exo discover' to find cluster nodes")
 
     # Check RDMA
     console.print("\n[bold]RDMA Acceleration:[/bold]")
@@ -60,7 +60,7 @@ def cmd_accelerate_check(_args: argparse.Namespace) -> None:
         )
         if result.returncode == 0 and result.stdout.strip():
             console.print("  [green]RDMA tools available[/green]")
-            console.print("  Use 'cli-ollama rdma detect' to list devices")
+            console.print("  Use 'qarin rdma detect' to list devices")
         else:
             console.print("  [yellow]No RDMA devices detected[/yellow]")
     except FileNotFoundError:
@@ -86,10 +86,10 @@ def cmd_accelerate_enable(args: argparse.Namespace) -> None:
             console.print(f"[green]RDMA acceleration enabled for {device}![/green]")
         else:
             console.print("[green]RDMA acceleration enabled![/green]")
-            console.print("Use 'cli-ollama rdma connect <device>' to connect")
+            console.print("Use 'qarin rdma connect <device>' to connect")
     elif method == "exo":
         console.print("[green]EXO distributed execution enabled![/green]")
-        console.print("Use 'cli-ollama exo discover' to find cluster nodes")
+        console.print("Use 'qarin exo discover' to find cluster nodes")
     else:
         console.print(f"[red]Unknown acceleration method: {method}[/red]")
         console.print("Valid methods: mlx, rdma, exo")
@@ -117,10 +117,10 @@ def cmd_accelerate(_args: argparse.Namespace) -> None:
     console.print("  exo    - Distributed execution")
     console.print("")
     console.print(" Examples:")
-    console.print("  cli-ollama accelerate check")
-    console.print("  cli-ollama accelerate enable mlx")
-    console.print("  cli-ollama accelerate enable rdma")
-    console.print("  cli-ollama accelerate disable")
+    console.print("  qarin accelerate check")
+    console.print("  qarin accelerate enable mlx")
+    console.print("  qarin accelerate enable rdma")
+    console.print("  qarin accelerate disable")
 
 
 # Command registration
@@ -128,21 +128,21 @@ def register_commands(parser: argparse._SubParsersAction) -> None:
     """Register acceleration commands with the main parser."""
     subparsers = parser.add_subparsers(help="Acceleration management")
 
-    # cli-ollama accelerate
+    # qarin accelerate
     accel_parser = subparsers.add_parser("accelerate", help="Acceleration management")
     accel_parser.set_defaults(func=cmd_accelerate)
 
-    # cli-ollama accelerate check
+    # qarin accelerate check
     check_parser = subparsers.add_parser("check", help="Check available acceleration methods")
     check_parser.set_defaults(func=cmd_accelerate_check)
 
-    # cli-ollama accelerate enable <method>
+    # qarin accelerate enable <method>
     enable_parser = subparsers.add_parser("enable", help="Enable acceleration method")
     enable_parser.add_argument("method", choices=["mlx", "rdma", "exo"], help="Acceleration method")
     enable_parser.add_argument("-d", "--device", help="Device name for RDMA")
     enable_parser.set_defaults(func=cmd_accelerate_enable)
 
-    # cli-ollama accelerate disable <method>
+    # qarin accelerate disable <method>
     disable_parser = subparsers.add_parser("disable", help="Disable acceleration method")
     disable_parser.add_argument("method", choices=["mlx", "rdma", "exo"], help="Acceleration method")
     disable_parser.set_defaults(func=cmd_accelerate_disable)

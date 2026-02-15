@@ -212,7 +212,7 @@ class CommandProcessor:
     def _cmd_help(self, arg: str) -> CommandResult:
         """Display the full help message."""
         lines: list[str] = [
-            "cli-ollama Help",
+            "qarin Help",
             "\u2550" * 50,
             "",
             "Usage:",
@@ -1428,7 +1428,7 @@ class CommandProcessor:
     # -- project commands ----------------------------------------------------
 
     def _cmd_init(self, arg: str) -> CommandResult:
-        """Initialize the current folder as a cli-ollama project."""
+        """Initialize the current folder as a qarin project."""
         from pathlib import Path
 
         project_memory = Path("OLLAMA.md")
@@ -1443,7 +1443,7 @@ class CommandProcessor:
                 f"# {project_name}\n\n"
                 "## Project Notes\n\n"
                 "<!-- Add project-specific context, conventions, and notes below. -->\n"
-                "<!-- cli-ollama reads this file to maintain project memory.       -->\n"
+                "<!-- qarin reads this file to maintain project memory.       -->\n"
             )
             try:
                 project_memory.write_text(template, encoding="utf-8")

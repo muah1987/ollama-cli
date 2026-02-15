@@ -1,4 +1,4 @@
-"""First-time interactive onboarding wizard for cli-ollama.
+"""First-time interactive onboarding wizard for qarin.
 
 Runs once after installation to help the user choose a provider, enter API
 keys (if needed), and pick a default model.  Saves the result to
@@ -23,7 +23,7 @@ try:
 except ImportError:
     HAS_BYPASS = False
 
-from api.config import OllamaCliConfig, get_config, save_config
+from api.config import QarinCliConfig, get_config, save_config
 
 console = Console()
 
@@ -80,17 +80,17 @@ def needs_onboarding() -> bool:
     return not cfg.onboarding_complete
 
 
-def run_onboarding() -> OllamaCliConfig:
+def run_onboarding() -> QarinCliConfig:
     """Run the interactive first-time setup wizard.
 
-    Returns the updated :class:`OllamaCliConfig` (already persisted).
+    Returns the updated :class:`QarinCliConfig` (already persisted).
     """
     cfg = get_config()
 
     console.print()
     console.print(
         Panel(
-            "[bold cyan]Welcome to cli-ollama![/bold cyan]\n\n"
+            "[bold cyan]Welcome to qarin![/bold cyan]\n\n"
             "Let's get you set up. This wizard runs only once.\n"
             "You can change these settings later with [bold]/config[/bold] "
             "or by editing [bold].ollama/config.json[/bold].",
@@ -228,7 +228,7 @@ def run_onboarding() -> OllamaCliConfig:
             f"  Model    : [cyan]{cfg.ollama_model}[/cyan]\n"
             f"  Config   : [dim]{saved_path}[/dim]\n\n"
             "Type [bold]/help[/bold] inside the REPL for available commands.\n"
-            "Run [bold]cli-ollama config set <key> <value>[/bold] to change settings later.",
+            "Run [bold]qarin config set <key> <value>[/bold] to change settings later.",
             title="Ready",
             border_style="green",
         )

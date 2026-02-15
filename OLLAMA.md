@@ -165,3 +165,83 @@ cli-ollama/
 - Duration: 3s
 - Messages: 1
 - Tokens: 1,370 (prompt: 1,362, completion: 8)
+
+
+<!-- session:b9f947d4bc5b -->
+### Session b9f947d4bc5b
+- Model: llama3.2 (ollama)
+- Duration: 3s
+- Messages: 1
+- Tokens: 1,410 (prompt: 1,402, completion: 8)
+
+
+<!-- session:c3682ca8747c -->
+### Session c3682ca8747c
+- Model: llama3.2 (ollama)
+- Duration: 3s
+- Messages: 1
+- Tokens: 1,450 (prompt: 1,442, completion: 8)
+
+
+<!-- session:c62a13f4f2c3 -->
+### Session c62a13f4f2c3
+- Model: llama3.2 (ollama)
+- Duration: 3s
+- Messages: 1
+- Tokens: 1,490 (prompt: 1,482, completion: 8)
+
+
+<!-- session:8dadafdf517f -->
+### Session 8dadafdf517f
+- Model: llama3.2 (ollama)
+- Duration: 3s
+- Messages: 1
+- Tokens: 1,530 (prompt: 1,522, completion: 8)
+
+
+<!-- session:e5233f02387d -->
+### Session e5233f02387d
+- Model: llama3.2 (ollama)
+- Duration: 3s
+- Messages: 1
+- Tokens: 1,570 (prompt: 1,562, completion: 8)
+
+
+<!-- session:cfa0536c7456 -->
+### Session cfa0536c7456
+- Model: llama3.2 (ollama)
+- Duration: 3s
+- Messages: 1
+- Tokens: 1,610 (prompt: 1,602, completion: 8)
+
+
+<!-- session:9d860f7d5492 -->
+### Session 9d860f7d5492
+- Model: llama3.2 (ollama)
+- Duration: 3s
+- Messages: 1
+- Tokens: 1,649 (prompt: 1,641, completion: 8)
+
+
+<!-- session:fea6415ed241 -->
+### Session fea6415ed241
+- Model: llama3.2 (ollama)
+- Duration: 3s
+- Messages: 1
+- Tokens: 1,689 (prompt: 1,681, completion: 8)
+
+
+<!-- session:fcfa2a654f60 -->
+### Session fcfa2a654f60
+- Model: llama3.2 (ollama)
+- Duration: 3s
+- Messages: 1
+- Tokens: 1,729 (prompt: 1,721, completion: 8)
+
+
+<!-- session:7020e6c5b0a5 -->
+### Session 7020e6c5b0a5
+- Model: llama3.2 (ollama)
+- Duration: 3s
+- Messages: 1
+- Tokens: 1,769 (prompt: 1,761, completion: 8)

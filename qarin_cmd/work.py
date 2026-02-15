@@ -9,7 +9,7 @@
 # ///
 
 """
-Work mode module for cli-ollama.
+Work mode module for qarin.
 
 This module provides work-specific functionality that focuses on execution efficiency
 and implements work-oriented behaviors.

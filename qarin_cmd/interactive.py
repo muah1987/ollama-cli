@@ -195,51 +195,51 @@ _OLLAMA_LOGO = (
 
 # Funny llama-themed spinner frames for "thinking" animation
 _LLAMA_SPINNER_FRAMES = [
-    "🦙 Thinking .  ",
-    "🦙 Thinking .. ",
-    "🦙 Thinking ...",
-    "🦙 Chewing on that .  ",
-    "🦙 Chewing on that .. ",
-    "🦙 Chewing on that ...",
-    "🦙 Ruminating .  ",
-    "🦙 Ruminating .. ",
-    "🦙 Ruminating ...",
-    "🦙 Spitting ideas .  ",
-    "🦙 Spitting ideas .. ",
-    "🦙 Spitting ideas ...",
-    "🦙 Grazing for answers .  ",
-    "🦙 Grazing for answers .. ",
-    "🦙 Grazing for answers ...",
-    "🦙 Trotting through context .  ",
-    "🦙 Trotting through context .. ",
-    "🦙 Trotting through context ...",
-    "🦙 Llama-nating .  ",
-    "🦙 Llama-nating .. ",
-    "🦙 Llama-nating ...",
-    "🦙 Herding tokens .  ",
-    "🦙 Herding tokens .. ",
-    "🦙 Herding tokens ...",
+    "☕ Grinding the beans... (محمصة)",
+    "☕ Boiling the dallah... (يغلي)",
+    "☕ Adding cardamom... (هيل)",
+    "🐪 Loading the camels... (يحمّل الجمل)",
+    "🐪 Consulting desert maps... (ينظر النجوم)",
+    "🐪 Following ancient routes...",
+    "📚 Opening the kitab... (فتح الكتاب)",
+    "📚 Examining the daleel... (فحص الدليل)",
+    "📚 Weighing the madhahib...",
+    "🎯 Station of Yearning... (مقام الشوق)",
+    "🎯 Station of Patience... (مقام الصبر)",
+    "🎯 Station of Trust... (مقام التوكل)",
+    "🍵 Preparing the hookah... (تنظيف الشيشة)",
+    "🍵 Packing apple tobacco...",
+    "🍵 Lighting coconut coals... (إشعال الفحم)",
+    "🔍 Examining the crime scene...",
+    "🔍 Following the clues...",
+    "🔍 Interrogating witnesses...",
+    "🏔️ Studying the mountain face...",
+    "🏔️ Setting the pitons...",
+    "🏔️ Testing handholds...",
+    "👨\u200d🍳 Reading the recipe...",
+    "👨\u200d🍳 Mixing the ingredients...",
+    "👨\u200d🍳 Taste testing the batter...",
 ]
 
 _LLAMA_PLAN_SPINNER = [
-    "🦙📋 [cli-ollama] Assembling the herd...",
-    "🦙📋 [cli-ollama] Planning the trail...",
-    "🦙📋 [cli-ollama] Mapping the pasture...",
-    "🦙📋 [cli-ollama] Organizing the caravan...",
+    "🐪📋 [qarin] Consulting desert maps...",
+    "🐪📋 [qarin] Planning the caravan route...",
+    "🐪📋 [qarin] Mapping the oasis stops...",
+    "🐪📋 [qarin] Organizing the expedition...",
 ]
 
 _LLAMA_BUILD_SPINNER = [
-    "🦙🔨 [cli-ollama] Building the barn...",
-    "🦙🔨 [cli-ollama] Hammering away...",
-    "🦙🔨 [cli-ollama] Laying foundation...",
-    "🦙🔨 [cli-ollama] Constructing...",
+    "☕🔨 [qarin] Grinding the beans...",
+    "☕🔨 [qarin] Boiling the dallah...",
+    "☕🔨 [qarin] Adding cardamom...",
+    "☕🔨 [qarin] Perfecting the brew...",
 ]
 
 _LLAMA_TEST_SPINNER = [
-    "🦙🧪 [cli-ollama] Running tests...",
-    "🦙🧪 [cli-ollama] Checking assertions...",
-    "🦙🧪 [cli-ollama] Validating output...",
-    "🦙🧪 [cli-ollama] Verifying results...",
+    "🔍🧪 [qarin] Examining the scene...",
+    "🔍🧪 [qarin] Following the clues...",
+    "🔍🧪 [qarin] Interrogating witnesses...",
+    "🔍🧪 [qarin] Connecting the dots...",
 ]
 
 
@@ -542,13 +542,13 @@ class InteractiveMode:
         self.session.provider = provider
         self.session.token_counter.provider = provider
         self.session.model = primary_model
-        os.environ["OLLAMA_CLI_AGENT_PROVIDER"] = provider
-        os.environ["OLLAMA_CLI_AGENT_MODEL"] = primary_model
-        os.environ["OLLAMA_CLI_CODING_PROVIDER"] = provider
-        os.environ["OLLAMA_CLI_CODING_MODEL"] = thinking_model
-        os.environ["OLLAMA_CLI_SUBAGENT_PROVIDER"] = provider
-        os.environ["OLLAMA_CLI_SUBAGENT_MODEL"] = background_model
-        os.environ["OLLAMA_CLI_FALLBACK_MODEL"] = fallback_model
+        os.environ["QARIN_CLI_AGENT_PROVIDER"] = provider
+        os.environ["QARIN_CLI_AGENT_MODEL"] = primary_model
+        os.environ["QARIN_CLI_CODING_PROVIDER"] = provider
+        os.environ["QARIN_CLI_CODING_MODEL"] = thinking_model
+        os.environ["QARIN_CLI_SUBAGENT_PROVIDER"] = provider
+        os.environ["QARIN_CLI_SUBAGENT_MODEL"] = background_model
+        os.environ["QARIN_CLI_FALLBACK_MODEL"] = fallback_model
         self.session.provider_router._task_config["agent"] = (provider, primary_model)
         self.session.provider_router._task_config["coding"] = (provider, thinking_model)
         self.session.provider_router._task_config["subagent"] = (provider, background_model)
@@ -941,7 +941,7 @@ class InteractiveMode:
         # Validate the model exists locally when using the Ollama provider
         if self.session.provider == "ollama":
             from api.config import get_config
-            from ollama_cmd.root import _fetch_local_models
+            from qarin_cmd.root import _fetch_local_models
 
             cfg = get_config()
             local_models = _fetch_local_models(cfg.ollama_host)
@@ -1476,7 +1476,7 @@ class InteractiveMode:
         return False
 
     def _cmd_init(self, _arg: str) -> bool:
-        """Initialize the current folder as a cli-ollama project.
+        """Initialize the current folder as a qarin project.
 
         Creates ``OLLAMA.md`` (project memory) and ``.ollama/`` (local config
         directory) if they do not already exist.  Also detects instruction
@@ -1499,7 +1499,7 @@ class InteractiveMode:
                 f"# {project_name}\n\n"
                 "## Project Notes\n\n"
                 "<!-- Add project-specific context, conventions, and notes below. -->\n"
-                "<!-- cli-ollama reads this file to maintain project memory.       -->\n"
+                "<!-- qarin reads this file to maintain project memory.       -->\n"
             )
             try:
                 _PROJECT_MEMORY_FILE.write_text(template, encoding="utf-8")
@@ -1731,7 +1731,7 @@ class InteractiveMode:
 
         # Try to fetch local Ollama models
         from api.config import get_config
-        from ollama_cmd.root import _fetch_local_models
+        from qarin_cmd.root import _fetch_local_models
 
         cfg = get_config()
         local_models = _fetch_local_models(cfg.ollama_host)
@@ -3013,8 +3013,8 @@ if __name__ == "__main__":
         await session.end()
 
     # Only run tests when not connected to a real terminal (CI / scripted)
-    # or when OLLAMA_CLI_TEST is set.  Otherwise, start the full REPL.
-    if os.environ.get("OLLAMA_CLI_TEST") or not sys.stdin.isatty():
+    # or when QARIN_CLI_TEST is set.  Otherwise, start the full REPL.
+    if os.environ.get("QARIN_CLI_TEST") or not sys.stdin.isatty():
         asyncio.run(_test())
     else:
 

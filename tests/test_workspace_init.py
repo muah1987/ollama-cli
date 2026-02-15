@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from ollama_cmd.interactive import (
+from qarin_cmd.interactive import (
     _KNOWN_INSTRUCTION_FILES,
     _PROJECT_MEMORY_FILE,
     _WORKSPACE_TRUST_FILE,

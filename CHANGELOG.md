@@ -2,7 +2,7 @@
 
 ### Added
 - Unified error hierarchy in `api/errors.py` with centralized exception classes
-- `OllamaCliError` root exception with `user_message` property and `hint` support
+- `CliOllamaError` root exception with `user_message` property and `hint` support
 - New error types: `ProviderRateLimitError`, `ProviderResponseError`, `ConfigurationError`, `SessionError`
 - CI security scanning via bandit
 - Coverage, CI, Python version, and license badges in README

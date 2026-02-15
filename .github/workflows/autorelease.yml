@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'ollama_cmd/**'
+      - 'qarin_cmd/**'
       - 'api/**'
       - 'model/**'
       - 'server/**'

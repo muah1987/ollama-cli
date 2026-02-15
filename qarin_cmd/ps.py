@@ -121,12 +121,12 @@ def handle_ps(args: argparse.Namespace) -> None:
 def build_parser() -> argparse.ArgumentParser:
     """Build the ps command argument parser."""
     parser = argparse.ArgumentParser(
-        prog="cli-ollama ps",
+        prog="qarin ps",
         description="List running models",
         epilog="""
 Examples:
-  cli-ollama ps
-  cli-ollama ps --json
+  qarin ps
+  qarin ps --json
         """,
     )
     parser.add_argument(

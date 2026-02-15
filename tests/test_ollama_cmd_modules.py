@@ -1,4 +1,4 @@
-"""Tests for ollama_cmd CLI modules that have 0% coverage.
+"""Tests for qarin_cmd CLI modules that have 0% coverage.
 
 Each module provides a CLI command handler. We test:
 - build_parser() returns a valid parser
@@ -22,24 +22,24 @@ import pytest
 
 class TestVersionModule:
     def test_version_constant(self):
-        from ollama_cmd.version import VERSION
+        from qarin_cmd.version import VERSION
 
         assert isinstance(VERSION, str)
         assert "." in VERSION
 
     def test_build_parser(self):
-        from ollama_cmd.version import build_parser
+        from qarin_cmd.version import build_parser
 
         parser = build_parser()
         assert isinstance(parser, argparse.ArgumentParser)
 
     def test_handle_version(self, capsys):
-        from ollama_cmd.version import handle_version
+        from qarin_cmd.version import handle_version
 
         args = argparse.Namespace()
         handle_version(args)
         captured = capsys.readouterr()
-        assert "cli-ollama" in captured.out
+        assert "qarin" in captured.out
 
 
 # ---------------------------------------------------------------------------
@@ -49,15 +49,15 @@ class TestVersionModule:
 
 class TestServeModule:
     def test_build_parser(self):
-        from ollama_cmd.serve import build_parser
+        from qarin_cmd.serve import build_parser
 
         parser = build_parser()
         assert isinstance(parser, argparse.ArgumentParser)
 
-    @patch("ollama_cmd.serve.httpx.get")
-    @patch("ollama_cmd.serve.get_config")
+    @patch("qarin_cmd.serve.httpx.get")
+    @patch("qarin_cmd.serve.get_config")
     def test_handle_serve_success(self, mock_cfg, mock_get):
-        from ollama_cmd.serve import handle_serve
+        from qarin_cmd.serve import handle_serve
 
         mock_cfg.return_value = MagicMock(ollama_host="http://localhost:11434")
         resp = MagicMock()
@@ -68,20 +68,20 @@ class TestServeModule:
         args = argparse.Namespace()
         handle_serve(args)  # Should not raise
 
-    @patch("ollama_cmd.serve.httpx.get", side_effect=httpx.ConnectError("fail"))
-    @patch("ollama_cmd.serve.get_config")
+    @patch("qarin_cmd.serve.httpx.get", side_effect=httpx.ConnectError("fail"))
+    @patch("qarin_cmd.serve.get_config")
     def test_handle_serve_connect_error(self, mock_cfg, mock_get):
-        from ollama_cmd.serve import handle_serve
+        from qarin_cmd.serve import handle_serve
 
         mock_cfg.return_value = MagicMock(ollama_host="http://localhost:11434")
         args = argparse.Namespace()
         with pytest.raises(SystemExit):
             handle_serve(args)
 
-    @patch("ollama_cmd.serve.httpx.get")
-    @patch("ollama_cmd.serve.get_config")
+    @patch("qarin_cmd.serve.httpx.get")
+    @patch("qarin_cmd.serve.get_config")
     def test_handle_serve_http_error(self, mock_cfg, mock_get):
-        from ollama_cmd.serve import handle_serve
+        from qarin_cmd.serve import handle_serve
 
         mock_cfg.return_value = MagicMock(ollama_host="http://localhost:11434")
         response = httpx.Response(500, request=httpx.Request("GET", "http://test"))
@@ -100,15 +100,15 @@ class TestServeModule:
 
 class TestListModule:
     def test_build_parser(self):
-        from ollama_cmd.list import build_parser
+        from qarin_cmd.list import build_parser
 
         parser = build_parser()
         assert isinstance(parser, argparse.ArgumentParser)
 
-    @patch("ollama_cmd.list.httpx.get")
-    @patch("ollama_cmd.list.get_config")
+    @patch("qarin_cmd.list.httpx.get")
+    @patch("qarin_cmd.list.get_config")
     def test_handle_list_success(self, mock_cfg, mock_get):
-        from ollama_cmd.list import handle_list
+        from qarin_cmd.list import handle_list
 
         mock_cfg.return_value = MagicMock(ollama_host="http://localhost:11434")
         resp = MagicMock()
@@ -124,10 +124,10 @@ class TestListModule:
         args = argparse.Namespace(json=False)
         handle_list(args)
 
-    @patch("ollama_cmd.list.httpx.get")
-    @patch("ollama_cmd.list.get_config")
+    @patch("qarin_cmd.list.httpx.get")
+    @patch("qarin_cmd.list.get_config")
     def test_handle_list_json_mode(self, mock_cfg, mock_get, capsys):
-        from ollama_cmd.list import handle_list
+        from qarin_cmd.list import handle_list
 
         mock_cfg.return_value = MagicMock(ollama_host="http://localhost:11434")
         resp = MagicMock()
@@ -139,10 +139,10 @@ class TestListModule:
         captured = capsys.readouterr()
         assert "llama3.2" in captured.out
 
-    @patch("ollama_cmd.list.httpx.get")
-    @patch("ollama_cmd.list.get_config")
+    @patch("qarin_cmd.list.httpx.get")
+    @patch("qarin_cmd.list.get_config")
     def test_handle_list_empty(self, mock_cfg, mock_get):
-        from ollama_cmd.list import handle_list
+        from qarin_cmd.list import handle_list
 
         mock_cfg.return_value = MagicMock(ollama_host="http://localhost:11434")
         resp = MagicMock()
@@ -152,10 +152,10 @@ class TestListModule:
         args = argparse.Namespace(json=False)
         handle_list(args)
 
-    @patch("ollama_cmd.list.httpx.get", side_effect=httpx.ConnectError("fail"))
-    @patch("ollama_cmd.list.get_config")
+    @patch("qarin_cmd.list.httpx.get", side_effect=httpx.ConnectError("fail"))
+    @patch("qarin_cmd.list.get_config")
     def test_handle_list_connect_error(self, mock_cfg, mock_get):
-        from ollama_cmd.list import handle_list
+        from qarin_cmd.list import handle_list
 
         mock_cfg.return_value = MagicMock(ollama_host="http://localhost:11434")
         args = argparse.Namespace(json=False)
@@ -170,15 +170,15 @@ class TestListModule:
 
 class TestStatusModule:
     def test_build_parser(self):
-        from ollama_cmd.status import build_parser
+        from qarin_cmd.status import build_parser
 
         parser = build_parser()
         assert isinstance(parser, argparse.ArgumentParser)
 
-    @patch("ollama_cmd.status.httpx.get")
-    @patch("ollama_cmd.status.get_config")
+    @patch("qarin_cmd.status.httpx.get")
+    @patch("qarin_cmd.status.get_config")
     def test_handle_status_server_online(self, mock_cfg, mock_get):
-        from ollama_cmd.status import handle_status
+        from qarin_cmd.status import handle_status
 
         mock_cfg.return_value = MagicMock(
             ollama_host="http://localhost:11434",
@@ -203,10 +203,10 @@ class TestStatusModule:
         args = argparse.Namespace(json=False)
         handle_status(args)
 
-    @patch("ollama_cmd.status.httpx.get")
-    @patch("ollama_cmd.status.get_config")
+    @patch("qarin_cmd.status.httpx.get")
+    @patch("qarin_cmd.status.get_config")
     def test_handle_status_json(self, mock_cfg, mock_get, capsys):
-        from ollama_cmd.status import handle_status
+        from qarin_cmd.status import handle_status
 
         mock_cfg.return_value = MagicMock(
             ollama_host="http://localhost:11434",
@@ -224,10 +224,10 @@ class TestStatusModule:
         data = json.loads(captured.out)
         assert data["server"]["status"] == "offline"
 
-    @patch("ollama_cmd.status.httpx.get", side_effect=httpx.ConnectError("fail"))
-    @patch("ollama_cmd.status.get_config")
+    @patch("qarin_cmd.status.httpx.get", side_effect=httpx.ConnectError("fail"))
+    @patch("qarin_cmd.status.get_config")
     def test_handle_status_server_offline(self, mock_cfg, mock_get):
-        from ollama_cmd.status import handle_status
+        from qarin_cmd.status import handle_status
 
         mock_cfg.return_value = MagicMock(
             ollama_host="http://localhost:11434",
@@ -243,19 +243,19 @@ class TestStatusModule:
 
 
 # ---------------------------------------------------------------------------
-# config.py (ollama_cmd)
+# config.py (qarin_cmd)
 # ---------------------------------------------------------------------------
 
 
 class TestConfigCmdModule:
     def test_build_parser(self):
-        from ollama_cmd.config import build_parser
+        from qarin_cmd.config import build_parser
 
         parser = build_parser()
         assert isinstance(parser, argparse.ArgumentParser)
 
     def test_is_sensitive_key(self):
-        from ollama_cmd.config import _is_sensitive_key
+        from qarin_cmd.config import _is_sensitive_key
 
         assert _is_sensitive_key("anthropic_api_key") is True
         assert _is_sensitive_key("gh_token") is True
@@ -263,18 +263,18 @@ class TestConfigCmdModule:
         assert _is_sensitive_key("ollama_model") is False
         assert _is_sensitive_key("provider") is False
 
-    @patch("ollama_cmd.config.get_config")
+    @patch("qarin_cmd.config.get_config")
     def test_show_config_default(self, mock_cfg):
-        from api.config import OllamaCliConfig
-        from ollama_cmd.config import handle_config
+        from api.config import QarinCliConfig
+        from qarin_cmd.config import handle_config
 
-        mock_cfg.return_value = OllamaCliConfig()
+        mock_cfg.return_value = QarinCliConfig()
         args = argparse.Namespace(action=None, key=None, value=None, json=False)
         handle_config(args)
 
-    @patch("ollama_cmd.config.get_config")
+    @patch("qarin_cmd.config.get_config")
     def test_show_config_get_action(self, mock_cfg):
-        from ollama_cmd.config import handle_config
+        from qarin_cmd.config import handle_config
 
         cfg = MagicMock()
         cfg.ollama_model = "llama3.2"
@@ -282,9 +282,9 @@ class TestConfigCmdModule:
         args = argparse.Namespace(action="get", key="ollama_model", value=None, json=False)
         handle_config(args)
 
-    @patch("ollama_cmd.config.get_config")
+    @patch("qarin_cmd.config.get_config")
     def test_config_get_json(self, mock_cfg, capsys):
-        from ollama_cmd.config import handle_config
+        from qarin_cmd.config import handle_config
 
         cfg = MagicMock()
         cfg.ollama_model = "llama3.2"
@@ -294,9 +294,9 @@ class TestConfigCmdModule:
         captured = capsys.readouterr()
         assert "llama3.2" in captured.out
 
-    @patch("ollama_cmd.config.get_config")
+    @patch("qarin_cmd.config.get_config")
     def test_config_get_sensitive_masked(self, mock_cfg):
-        from ollama_cmd.config import handle_config
+        from qarin_cmd.config import handle_config
 
         cfg = MagicMock()
         cfg.anthropic_api_key = "sk-secret-123"
@@ -304,10 +304,10 @@ class TestConfigCmdModule:
         args = argparse.Namespace(action="get", key="anthropic_api_key", value=None, json=False)
         handle_config(args)
 
-    @patch("ollama_cmd.config.save_config")
-    @patch("ollama_cmd.config.get_config")
+    @patch("qarin_cmd.config.save_config")
+    @patch("qarin_cmd.config.get_config")
     def test_config_set_string(self, mock_cfg, mock_save):
-        from ollama_cmd.config import handle_config
+        from qarin_cmd.config import handle_config
 
         cfg = MagicMock()
         cfg.ollama_model = "llama3.2"
@@ -317,18 +317,18 @@ class TestConfigCmdModule:
         assert cfg.ollama_model == "codellama"
         mock_save.assert_called_once()
 
-    @patch("ollama_cmd.config.get_config")
+    @patch("qarin_cmd.config.get_config")
     def test_config_set_missing_value(self, mock_cfg):
-        from ollama_cmd.config import handle_config
+        from qarin_cmd.config import handle_config
 
         mock_cfg.return_value = MagicMock()
         args = argparse.Namespace(action="set", key="ollama_model", value=None, json=False)
         with pytest.raises(SystemExit):
             handle_config(args)
 
-    @patch("ollama_cmd.config.get_config")
+    @patch("qarin_cmd.config.get_config")
     def test_config_set_unknown_key(self, mock_cfg):
-        from ollama_cmd.config import handle_config
+        from qarin_cmd.config import handle_config
 
         cfg = MagicMock(spec=[])
         mock_cfg.return_value = cfg
@@ -336,9 +336,9 @@ class TestConfigCmdModule:
         with pytest.raises(SystemExit):
             handle_config(args)
 
-    @patch("ollama_cmd.config.get_config")
+    @patch("qarin_cmd.config.get_config")
     def test_config_set_sensitive_key_rejected(self, mock_cfg):
-        from ollama_cmd.config import handle_config
+        from qarin_cmd.config import handle_config
 
         cfg = MagicMock()
         cfg.anthropic_api_key = "old"
@@ -347,10 +347,10 @@ class TestConfigCmdModule:
         with pytest.raises(SystemExit):
             handle_config(args)
 
-    @patch("ollama_cmd.config.save_config")
-    @patch("ollama_cmd.config.get_config")
+    @patch("qarin_cmd.config.save_config")
+    @patch("qarin_cmd.config.get_config")
     def test_config_set_bool(self, mock_cfg, mock_save):
-        from ollama_cmd.config import handle_config
+        from qarin_cmd.config import handle_config
 
         cfg = MagicMock()
         cfg.auto_compact = True
@@ -359,10 +359,10 @@ class TestConfigCmdModule:
         handle_config(args)
         assert cfg.auto_compact is False
 
-    @patch("ollama_cmd.config.save_config")
-    @patch("ollama_cmd.config.get_config")
+    @patch("qarin_cmd.config.save_config")
+    @patch("qarin_cmd.config.get_config")
     def test_config_set_int(self, mock_cfg, mock_save):
-        from ollama_cmd.config import handle_config
+        from qarin_cmd.config import handle_config
 
         cfg = MagicMock()
         cfg.context_length = 4096
@@ -371,9 +371,9 @@ class TestConfigCmdModule:
         handle_config(args)
         assert cfg.context_length == 8192
 
-    @patch("ollama_cmd.config.get_config")
+    @patch("qarin_cmd.config.get_config")
     def test_config_set_int_invalid(self, mock_cfg):
-        from ollama_cmd.config import handle_config
+        from qarin_cmd.config import handle_config
 
         cfg = MagicMock()
         cfg.context_length = 4096
@@ -382,10 +382,10 @@ class TestConfigCmdModule:
         with pytest.raises(SystemExit):
             handle_config(args)
 
-    @patch("ollama_cmd.config.save_config")
-    @patch("ollama_cmd.config.get_config")
+    @patch("qarin_cmd.config.save_config")
+    @patch("qarin_cmd.config.get_config")
     def test_config_set_float(self, mock_cfg, mock_save):
-        from ollama_cmd.config import handle_config
+        from qarin_cmd.config import handle_config
 
         cfg = MagicMock()
         cfg.compact_threshold = 0.85
@@ -394,9 +394,9 @@ class TestConfigCmdModule:
         handle_config(args)
         assert cfg.compact_threshold == pytest.approx(0.90)
 
-    @patch("ollama_cmd.config.get_config")
+    @patch("qarin_cmd.config.get_config")
     def test_config_set_float_invalid(self, mock_cfg):
-        from ollama_cmd.config import handle_config
+        from qarin_cmd.config import handle_config
 
         cfg = MagicMock()
         cfg.compact_threshold = 0.85
@@ -405,9 +405,9 @@ class TestConfigCmdModule:
         with pytest.raises(SystemExit):
             handle_config(args)
 
-    @patch("ollama_cmd.config.get_config")
+    @patch("qarin_cmd.config.get_config")
     def test_config_set_list_rejected(self, mock_cfg):
-        from ollama_cmd.config import handle_config
+        from qarin_cmd.config import handle_config
 
         cfg = MagicMock()
         cfg.allowed_tools = ["file_read"]
@@ -416,9 +416,9 @@ class TestConfigCmdModule:
         with pytest.raises(SystemExit):
             handle_config(args)
 
-    @patch("ollama_cmd.config.get_config")
+    @patch("qarin_cmd.config.get_config")
     def test_config_unknown_action(self, mock_cfg):
-        from ollama_cmd.config import handle_config
+        from qarin_cmd.config import handle_config
 
         cfg = MagicMock(spec=[])
         mock_cfg.return_value = cfg
@@ -426,9 +426,9 @@ class TestConfigCmdModule:
         with pytest.raises(SystemExit):
             handle_config(args)
 
-    @patch("ollama_cmd.config.get_config")
+    @patch("qarin_cmd.config.get_config")
     def test_config_action_as_key_name(self, mock_cfg):
-        from ollama_cmd.config import handle_config
+        from qarin_cmd.config import handle_config
 
         cfg = MagicMock()
         cfg.ollama_model = "test"
@@ -436,20 +436,20 @@ class TestConfigCmdModule:
         args = argparse.Namespace(action="ollama_model", key=None, value=None, json=False)
         handle_config(args)
 
-    @patch("ollama_cmd.config.get_config")
+    @patch("qarin_cmd.config.get_config")
     def test_show_config_json(self, mock_cfg, capsys):
-        from api.config import OllamaCliConfig
-        from ollama_cmd.config import handle_config
+        from api.config import QarinCliConfig
+        from qarin_cmd.config import handle_config
 
-        mock_cfg.return_value = OllamaCliConfig()
+        mock_cfg.return_value = QarinCliConfig()
         args = argparse.Namespace(action=None, key=None, value=None, json=True)
         handle_config(args)
         captured = capsys.readouterr()
         assert "ollama" in captured.out.lower()
 
-    @patch("ollama_cmd.config.get_config")
+    @patch("qarin_cmd.config.get_config")
     def test_config_get_unknown(self, mock_cfg):
-        from ollama_cmd.config import handle_config
+        from qarin_cmd.config import handle_config
 
         cfg = MagicMock(spec=[])
         mock_cfg.return_value = cfg
@@ -465,15 +465,15 @@ class TestConfigCmdModule:
 
 class TestShowModule:
     def test_build_parser(self):
-        from ollama_cmd.show import build_parser
+        from qarin_cmd.show import build_parser
 
         parser = build_parser()
         assert isinstance(parser, argparse.ArgumentParser)
 
-    @patch("ollama_cmd.show.httpx.get")
-    @patch("ollama_cmd.show.get_config")
+    @patch("qarin_cmd.show.httpx.get")
+    @patch("qarin_cmd.show.get_config")
     def test_handle_show_no_model_lists(self, mock_cfg, mock_get):
-        from ollama_cmd.show import handle_show
+        from qarin_cmd.show import handle_show
 
         mock_cfg.return_value = MagicMock(ollama_host="http://localhost:11434")
         resp = MagicMock()
@@ -483,10 +483,10 @@ class TestShowModule:
         args = argparse.Namespace(model_name=None, json=False, modelfile=False)
         handle_show(args)
 
-    @patch("ollama_cmd.show.httpx.get")
-    @patch("ollama_cmd.show.get_config")
+    @patch("qarin_cmd.show.httpx.get")
+    @patch("qarin_cmd.show.get_config")
     def test_handle_show_no_model_empty(self, mock_cfg, mock_get):
-        from ollama_cmd.show import handle_show
+        from qarin_cmd.show import handle_show
 
         mock_cfg.return_value = MagicMock(ollama_host="http://localhost:11434")
         resp = MagicMock()
@@ -496,10 +496,10 @@ class TestShowModule:
         args = argparse.Namespace(model_name=None, json=False, modelfile=False)
         handle_show(args)
 
-    @patch("ollama_cmd.show.httpx.post")
-    @patch("ollama_cmd.show.get_config")
+    @patch("qarin_cmd.show.httpx.post")
+    @patch("qarin_cmd.show.get_config")
     def test_handle_show_model_details(self, mock_cfg, mock_post):
-        from ollama_cmd.show import handle_show
+        from qarin_cmd.show import handle_show
 
         mock_cfg.return_value = MagicMock(ollama_host="http://localhost:11434")
         resp = MagicMock()
@@ -520,10 +520,10 @@ class TestShowModule:
         args = argparse.Namespace(model_name="llama3.2", json=False, modelfile=True)
         handle_show(args)
 
-    @patch("ollama_cmd.show.httpx.post")
-    @patch("ollama_cmd.show.get_config")
+    @patch("qarin_cmd.show.httpx.post")
+    @patch("qarin_cmd.show.get_config")
     def test_handle_show_json(self, mock_cfg, mock_post, capsys):
-        from ollama_cmd.show import handle_show
+        from qarin_cmd.show import handle_show
 
         mock_cfg.return_value = MagicMock(ollama_host="http://localhost:11434")
         resp = MagicMock()
@@ -535,10 +535,10 @@ class TestShowModule:
         captured = capsys.readouterr()
         assert "details" in captured.out
 
-    @patch("ollama_cmd.show.httpx.post")
-    @patch("ollama_cmd.show.get_config")
+    @patch("qarin_cmd.show.httpx.post")
+    @patch("qarin_cmd.show.get_config")
     def test_handle_show_404(self, mock_cfg, mock_post):
-        from ollama_cmd.show import handle_show
+        from qarin_cmd.show import handle_show
 
         mock_cfg.return_value = MagicMock(ollama_host="http://localhost:11434")
         response = httpx.Response(404, request=httpx.Request("POST", "http://test"))
@@ -557,15 +557,15 @@ class TestShowModule:
 
 class TestPsModule:
     def test_build_parser(self):
-        from ollama_cmd.ps import build_parser
+        from qarin_cmd.ps import build_parser
 
         parser = build_parser()
         assert isinstance(parser, argparse.ArgumentParser)
 
-    @patch("ollama_cmd.ps.httpx.get")
-    @patch("ollama_cmd.ps.get_config")
+    @patch("qarin_cmd.ps.httpx.get")
+    @patch("qarin_cmd.ps.get_config")
     def test_handle_ps_with_models(self, mock_cfg, mock_get):
-        from ollama_cmd.ps import handle_ps
+        from qarin_cmd.ps import handle_ps
 
         mock_cfg.return_value = MagicMock(ollama_host="http://localhost:11434")
         resp = MagicMock()
@@ -588,10 +588,10 @@ class TestPsModule:
         args = argparse.Namespace(json=False)
         handle_ps(args)
 
-    @patch("ollama_cmd.ps.httpx.get")
-    @patch("ollama_cmd.ps.get_config")
+    @patch("qarin_cmd.ps.httpx.get")
+    @patch("qarin_cmd.ps.get_config")
     def test_handle_ps_json(self, mock_cfg, mock_get, capsys):
-        from ollama_cmd.ps import handle_ps
+        from qarin_cmd.ps import handle_ps
 
         mock_cfg.return_value = MagicMock(ollama_host="http://localhost:11434")
         resp = MagicMock()
@@ -603,10 +603,10 @@ class TestPsModule:
         captured = capsys.readouterr()
         assert "m1" in captured.out
 
-    @patch("ollama_cmd.ps.httpx.get")
-    @patch("ollama_cmd.ps.get_config")
+    @patch("qarin_cmd.ps.httpx.get")
+    @patch("qarin_cmd.ps.get_config")
     def test_handle_ps_empty(self, mock_cfg, mock_get):
-        from ollama_cmd.ps import handle_ps
+        from qarin_cmd.ps import handle_ps
 
         mock_cfg.return_value = MagicMock(ollama_host="http://localhost:11434")
         resp = MagicMock()
@@ -616,10 +616,10 @@ class TestPsModule:
         args = argparse.Namespace(json=False)
         handle_ps(args)
 
-    @patch("ollama_cmd.ps.httpx.get", side_effect=httpx.ConnectError("fail"))
-    @patch("ollama_cmd.ps.get_config")
+    @patch("qarin_cmd.ps.httpx.get", side_effect=httpx.ConnectError("fail"))
+    @patch("qarin_cmd.ps.get_config")
     def test_handle_ps_connect_error(self, mock_cfg, mock_get):
-        from ollama_cmd.ps import handle_ps
+        from qarin_cmd.ps import handle_ps
 
         mock_cfg.return_value = MagicMock(ollama_host="http://localhost:11434")
         args = argparse.Namespace(json=False)
@@ -634,16 +634,16 @@ class TestPsModule:
 
 class TestStopModule:
     def test_build_parser(self):
-        from ollama_cmd.stop import build_parser
+        from qarin_cmd.stop import build_parser
 
         parser = build_parser()
         assert isinstance(parser, argparse.ArgumentParser)
 
-    @patch("ollama_cmd.stop.httpx.post")
-    @patch("ollama_cmd.stop.httpx.get")
-    @patch("ollama_cmd.stop.get_config")
+    @patch("qarin_cmd.stop.httpx.post")
+    @patch("qarin_cmd.stop.httpx.get")
+    @patch("qarin_cmd.stop.get_config")
     def test_handle_stop_success(self, mock_cfg, mock_get, mock_post):
-        from ollama_cmd.stop import handle_stop
+        from qarin_cmd.stop import handle_stop
 
         mock_cfg.return_value = MagicMock(ollama_host="http://localhost:11434")
         ps_resp = MagicMock()
@@ -659,10 +659,10 @@ class TestStopModule:
         args = argparse.Namespace(model_name="llama3.2")
         handle_stop(args)
 
-    @patch("ollama_cmd.stop.httpx.get")
-    @patch("ollama_cmd.stop.get_config")
+    @patch("qarin_cmd.stop.httpx.get")
+    @patch("qarin_cmd.stop.get_config")
     def test_handle_stop_no_model_lists(self, mock_cfg, mock_get):
-        from ollama_cmd.stop import handle_stop
+        from qarin_cmd.stop import handle_stop
 
         mock_cfg.return_value = MagicMock(ollama_host="http://localhost:11434")
         resp = MagicMock()
@@ -672,10 +672,10 @@ class TestStopModule:
         args = argparse.Namespace(model_name=None)
         handle_stop(args)
 
-    @patch("ollama_cmd.stop.httpx.get")
-    @patch("ollama_cmd.stop.get_config")
+    @patch("qarin_cmd.stop.httpx.get")
+    @patch("qarin_cmd.stop.get_config")
     def test_handle_stop_no_model_empty(self, mock_cfg, mock_get):
-        from ollama_cmd.stop import handle_stop
+        from qarin_cmd.stop import handle_stop
 
         mock_cfg.return_value = MagicMock(ollama_host="http://localhost:11434")
         resp = MagicMock()
@@ -685,11 +685,11 @@ class TestStopModule:
         args = argparse.Namespace(model_name=None)
         handle_stop(args)
 
-    @patch("ollama_cmd.stop.httpx.post")
-    @patch("ollama_cmd.stop.httpx.get")
-    @patch("ollama_cmd.stop.get_config")
+    @patch("qarin_cmd.stop.httpx.post")
+    @patch("qarin_cmd.stop.httpx.get")
+    @patch("qarin_cmd.stop.get_config")
     def test_handle_stop_model_404(self, mock_cfg, mock_get, mock_post):
-        from ollama_cmd.stop import handle_stop
+        from qarin_cmd.stop import handle_stop
 
         mock_cfg.return_value = MagicMock(ollama_host="http://localhost:11434")
         ps_resp = MagicMock()
@@ -702,11 +702,11 @@ class TestStopModule:
         args = argparse.Namespace(model_name="nonexistent")
         handle_stop(args)
 
-    @patch("ollama_cmd.stop.httpx.post")
-    @patch("ollama_cmd.stop.httpx.get")
-    @patch("ollama_cmd.stop.get_config")
+    @patch("qarin_cmd.stop.httpx.post")
+    @patch("qarin_cmd.stop.httpx.get")
+    @patch("qarin_cmd.stop.get_config")
     def test_handle_stop_model_400(self, mock_cfg, mock_get, mock_post):
-        from ollama_cmd.stop import handle_stop
+        from qarin_cmd.stop import handle_stop
 
         mock_cfg.return_value = MagicMock(ollama_host="http://localhost:11434")
         ps_resp = MagicMock()
@@ -727,17 +727,17 @@ class TestStopModule:
 
 class TestCpModule:
     def test_build_parser(self):
-        from ollama_cmd.cp import build_parser
+        from qarin_cmd.cp import build_parser
 
         parser = build_parser()
         assert isinstance(parser, argparse.ArgumentParser)
 
-    @patch("ollama_cmd.cp.get_config")
+    @patch("qarin_cmd.cp.get_config")
     @pytest.mark.asyncio
     async def test_handle_cp_async_success(self, mock_cfg):
         from unittest.mock import AsyncMock
 
-        from ollama_cmd.cp import handle_cp_async
+        from qarin_cmd.cp import handle_cp_async
 
         mock_cfg.return_value = MagicMock(ollama_host="http://localhost:11434")
         mock_resp = MagicMock()
@@ -746,7 +746,7 @@ class TestCpModule:
         mock_client = AsyncMock()
         mock_client.post = AsyncMock(return_value=mock_resp)
 
-        with patch("ollama_cmd.cp.httpx.AsyncClient") as mock_cls:
+        with patch("qarin_cmd.cp.httpx.AsyncClient") as mock_cls:
             mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
             mock_cls.return_value.__aexit__ = AsyncMock(return_value=False)
             args = argparse.Namespace(source="llama3.2", destination="my-llama")
@@ -760,17 +760,17 @@ class TestCpModule:
 
 class TestRmModule:
     def test_build_parser(self):
-        from ollama_cmd.rm import build_parser
+        from qarin_cmd.rm import build_parser
 
         parser = build_parser()
         assert isinstance(parser, argparse.ArgumentParser)
 
-    @patch("ollama_cmd.rm.get_config")
+    @patch("qarin_cmd.rm.get_config")
     @pytest.mark.asyncio
     async def test_handle_rm_async_force(self, mock_cfg):
         from unittest.mock import AsyncMock
 
-        from ollama_cmd.rm import handle_rm_async
+        from qarin_cmd.rm import handle_rm_async
 
         mock_cfg.return_value = MagicMock(ollama_host="http://localhost:11434")
         mock_resp = MagicMock()
@@ -779,7 +779,7 @@ class TestRmModule:
         mock_client = AsyncMock()
         mock_client.delete = AsyncMock(return_value=mock_resp)
 
-        with patch("ollama_cmd.rm.httpx.AsyncClient") as mock_cls:
+        with patch("qarin_cmd.rm.httpx.AsyncClient") as mock_cls:
             mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
             mock_cls.return_value.__aexit__ = AsyncMock(return_value=False)
             args = argparse.Namespace(model_name="old-model", force=True)
@@ -793,7 +793,7 @@ class TestRmModule:
 
 class TestCreateModule:
     def test_build_parser(self):
-        from ollama_cmd.create import build_parser
+        from qarin_cmd.create import build_parser
 
         parser = build_parser()
         assert isinstance(parser, argparse.ArgumentParser)
@@ -806,15 +806,15 @@ class TestCreateModule:
 
 class TestRunModule:
     def test_build_parser(self):
-        from ollama_cmd.run import build_parser
+        from qarin_cmd.run import build_parser
 
         parser = build_parser()
         assert isinstance(parser, argparse.ArgumentParser)
 
-    @patch("ollama_cmd.run.httpx.stream")
-    @patch("ollama_cmd.run.get_config")
+    @patch("qarin_cmd.run.httpx.stream")
+    @patch("qarin_cmd.run.get_config")
     def test_handle_run_connect_error(self, mock_cfg, mock_stream):
-        from ollama_cmd.run import handle_run
+        from qarin_cmd.run import handle_run
 
         mock_cfg.return_value = MagicMock(ollama_host="http://localhost:11434", ollama_model="llama3.2")
         mock_stream.side_effect = httpx.ConnectError("fail")
@@ -833,9 +833,9 @@ class TestRunModule:
         with pytest.raises(SystemExit):
             handle_run(args)
 
-    @patch("ollama_cmd.run.get_config")
+    @patch("qarin_cmd.run.get_config")
     def test_handle_run_no_prompt(self, mock_cfg):
-        from ollama_cmd.run import handle_run
+        from qarin_cmd.run import handle_run
 
         mock_cfg.return_value = MagicMock(ollama_host="http://localhost:11434", ollama_model="llama3.2")
         args = argparse.Namespace(
@@ -861,24 +861,24 @@ class TestRunModule:
 
 class TestPullModule:
     def test_build_parser(self):
-        from ollama_cmd.pull import build_parser
+        from qarin_cmd.pull import build_parser
 
         parser = build_parser()
         assert isinstance(parser, argparse.ArgumentParser)
 
-    @patch("ollama_cmd.pull.get_config")
+    @patch("qarin_cmd.pull.get_config")
     def test_handle_pull_no_model(self, mock_cfg):
-        from ollama_cmd.pull import handle_pull
+        from qarin_cmd.pull import handle_pull
 
         mock_cfg.return_value = MagicMock(ollama_host="http://localhost:11434")
         args = argparse.Namespace(model_name=None)
         with pytest.raises(SystemExit):
             handle_pull(args)
 
-    @patch("ollama_cmd.pull.httpx.stream", side_effect=httpx.ConnectError("fail"))
-    @patch("ollama_cmd.pull.get_config")
+    @patch("qarin_cmd.pull.httpx.stream", side_effect=httpx.ConnectError("fail"))
+    @patch("qarin_cmd.pull.get_config")
     def test_handle_pull_connect_error(self, mock_cfg, mock_stream):
-        from ollama_cmd.pull import handle_pull
+        from qarin_cmd.pull import handle_pull
 
         mock_cfg.return_value = MagicMock(ollama_host="http://localhost:11434")
         args = argparse.Namespace(model_name="llama3.2")
@@ -893,7 +893,7 @@ class TestPullModule:
 
 class TestPlanningModule:
     def test_initialize_planning_mode(self):
-        from ollama_cmd.planning import initialize_planning_mode
+        from qarin_cmd.planning import initialize_planning_mode
 
         session = MagicMock()
         session.context_manager.max_tokens = 4096
@@ -903,7 +903,7 @@ class TestPlanningModule:
         assert session.timeout == 300
 
     def test_plan_task(self):
-        from ollama_cmd.planning import plan_task
+        from qarin_cmd.planning import plan_task
 
         session = MagicMock()
         session.send.return_value = {"content": "step 1: do X"}
@@ -912,7 +912,7 @@ class TestPlanningModule:
         session.send.assert_called_once()
 
     def test_execute_planning_workflow(self, capsys):
-        from ollama_cmd.planning import execute_planning_workflow
+        from qarin_cmd.planning import execute_planning_workflow
 
         session = MagicMock()
         session.context_manager.max_tokens = 2048
@@ -930,7 +930,7 @@ class TestPlanningModule:
 
 class TestWorkModule:
     def test_initialize_work_mode(self):
-        from ollama_cmd.work import initialize_work_mode
+        from qarin_cmd.work import initialize_work_mode
 
         session = MagicMock()
         session.context_manager.max_tokens = 4096
@@ -940,7 +940,7 @@ class TestWorkModule:
         assert session.timeout == 60
 
     def test_execute_task(self):
-        from ollama_cmd.work import execute_task
+        from qarin_cmd.work import execute_task
 
         session = MagicMock()
         session.send.return_value = {"content": "done"}
@@ -948,7 +948,7 @@ class TestWorkModule:
         assert result == {"content": "done"}
 
     def test_execute_work_workflow(self, capsys):
-        from ollama_cmd.work import execute_work_workflow
+        from qarin_cmd.work import execute_work_workflow
 
         session = MagicMock()
         session.context_manager.max_tokens = 4096

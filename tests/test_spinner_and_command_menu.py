@@ -23,7 +23,7 @@ class TestSpinnerClearing:
         """Spinner _run should emit \\033[K (clear to end of line) to prevent garbled text."""
         import inspect
 
-        from ollama_cmd.interactive import _LlamaSpinner
+        from qarin_cmd.interactive import _LlamaSpinner
 
         source = inspect.getsource(_LlamaSpinner._run)
         # Must contain the escape sequence that clears to end of line
@@ -33,14 +33,14 @@ class TestSpinnerClearing:
         """Spinner stop() should emit clear-line escape to remove spinner text."""
         import inspect
 
-        from ollama_cmd.interactive import _LlamaSpinner
+        from qarin_cmd.interactive import _LlamaSpinner
 
         source = inspect.getsource(_LlamaSpinner.stop)
         assert "\\033[K" in source or "\033[K" in source
 
     def test_spinner_frames_replaced_cleanly(self) -> None:
         """Capture spinner output and verify each frame starts with \\r\\033[K."""
-        from ollama_cmd.interactive import _LlamaSpinner
+        from qarin_cmd.interactive import _LlamaSpinner
 
         captured = io.StringIO()
         frames = ["short", "a much longer frame text here"]
@@ -65,29 +65,26 @@ class TestCLIBrandedSpinners:
     """Tests that build/plan/test spinners include the CLI icon branding."""
 
     def test_build_spinner_has_cli_brand(self) -> None:
-        """Build spinner frames should include [cli-ollama] branding."""
-        from ollama_cmd.interactive import _LLAMA_BUILD_SPINNER
+        """Build spinner frames should include [qarin] branding."""
+        from qarin_cmd.interactive import _LLAMA_BUILD_SPINNER
 
         for frame in _LLAMA_BUILD_SPINNER:
-            assert "[cli-ollama]" in frame, f"Missing branding in: {frame}"
-            assert "🦙" in frame, f"Missing llama icon in: {frame}"
+            assert "[qarin]" in frame, f"Missing branding in: {frame}"
 
     def test_plan_spinner_has_cli_brand(self) -> None:
-        """Plan spinner frames should include [cli-ollama] branding."""
-        from ollama_cmd.interactive import _LLAMA_PLAN_SPINNER
+        """Plan spinner frames should include [qarin] branding."""
+        from qarin_cmd.interactive import _LLAMA_PLAN_SPINNER
 
         for frame in _LLAMA_PLAN_SPINNER:
-            assert "[cli-ollama]" in frame, f"Missing branding in: {frame}"
-            assert "🦙" in frame, f"Missing llama icon in: {frame}"
+            assert "[qarin]" in frame, f"Missing branding in: {frame}"
 
     def test_test_spinner_exists(self) -> None:
         """A test-specific spinner should be defined."""
-        from ollama_cmd.interactive import _LLAMA_TEST_SPINNER
+        from qarin_cmd.interactive import _LLAMA_TEST_SPINNER
 
         assert len(_LLAMA_TEST_SPINNER) > 0
         for frame in _LLAMA_TEST_SPINNER:
-            assert "[cli-ollama]" in frame, f"Missing branding in: {frame}"
-            assert "🦙" in frame, f"Missing llama icon in: {frame}"
+            assert "[qarin]" in frame, f"Missing branding in: {frame}"
 
 
 # ---------------------------------------------------------------------------
@@ -103,7 +100,7 @@ class TestSlashCommandMenu:
         script = (
             "import asyncio\n"
             "from model.session import Session\n"
-            "from ollama_cmd.interactive import InteractiveMode\n"
+            "from qarin_cmd.interactive import InteractiveMode\n"
             "s = Session(model='test', provider='ollama')\n"
             "r = InteractiveMode(s)\n"
             "result = asyncio.run(r._dispatch_command('/'))\n"
@@ -123,7 +120,7 @@ class TestSlashCommandMenu:
         """_show_command_menu output should contain category headers."""
         script = (
             "from model.session import Session\n"
-            "from ollama_cmd.interactive import InteractiveMode\n"
+            "from qarin_cmd.interactive import InteractiveMode\n"
             "s = Session(model='test', provider='ollama')\n"
             "r = InteractiveMode(s)\n"
             "r._show_command_menu()\n"
@@ -140,7 +137,7 @@ class TestSlashCommandMenu:
 
     def test_show_command_menu_method_exists(self) -> None:
         """InteractiveMode should have a _show_command_menu method."""
-        from ollama_cmd.interactive import InteractiveMode
+        from qarin_cmd.interactive import InteractiveMode
 
         assert hasattr(InteractiveMode, "_show_command_menu")
         assert callable(getattr(InteractiveMode, "_show_command_menu"))
@@ -311,7 +308,7 @@ class TestModelCommand:
 
     def test_model_command_registered(self) -> None:
         """The /model command should be in the command table."""
-        from ollama_cmd.interactive import InteractiveMode
+        from qarin_cmd.interactive import InteractiveMode
 
         assert "/model" in InteractiveMode._COMMAND_TABLE
 
@@ -320,7 +317,7 @@ class TestModelCommand:
         script = (
             "import asyncio\n"
             "from model.session import Session\n"
-            "from ollama_cmd.interactive import InteractiveMode\n"
+            "from qarin_cmd.interactive import InteractiveMode\n"
             "s = Session(model='test', provider='ollama')\n"
             "r = InteractiveMode(s)\n"
             "result = asyncio.run(r._dispatch_command('/model'))\n"
@@ -342,9 +339,9 @@ class TestModelCommand:
             "import asyncio\n"
             "import os\n"
             "# Enable bypass mode for autonomous operation\n"
-            "os.environ['OLLAMA_CLI_BYPASS_PERMISSIONS'] = 'true'\n"
+            "os.environ['QARIN_CLI_BYPASS_PERMISSIONS'] = 'true'\n"
             "from model.session import Session\n"
-            "from ollama_cmd.interactive import InteractiveMode\n"
+            "from qarin_cmd.interactive import InteractiveMode\n"
             "s = Session(model='old-model', provider='ollama')\n"
             "r = InteractiveMode(s)\n"
             "result = asyncio.run(r._dispatch_command('/model new-model'))\n"
@@ -366,7 +363,7 @@ class TestModelCommand:
         script = (
             "import asyncio\n"
             "from model.session import Session\n"
-            "from ollama_cmd.interactive import InteractiveMode\n"
+            "from qarin_cmd.interactive import InteractiveMode\n"
             "s = Session(model='test', provider='ollama')\n"
             "r = InteractiveMode(s)\n"
             "result = asyncio.run(r._dispatch_command('/model provider gemini'))\n"
@@ -388,7 +385,7 @@ class TestModelCommand:
         script = (
             "import asyncio\n"
             "from model.session import Session\n"
-            "from ollama_cmd.interactive import InteractiveMode\n"
+            "from qarin_cmd.interactive import InteractiveMode\n"
             "s = Session(model='test', provider='ollama')\n"
             "r = InteractiveMode(s)\n"
             "result = asyncio.run(r._dispatch_command('/model provider nonexistent'))\n"
@@ -410,7 +407,7 @@ class TestModelCommand:
         script = (
             "import asyncio\n"
             "from model.session import Session\n"
-            "from ollama_cmd.interactive import InteractiveMode\n"
+            "from qarin_cmd.interactive import InteractiveMode\n"
             "s = Session(model='test', provider='ollama')\n"
             "r = InteractiveMode(s)\n"
             "result = asyncio.run(r._dispatch_command('/model provider'))\n"
@@ -428,7 +425,7 @@ class TestModelCommand:
 
     def test_skill_command_removed(self) -> None:
         """The /skill command should no longer be in the command table."""
-        from ollama_cmd.interactive import InteractiveMode
+        from qarin_cmd.interactive import InteractiveMode
 
         assert "/skill" not in InteractiveMode._COMMAND_TABLE
 
@@ -443,7 +440,7 @@ class TestPullCommandAndTool:
 
     def test_pull_command_registered(self) -> None:
         """The /pull command should be in the command table."""
-        from ollama_cmd.interactive import InteractiveMode
+        from qarin_cmd.interactive import InteractiveMode
 
         assert "/pull" in InteractiveMode._COMMAND_TABLE
 
@@ -488,7 +485,7 @@ class TestPullCommandAndTool:
 
     def test_hf_in_valid_providers(self) -> None:
         """The 'hf' provider should be listed as a valid provider."""
-        from ollama_cmd.interactive import _VALID_PROVIDERS
+        from qarin_cmd.interactive import _VALID_PROVIDERS
 
         assert "hf" in _VALID_PROVIDERS
 
@@ -503,7 +500,7 @@ class TestCLIFlags:
 
     def test_api_flag_accepted(self) -> None:
         """The --api flag should be accepted by the argument parser."""
-        from ollama_cmd.root import build_parser
+        from qarin_cmd.root import build_parser
 
         parser = build_parser()
         args = parser.parse_args(["--api", "http://myhost:1234"])
@@ -511,7 +508,7 @@ class TestCLIFlags:
 
     def test_model_flag_accepted(self) -> None:
         """The --model flag should be accepted by the argument parser."""
-        from ollama_cmd.root import build_parser
+        from qarin_cmd.root import build_parser
 
         parser = build_parser()
         args = parser.parse_args(["--model", "codestral:latest"])
@@ -519,7 +516,7 @@ class TestCLIFlags:
 
     def test_provider_flag_includes_hf(self) -> None:
         """The --provider flag should accept 'hf'."""
-        from ollama_cmd.root import build_parser
+        from qarin_cmd.root import build_parser
 
         parser = build_parser()
         args = parser.parse_args(["--provider", "hf"])
@@ -529,7 +526,7 @@ class TestCLIFlags:
         """_apply_global_flags should set ollama_host when --api is provided."""
         import argparse
 
-        from ollama_cmd.root import _apply_global_flags
+        from qarin_cmd.root import _apply_global_flags
 
         args = argparse.Namespace(
             model=None,

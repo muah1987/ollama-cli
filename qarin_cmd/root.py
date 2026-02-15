@@ -8,7 +8,7 @@
 # ]
 # ///
 """
-cli-ollama -- Main CLI entry point.
+qarin -- Main CLI entry point.
 
 Provides subcommands for chatting, running prompts, listing models, pulling models,
 and managing configuration. Organized to match Ollama's command structure.
@@ -63,7 +63,7 @@ def print_banner() -> None:
     """Print a startup banner showing current config."""
     cfg = get_config()
     compact_status = "on" if cfg.auto_compact else "off"
-    console.print(f"[bold cyan]cli-ollama[/bold cyan] v{VERSION}")
+    console.print(f"[bold cyan]qarin[/bold cyan] v{VERSION}")
     console.print(f"  provider : [green]{cfg.provider}[/green]")
     console.print(f"  model    : [green]{cfg.ollama_model}[/green]")
     console.print(f"  context  : [green]{cfg.context_length}[/green] tokens")
@@ -182,7 +182,7 @@ def cmd_list(args: argparse.Namespace) -> None:
 
     models = data.get("models", [])
     if not models:
-        console.print("No models found locally. Pull one with: [bold]cli-ollama pull <model>[/bold]")
+        console.print("No models found locally. Pull one with: [bold]qarin pull <model>[/bold]")
         return
 
     if args.json:
@@ -262,7 +262,7 @@ def cmd_status(args: argparse.Namespace) -> None:
 
 def cmd_version(_args: argparse.Namespace) -> None:
     """Show CLI version."""
-    print(f"cli-ollama v{VERSION}")
+    print(f"qarin v{VERSION}")
 
 
 def cmd_interactive(args: argparse.Namespace) -> None:
@@ -434,22 +434,22 @@ def cmd_stop(args: argparse.Namespace) -> None:
 def build_parser() -> argparse.ArgumentParser:
     """Build the top-level argument parser with all subcommands."""
     parser = argparse.ArgumentParser(
-        prog="cli-ollama",
-        usage="cli-ollama [options] [command] [prompt]",
+        prog="qarin",
+        usage="qarin [options] [command] [prompt]",
         description=(
-            "Ollama CLI - an AI coding assistant powered by Ollama with Textual TUI interface. "
+            "Qarin CLI - an AI coding assistant with Textual TUI interface. "
             "Starts an interactive session by default. "
             "Use -p/--print for non-interactive output."
         ),
     )
 
     # Global flags
-    parser.add_argument("-v", "--version", action="version", version=f"cli-ollama v{VERSION}")
+    parser.add_argument("-v", "--version", action="version", version=f"qarin v{VERSION}")
     parser.add_argument("--model", type=str, default=None, help="Override the default model for this session")
     parser.add_argument(
         "--provider",
         type=str,
-        choices=["ollama", "claude", "gemini", "codex", "hf"],
+        choices=["ollama", "llamacpp", "vllm", "other", "claude", "gemini", "codex", "hf"],
         default=None,
         help="Override provider",
     )
@@ -668,7 +668,7 @@ def main() -> None:
 
     raw_args = sys.argv[1:]
 
-    # Support piped stdin: `echo "fix this" | cli-ollama`
+    # Support piped stdin: `echo "fix this" | qarin`
     # Only treat piped stdin as a prompt when no explicit subcommand is present.
     piped_input = None
     if (
@@ -695,7 +695,7 @@ def main() -> None:
     if not command:
         if args.print_mode:
             console.print("[red]Error:[/red] --print requires a prompt.")
-            console.print('Usage: cli-ollama -p "your prompt here"')
+            console.print('Usage: qarin -p "your prompt here"')
             sys.exit(1)
         # Default to interactive mode
         command = "interactive"

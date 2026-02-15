@@ -1,11 +1,11 @@
-"""Tests for ollama_cmd/interactive.py -- ANSI helpers, spinner, instruction imports, and InteractiveMode."""
+"""Tests for qarin_cmd/interactive.py -- ANSI helpers, spinner, instruction imports, and InteractiveMode."""
 
 from __future__ import annotations
 
 import time
 from unittest.mock import MagicMock, patch
 
-from ollama_cmd.interactive import (
+from qarin_cmd.interactive import (
     _LLAMA_BUILD_SPINNER,
     _LLAMA_PLAN_SPINNER,
     _LLAMA_SPINNER_FRAMES,
@@ -105,32 +105,31 @@ class TestAgentColor:
 
 class TestSpinnerFrames:
     def test_llama_spinner_frames_count(self):
-        assert len(_LLAMA_SPINNER_FRAMES) == 24  # 8 messages x 3 dot frames each
+        assert len(_LLAMA_SPINNER_FRAMES) == 24  # 8 themes x 3 frames each
 
-    def test_all_frames_have_llama_emoji(self):
+    def test_all_frames_are_non_empty(self):
         for frame in _LLAMA_SPINNER_FRAMES:
-            assert "🦙" in frame
+            assert isinstance(frame, str) and len(frame) > 0
 
-    def test_dot_animation_pattern(self):
-        # First three frames should show dot progression
-        assert ".  " in _LLAMA_SPINNER_FRAMES[0]
-        assert ".. " in _LLAMA_SPINNER_FRAMES[1]
-        assert "..." in _LLAMA_SPINNER_FRAMES[2]
+    def test_frames_contain_themed_content(self):
+        # Should contain frames from multiple themes
+        all_text = " ".join(_LLAMA_SPINNER_FRAMES)
+        assert "☕" in all_text or "🐪" in all_text or "📚" in all_text
 
     def test_plan_spinner(self):
         assert len(_LLAMA_PLAN_SPINNER) >= 3
         for frame in _LLAMA_PLAN_SPINNER:
-            assert "🦙📋" in frame
+            assert "[qarin]" in frame
 
     def test_build_spinner(self):
         assert len(_LLAMA_BUILD_SPINNER) >= 3
         for frame in _LLAMA_BUILD_SPINNER:
-            assert "🦙🔨" in frame
+            assert "[qarin]" in frame
 
     def test_test_spinner(self):
         assert len(_LLAMA_TEST_SPINNER) >= 3
         for frame in _LLAMA_TEST_SPINNER:
-            assert "🦙🧪" in frame
+            assert "[qarin]" in frame
 
 
 # ---------------------------------------------------------------------------
@@ -169,7 +168,7 @@ class TestLlamaSpinner:
 class TestImportInstructionFiles:
     def test_import_no_ollama_md(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        with patch("ollama_cmd.interactive._PROJECT_MEMORY_FILE", tmp_path / "OLLAMA.md"):
+        with patch("qarin_cmd.interactive._PROJECT_MEMORY_FILE", tmp_path / "OLLAMA.md"):
             result = _import_instruction_files()
         assert result == []
 
@@ -178,8 +177,8 @@ class TestImportInstructionFiles:
         (tmp_path / "OLLAMA.md").write_text("# Project\n", encoding="utf-8")
         (tmp_path / "CLAUDE.md").write_text("# Claude\nBe helpful.", encoding="utf-8")
         with (
-            patch("ollama_cmd.interactive._PROJECT_MEMORY_FILE", tmp_path / "OLLAMA.md"),
-            patch("ollama_cmd.interactive._KNOWN_INSTRUCTION_FILES", [tmp_path / "CLAUDE.md"]),
+            patch("qarin_cmd.interactive._PROJECT_MEMORY_FILE", tmp_path / "OLLAMA.md"),
+            patch("qarin_cmd.interactive._KNOWN_INSTRUCTION_FILES", [tmp_path / "CLAUDE.md"]),
         ):
             result = _import_instruction_files()
         assert "CLAUDE.md" in str(result)
@@ -192,8 +191,8 @@ class TestImportInstructionFiles:
         (tmp_path / "OLLAMA.md").write_text(f"# Project\n{marker}\n", encoding="utf-8")
         (tmp_path / "CLAUDE.md").write_text("# Claude\nBe helpful.", encoding="utf-8")
         with (
-            patch("ollama_cmd.interactive._PROJECT_MEMORY_FILE", tmp_path / "OLLAMA.md"),
-            patch("ollama_cmd.interactive._KNOWN_INSTRUCTION_FILES", [tmp_path / "CLAUDE.md"]),
+            patch("qarin_cmd.interactive._PROJECT_MEMORY_FILE", tmp_path / "OLLAMA.md"),
+            patch("qarin_cmd.interactive._KNOWN_INSTRUCTION_FILES", [tmp_path / "CLAUDE.md"]),
         ):
             result = _import_instruction_files()
         assert result == []
@@ -203,8 +202,8 @@ class TestImportInstructionFiles:
         (tmp_path / "OLLAMA.md").write_text("# Project\n", encoding="utf-8")
         (tmp_path / "EMPTY.md").write_text("", encoding="utf-8")
         with (
-            patch("ollama_cmd.interactive._PROJECT_MEMORY_FILE", tmp_path / "OLLAMA.md"),
-            patch("ollama_cmd.interactive._KNOWN_INSTRUCTION_FILES", [tmp_path / "EMPTY.md"]),
+            patch("qarin_cmd.interactive._PROJECT_MEMORY_FILE", tmp_path / "OLLAMA.md"),
+            patch("qarin_cmd.interactive._KNOWN_INSTRUCTION_FILES", [tmp_path / "EMPTY.md"]),
         ):
             result = _import_instruction_files()
         assert result == []
@@ -217,35 +216,35 @@ class TestImportInstructionFiles:
 
 class TestInteractiveModeStatic:
     def test_print_system(self, capsys):
-        from ollama_cmd.interactive import InteractiveMode
+        from qarin_cmd.interactive import InteractiveMode
 
         InteractiveMode._print_system("System message")
         out = capsys.readouterr().out
         assert "System message" in out
 
     def test_print_error(self, capsys):
-        from ollama_cmd.interactive import InteractiveMode
+        from qarin_cmd.interactive import InteractiveMode
 
         InteractiveMode._print_error("Something failed")
         out = capsys.readouterr().out
         assert "Something failed" in out
 
     def test_print_info(self, capsys):
-        from ollama_cmd.interactive import InteractiveMode
+        from qarin_cmd.interactive import InteractiveMode
 
         InteractiveMode._print_info("Info message")
         out = capsys.readouterr().out
         assert "Info message" in out
 
     def test_get_terminal_height(self):
-        from ollama_cmd.interactive import InteractiveMode
+        from qarin_cmd.interactive import InteractiveMode
 
         height = InteractiveMode._get_terminal_height()
         assert isinstance(height, int)
         assert height > 0
 
     def test_spinner_factory(self):
-        from ollama_cmd.interactive import InteractiveMode
+        from qarin_cmd.interactive import InteractiveMode
 
         spinner = InteractiveMode._spinner(["a", "b", "c"])
         assert isinstance(spinner, _LlamaSpinner)
@@ -319,7 +318,7 @@ def _make_interactive_session() -> MagicMock:
 class TestInteractiveModeMethods:
     def _make_mode(self) -> object:
         """Create a minimal InteractiveMode with mocked session."""
-        from ollama_cmd.interactive import InteractiveMode
+        from qarin_cmd.interactive import InteractiveMode
 
         session = _make_interactive_session()
         mode = InteractiveMode.__new__(InteractiveMode)
@@ -530,7 +529,7 @@ class TestInteractiveModeMethods:
 class TestInteractiveModeAdditional:
     def _make_mode(self) -> object:
         """Create a minimal InteractiveMode with mocked session."""
-        from ollama_cmd.interactive import InteractiveMode
+        from qarin_cmd.interactive import InteractiveMode
 
         session = _make_interactive_session()
         mode = InteractiveMode.__new__(InteractiveMode)
@@ -679,7 +678,7 @@ class TestInteractiveModeAdditional:
 
 class TestParseToolArgs:
     def test_file_read_single_arg(self):
-        from ollama_cmd.interactive import _parse_tool_args
+        from qarin_cmd.interactive import _parse_tool_args
 
         args, kwargs, error = _parse_tool_args("file_read", "README.md")
         assert args == ("README.md",)
@@ -687,7 +686,7 @@ class TestParseToolArgs:
         assert error is None
 
     def test_file_write_valid(self):
-        from ollama_cmd.interactive import _parse_tool_args
+        from qarin_cmd.interactive import _parse_tool_args
 
         args, kwargs, error = _parse_tool_args("file_write", "test.txt hello world")
         assert args == ("test.txt", "hello world")
@@ -695,42 +694,42 @@ class TestParseToolArgs:
         assert error is None
 
     def test_file_write_missing_content(self):
-        from ollama_cmd.interactive import _parse_tool_args
+        from qarin_cmd.interactive import _parse_tool_args
 
         args, kwargs, error = _parse_tool_args("file_write", "test.txt")
         assert error is not None
         assert "Usage" in error
 
     def test_file_edit_valid(self):
-        from ollama_cmd.interactive import _parse_tool_args
+        from qarin_cmd.interactive import _parse_tool_args
 
         args, kwargs, error = _parse_tool_args("file_edit", "f.py|||old|||new")
         assert args == ("f.py", "old", "new")
         assert error is None
 
     def test_file_edit_invalid_parts(self):
-        from ollama_cmd.interactive import _parse_tool_args
+        from qarin_cmd.interactive import _parse_tool_args
 
         _, _, error = _parse_tool_args("file_edit", "f.py|||old")
         assert error is not None
         assert "Usage" in error
 
     def test_grep_search_with_path(self):
-        from ollama_cmd.interactive import _parse_tool_args
+        from qarin_cmd.interactive import _parse_tool_args
 
         args, kwargs, error = _parse_tool_args("grep_search", "pattern src/")
         assert args == ("pattern", "src/")
         assert error is None
 
     def test_grep_search_default_path(self):
-        from ollama_cmd.interactive import _parse_tool_args
+        from qarin_cmd.interactive import _parse_tool_args
 
         args, kwargs, error = _parse_tool_args("grep_search", "pattern")
         assert args == ("pattern", ".")
         assert error is None
 
     def test_shell_exec_single_arg(self):
-        from ollama_cmd.interactive import _parse_tool_args
+        from qarin_cmd.interactive import _parse_tool_args
 
         args, kwargs, error = _parse_tool_args("shell_exec", "echo hello")
         assert args == ("echo hello",)
@@ -738,14 +737,14 @@ class TestParseToolArgs:
         assert error is None
 
     def test_web_fetch_single_arg(self):
-        from ollama_cmd.interactive import _parse_tool_args
+        from qarin_cmd.interactive import _parse_tool_args
 
         args, kwargs, error = _parse_tool_args("web_fetch", "https://example.com")
         assert args == ("https://example.com",)
         assert error is None
 
     def test_model_pull_no_force(self):
-        from ollama_cmd.interactive import _parse_tool_args
+        from qarin_cmd.interactive import _parse_tool_args
 
         args, kwargs, error = _parse_tool_args("model_pull", "llama3.2")
         assert args == ("llama3.2",)
@@ -753,7 +752,7 @@ class TestParseToolArgs:
         assert error is None
 
     def test_model_pull_with_force(self):
-        from ollama_cmd.interactive import _parse_tool_args
+        from qarin_cmd.interactive import _parse_tool_args
 
         args, kwargs, error = _parse_tool_args("model_pull", "--force llama3.2")
         assert args == ("llama3.2",)
@@ -761,7 +760,7 @@ class TestParseToolArgs:
         assert error is None
 
     def test_unknown_tool_defaults_to_single_arg(self):
-        from ollama_cmd.interactive import _parse_tool_args
+        from qarin_cmd.interactive import _parse_tool_args
 
         args, kwargs, error = _parse_tool_args("future_tool", "some args")
         assert args == ("some args",)
@@ -777,7 +776,7 @@ class TestParseToolArgs:
 class TestReplHelpers:
     def _make_mode(self) -> object:
         """Create a minimal InteractiveMode with mocked session."""
-        from ollama_cmd.interactive import InteractiveMode
+        from qarin_cmd.interactive import InteractiveMode
 
         session = _make_interactive_session()
         mode = InteractiveMode.__new__(InteractiveMode)

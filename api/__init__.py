@@ -9,7 +9,6 @@ This package contains:
 
 from .errors import (
     ConfigurationError,
-    OllamaCliError,
     OllamaConnectionError,
     OllamaError,
     OllamaModelNotFoundError,
@@ -18,6 +17,7 @@ from .errors import (
     ProviderRateLimitError,
     ProviderResponseError,
     ProviderUnavailableError,
+    QarinCliError,
     SessionError,
 )
 from .ollama_client import (
@@ -37,7 +37,7 @@ from .provider_router import (
 
 __all__ = [
     # Unified error hierarchy
-    "OllamaCliError",
+    "QarinCliError",
     "ConfigurationError",
     "SessionError",
     # Client

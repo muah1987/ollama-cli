@@ -9,7 +9,7 @@
 # ///
 
 """
-Planning mode module for cli-ollama.
+Planning mode module for qarin.
 
 This module provides planning-specific functionality that allocates more resources
 to research tasks and implements planning-oriented behaviors.

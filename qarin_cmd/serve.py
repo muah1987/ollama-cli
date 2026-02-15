@@ -53,7 +53,7 @@ def handle_serve(_args: argparse.Namespace) -> None:
 def build_parser() -> argparse.ArgumentParser:
     """Build the serve command argument parser."""
     parser = argparse.ArgumentParser(
-        prog="cli-ollama serve",
+        prog="qarin serve",
         description="Check Ollama server status",
     )
     return parser

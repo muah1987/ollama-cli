@@ -1,4 +1,4 @@
-"""cli-ollama TUI application powered by Textual — Claude Code-style layout."""
+"""qarin TUI application powered by Textual — Claude Code-style layout."""
 
 from __future__ import annotations
 
@@ -7,9 +7,9 @@ from textual.binding import Binding
 
 
 class ChatApp(App):
-    """Ollama CLI -- Claude Code-style TUI powered by Textual."""
+    """Qarin CLI -- Claude Code-style TUI powered by Textual."""
 
-    TITLE = "cli-ollama"
+    TITLE = "qarin"
     SUB_TITLE = "AI Coding Assistant"
     CSS_PATH = "styles/app.tcss"
 

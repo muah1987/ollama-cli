@@ -361,7 +361,7 @@ def test_compact_command_registered() -> None:
         [
             sys.executable,
             "-c",
-            ("from ollama_cmd.interactive import InteractiveMode; print('/compact' in InteractiveMode._COMMAND_TABLE)"),
+            ("from qarin_cmd.interactive import InteractiveMode; print('/compact' in InteractiveMode._COMMAND_TABLE)"),
         ],
         capture_output=True,
         text=True,
@@ -378,7 +378,7 @@ def test_compact_handler_is_async() -> None:
             "-c",
             (
                 "import asyncio; "
-                "from ollama_cmd.interactive import InteractiveMode; "
+                "from qarin_cmd.interactive import InteractiveMode; "
                 "print(asyncio.iscoroutinefunction(InteractiveMode._cmd_compact))"
             ),
         ],
@@ -395,7 +395,7 @@ def test_compact_command_in_help_output() -> None:
         "import sys, asyncio\n"
         "sys.path.insert(0, '.')\n"
         "from model.session import Session\n"
-        "from ollama_cmd.interactive import InteractiveMode\n"
+        "from qarin_cmd.interactive import InteractiveMode\n"
         "async def t():\n"
         "    s = Session(model='m', provider='ollama')\n"
         "    await s.start()\n"
@@ -418,14 +418,14 @@ def test_compact_command_in_help_output() -> None:
 
 
 def test_config_has_compact_fields() -> None:
-    """OllamaCliConfig has auto_compact and compact_threshold fields."""
+    """QarinCliConfig has auto_compact and compact_threshold fields."""
     result = subprocess.run(
         [
             sys.executable,
             "-c",
             (
-                "from api.config import OllamaCliConfig; "
-                "c = OllamaCliConfig(); "
+                "from api.config import QarinCliConfig; "
+                "c = QarinCliConfig(); "
                 "print(c.auto_compact, c.compact_threshold)"
             ),
         ],
@@ -448,7 +448,7 @@ def test_banner_shows_compact_info() -> None:
         "import sys, asyncio\n"
         "sys.path.insert(0, '.')\n"
         "from model.session import Session\n"
-        "from ollama_cmd.interactive import InteractiveMode\n"
+        "from qarin_cmd.interactive import InteractiveMode\n"
         "async def t():\n"
         "    s = Session(model='m', provider='ollama')\n"
         "    await s.start()\n"
@@ -471,7 +471,7 @@ def test_status_shows_compact_info() -> None:
         "import sys, asyncio\n"
         "sys.path.insert(0, '.')\n"
         "from model.session import Session\n"
-        "from ollama_cmd.interactive import InteractiveMode\n"
+        "from qarin_cmd.interactive import InteractiveMode\n"
         "async def t():\n"
         "    s = Session(model='m', provider='ollama')\n"
         "    await s.start()\n"

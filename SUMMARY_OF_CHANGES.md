@@ -6,7 +6,7 @@
 
 1. **Unified Error Hierarchy**:
    - Created `api/errors.py` with centralized exception classes
-   - Root `OllamaCliError` with `user_message` property and `hint` support
+   - Root `CliOllamaError` with `user_message` property and `hint` support
    - Provider errors: `ProviderError`, `ProviderUnavailableError`, `ProviderAuthError`, `ProviderRateLimitError`, `ProviderResponseError`
    - Ollama errors: `OllamaError`, `OllamaConnectionError`, `OllamaModelNotFoundError`
    - Session/config errors: `ConfigurationError`, `SessionError`

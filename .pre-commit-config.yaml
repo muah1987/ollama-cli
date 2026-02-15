@@ -32,7 +32,7 @@ repos:
     hooks:
       - id: bandit
         args: [-r, -ll]
-        files: ^ollama_cmd/|^api/|^runner/|^model/|^server/
+        files: ^qarin_cmd/|^api/|^runner/|^model/|^server/
 
   # General file checks
   - repo: https://github.com/pre-commit/pre-commit-hooks
