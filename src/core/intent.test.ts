@@ -46,6 +46,11 @@ describe("IntentClassifier", () => {
     assert.equal(result.agentType, "research");
   });
 
+  it("classifies team intents", () => {
+    const result = classifier.classify("Complete this with team build");
+    assert.equal(result.agentType, "team");
+  });
+
   it("returns low confidence for ambiguous prompts", () => {
     const result = classifier.classify("Hello, how are you?");
     assert.ok(result.confidence < 0.7);

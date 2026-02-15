@@ -179,6 +179,12 @@ export class HookRunner {
         );
 
         if (child.stdin) {
+          child.stdin.on("error", (err) => {
+            // Ignore EPIPE errors - they happen when the child exits before we finish writing
+            if ((err as { code?: string }).code !== "EPIPE") {
+              rejectPromise(err);
+            }
+          });
           child.stdin.write(payloadJson);
           child.stdin.end();
         }
