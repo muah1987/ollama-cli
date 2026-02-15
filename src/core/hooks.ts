@@ -123,7 +123,12 @@ export class HookRunner {
     payload: Record<string, unknown>,
   ): boolean {
     if (!matcher) return true;
-    const toolName = (payload.tool_name as string) ?? "";
+    // Prefer camelCase `toolName` for TypeScript callers, but also support
+    // snake_case `tool_name` for compatibility with the Python implementation.
+    const toolName =
+      (payload.toolName as string | undefined) ??
+      (payload.tool_name as string | undefined) ??
+      "";
     return matcher === toolName || toolName.includes(matcher);
   }
 
@@ -142,16 +147,42 @@ export class HookRunner {
     const payloadJson = JSON.stringify(payload);
 
     try {
-      const { stdout, stderr } = await execFileAsync(
-        "sh",
-        ["-c", expandedCommand],
-        {
-          timeout: timeout * 1000,
-          maxBuffer: 50_000,
-          env: { ...process.env },
-          // Send payload via stdin by setting input
-        },
-      );
+      const { stdout, stderr } = await new Promise<{
+        stdout: string;
+        stderr: string;
+      }>((resolvePromise, rejectPromise) => {
+        const child = execFile(
+          "sh",
+          ["-c", expandedCommand],
+          {
+            timeout: timeout * 1000,
+            maxBuffer: 50_000,
+            env: { ...process.env },
+          },
+          (error, childStdout, childStderr) => {
+            if (error) {
+              const err = error as {
+                code?: number;
+                stdout?: string;
+                stderr?: string;
+                message: string;
+                killed?: boolean;
+              };
+              err.stdout = childStdout;
+              err.stderr = childStderr;
+              rejectPromise(err);
+              return;
+            }
+
+            resolvePromise({ stdout: childStdout, stderr: childStderr });
+          },
+        );
+
+        if (child.stdin) {
+          child.stdin.write(payloadJson);
+          child.stdin.end();
+        }
+      });
 
       // Try to parse stdout as JSON
       let parsed: Record<string, unknown> = {};
