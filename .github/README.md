@@ -24,16 +24,16 @@ This installs `qarin-cli` to `~/.local/bin/`, sets up dependencies, and installs
 
 ```bash
 # Start interactive session (default)
-qarin-cli
+qarin
 
 # Or with a direct prompt
-qarin-cli "Explain this codebase to me"
+qarin "Explain this codebase to me"
 
 # Non-interactive mode
-qarin-cli -p "Write a Python function that reverses a string"
+qarin -p "Write a Python function that reverses a string"
 
 # Resume last session
-qarin-cli --resume
+qarin --resume
 ```
 
 ### Pipe input
