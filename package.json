@@ -4,12 +4,12 @@
   "description": "AI coding assistant - TypeScript port of ollama-cli with Arabic themes",
   "type": "module",
   "bin": {
-    "qarin-ts": "./dist/index.js"
+    "qarin": "./dist/index.js"
   },
   "scripts": {
     "dev": "tsx --watch src/index.tsx",
     "build": "tsc",
-    "build:binary": "bun build src/index.tsx --compile --outfile qarin-ts",
+    "build:binary": "bun build src/index.tsx --compile --outfile qarin",
     "lint": "tsc --noEmit",
     "test": "node --import tsx --test src/**/*.test.ts",
     "test:py": "python -m pytest tests/"

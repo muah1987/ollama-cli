@@ -5,59 +5,82 @@
 
 ## Project Overview
 
-Qarin CLI is a full-featured AI coding assistant powered by AI models with multi-provider support (Claude, Gemini, Codex). Built using the GOTCHA Framework and ATLAS Workflow from the ai-code-hooks ecosystem.
+Qarin CLI (v0.1.0) is a TypeScript port of ollama-cli — a full-featured AI coding assistant with multi-provider support (Anthropic Claude, OpenAI, Ollama). Built with Bun/Node.js, React + Ink for terminal UI, and Arabic-themed progress indicators.
 
 ## Architecture
 
-- **GOTCHA Framework**: Goals, Orchestration, Tools, Context, Hard prompts, Args
-- **ATLAS Workflow**: Architect, Trace, Link, Assemble, Stress-test
-- **Multi-Provider Routing**: Ollama (local/cloud), Claude, Gemini, Codex
-- **Auto-Compact Context**: Automatic compaction at 85% context usage
-- **Hook System**: 7 lifecycle hooks mirroring Claude Code
+- **Runtime**: TypeScript on Bun / Node.js 18+
+- **UI**: React + Ink terminal interface with themed progress
+- **Multi-Provider Routing**: Anthropic (Claude), OpenAI (GPT), Ollama (local)
+- **Auto-Compact Context**: Automatic compaction at 85% of 128K context window
+- **Hook System**: 13 lifecycle hooks (SessionStart, PreToolUse, PostToolUse, etc.)
+- **Sub-Agent Orchestration**: 4-wave delegation (Diagnostic, Analysis, Solution, Verification)
+- **Arabic Themes**: Shisha, Caravan, Qahwa, Scholarly progress indicators
 
 ## Configuration
 
-- Default model: llama3.2
-- Default provider: ollama (local)
-- Context length: 4096 (configurable via OLLAMA_CONTEXT_LENGTH)
+- Default model: claude-sonnet-4-20250514
+- Default provider: anthropic
+- Context length: 128,000 tokens (configurable)
 - Auto-compact: enabled at 85% threshold
 - Hooks: enabled by default
+- Default theme: shisha
 
 ## Source Structure
 
 ```
 qarin-cli/
-├── src/
-│   ├── cli.py              — Main CLI entry point (9 commands)
-│   ├── api_client.py       — Ollama API client (native + OpenAI-compatible)
-│   ├── provider_router.py  — Multi-provider routing (Ollama/Claude/Gemini/Codex)
-│   ├── context_manager.py  — Auto-compact context management
-│   ├── token_counter.py    — Token tracking with cost estimation
-│   ├── session.py          — Session state management
-│   ├── config.py           — Configuration management
-│   └── hook_runner.py      — Hook execution engine
+├── src/                              — TypeScript source (v0.1.0)
+│   ├── index.tsx                     — CLI entry (Commander + Ink)
+│   ├── app.tsx                       — Main Ink React app
+│   ├── core/
+│   │   ├── agent.ts                  — QarinAgent with EventEmitter
+│   │   ├── context.ts                — Context manager with auto-compaction
+│   │   ├── models.ts                 — Multi-provider LLM abstraction
+│   │   ├── tools.ts                  — File ops, shell exec, grep, web fetch
+│   │   ├── intent.ts                 — Intent classifier (Tier 1 patterns)
+│   │   ├── tokens.ts                 — Token counter with cost estimation
+│   │   ├── session.ts                — Session persistence + QARIN.md integration
+│   │   ├── hooks.ts                  — Lifecycle hook runner (13 events)
+│   │   └── subagents.ts              — 4-wave sub-agent orchestration
+│   ├── components/
+│   │   ├── StatusBar.tsx             — Session/model/token status bar
+│   │   ├── ChatView.tsx              — Message display
+│   │   ├── InputArea.tsx             — User input with command handling
+│   │   ├── ProgressTheme.tsx         — Arabic-themed progress indicator
+│   │   ├── CodePanel.tsx             — Syntax-highlighted code display
+│   │   └── DiffViewer.tsx            — Git diff visualization
+│   ├── hooks/
+│   │   ├── useAgent.ts               — Agent lifecycle React hook
+│   │   ├── useTheme.ts               — Theme switching hook
+│   │   └── useSubagents.ts           — Sub-agent orchestration hook
+│   ├── themes/
+│   │   ├── base.ts, shisha.ts        — Base + Shisha (default) themes
+│   │   ├── caravan.ts, qahwa.ts      — Caravan + Qahwa themes
+│   │   ├── scholarly.ts              — Islamic scholarship theme
+│   │   └── index.ts                  — Theme registry
+│   └── types/
+│       ├── agent.ts                  — Agent/session/tool types
+│       ├── message.ts                — Provider/message/token types
+│       └── theme.ts                  — Theme/phase types
 ├── .qarin/
-│   ├── settings.json       — Hook configuration
-│   ├── hooks/              — 7 lifecycle hook scripts
-│   ├── status_lines/       — 3 status line scripts + utils
-│   └── memory/             — Persistent session data
-├── production/             — GitHub release artifacts
-├── QARIN.md              — This file (project memory)
-├── .env.sample            — Environment variable template
-└── pyproject.toml         — Python project configuration
+│   ├── settings.json                 — Hook configuration
+│   ├── hooks/                        — Lifecycle hook scripts
+│   ├── mcp.json                      — MCP server definitions
+│   └── chain.json                    — Chain orchestration config
+├── package.json                      — v0.1.0 TypeScript package
+├── tsconfig.json                     — TypeScript configuration
+├── QARIN.md                          — This file (project memory)
+└── .env.sample                       — Environment variable template
 ```
 
 ## Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
+| ANTHROPIC_API_KEY | - | For Anthropic Claude provider |
+| OPENAI_API_KEY | - | For OpenAI GPT provider |
 | OLLAMA_HOST | http://localhost:11434 | Ollama server URL |
-| OLLAMA_MODEL | llama3.2 | Default model |
-| OLLAMA_CONTEXT_LENGTH | 4096 | Context window size |
-| QARIN_CLI_PROVIDER | ollama | Default provider |
-| ANTHROPIC_API_KEY | - | For Claude provider |
-| GEMINI_API_KEY | - | For Gemini provider |
-| OPENAI_API_KEY | - | For Codex provider |
 
 ## Learned Patterns
 
@@ -325,11 +348,3 @@ qarin-cli/
 - Duration: 1m 0s
 - Messages: 5
 - Tokens: 750 (prompt: 500, completion: 250)
-
-
-<!-- session:3ac3c107-ec3 -->
-### Session 3ac3c107-ec3
-- Model: llama3.2 (ollama)
-- Duration: 0s
-- Messages: 2
-- Tokens: 0 (prompt: 0, completion: 0)
