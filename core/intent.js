@@ -264,6 +264,82 @@ export class IntentClassifier {
         };
     }
 }
+    /**
+     * Tier 2: LLM-based classification fallback.
+     *
+     * When Tier 1 confidence is below threshold, ask the active model
+     * to classify intent via structured prompt. Also supports
+     * context-aware classification by factoring in recent messages.
+     *
+     * @param prompt - User prompt to classify
+     * @param orchestrator - ModelOrchestrator for LLM calls
+     * @param provider - Provider to use for LLM call
+     * @param recentMessages - Last N messages for context-aware classification
+     * @returns ClassificationResult with LLM-derived intent
+     */
+    async classifyWithLLM(prompt, orchestrator, provider, recentMessages = []) {
+        const tier1Result = this.classify(prompt);
+        // If Tier 1 is confident enough, return it
+        if (tier1Result.confidence >= this.threshold) {
+            return tier1Result;
+        }
+        // Build context from recent messages for context-aware classification
+        const contextBlock = recentMessages.length > 0
+            ? `\nRecent conversation context:\n${recentMessages.map((m) => `[${m.role}]: ${m.content.slice(0, 200)}`).join("\n")}\n`
+            : "";
+        const classifyPrompt = [
+            "Classify the following user message into exactly one agent type.",
+            "Available types: code, review, test, debug, plan, docs, orchestrator, research, team",
+            "",
+            "Rules:",
+            "- Consider the conversation context if provided",
+            '- A short follow-up like "do it" or "yes" after a plan -> code',
+            '- "looks good" after code -> review',
+            "- Return ONLY a JSON object with these fields:",
+            '  { "agentType": string, "confidence": number 0-1, "explanation": string }',
+            contextBlock,
+            `User message: ${prompt}`,
+        ].join("\n");
+        try {
+            const response = await orchestrator.complete(provider, [
+                { role: "system", content: "You are an intent classifier. Return only valid JSON." },
+                { role: "user", content: classifyPrompt },
+            ]);
+            // Parse the LLM response
+            let parsed = null;
+            try {
+                parsed = JSON.parse(response.content);
+            }
+            catch {
+                const match = response.content.match(/\{[\s\S]*\}/);
+                if (match) {
+                    try {
+                        parsed = JSON.parse(match[0]);
+                    }
+                    catch { }
+                }
+            }
+            if (parsed?.agentType) {
+                const validTypes = Object.keys(PATTERN_REGISTRY);
+                const agentType = validTypes.includes(parsed.agentType) ? parsed.agentType : "code";
+                return {
+                    agentType,
+                    confidence: typeof parsed.confidence === "number" ? parsed.confidence : 0.8,
+                    matchedPatterns: tier1Result.matchedPatterns,
+                    explanation: parsed.explanation ?? `LLM classified as '${agentType}'`,
+                    tier: 2,
+                };
+            }
+        }
+        catch {
+            // LLM call failed, return Tier 1 result
+        }
+        return {
+            ...tier1Result,
+            explanation: `Tier 2 LLM fallback failed. ${tier1Result.explanation}`,
+        };
+    }
+}
 /**
  * Convenience function: classify a user prompt into an agent type.
  */

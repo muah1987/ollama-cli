@@ -84,6 +84,7 @@ export function useAgent(options) {
         const finalStatus = await agent.end();
         setStatus(finalStatus);
     }, []);
+    const getAgent = useCallback(() => agentRef.current, []);
     return {
         phase,
         details,
@@ -96,6 +97,7 @@ export function useAgent(options) {
         sendMessage,
         runTool,
         endSession,
+        getAgent,
     };
 }
 //# sourceMappingURL=useAgent.js.map

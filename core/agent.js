@@ -16,6 +16,8 @@ import { IntentClassifier } from "./intent.js";
 import { TokenCounter } from "./tokens.js";
 import { HookRunner } from "./hooks.js";
 import { ChainController } from "./chain.js";
+import { MemoryStore } from "./memory.js";
+import { ProjectContext } from "./project.js";
 /** Generate a UUID-like session ID */
 function generateSessionId() {
     return crypto.randomUUID();
@@ -47,6 +49,8 @@ export class QarinAgent extends EventEmitter {
     intentClassifier;
     tokenCounter;
     hookRunner;
+    memory;
+    projectContext;
     provider;
     model;
     sessionId;
@@ -72,6 +76,9 @@ export class QarinAgent extends EventEmitter {
             provider: this.provider,
             model: this.model,
         });
+        // Initialize memory and project context
+        this.memory = new MemoryStore();
+        this.projectContext = new ProjectContext();
         // Set system prompt
         this.context.setSystemMessage(options.systemPrompt ?? this.buildDefaultSystemPrompt());
     }
@@ -79,8 +86,9 @@ export class QarinAgent extends EventEmitter {
     async start() {
         this.running = true;
         this.startTime = new Date();
-        // Load hook configuration
+        // Load hook configuration and memory
         await this.hookRunner.load();
+        await this.memory.load();
         // Fire SessionStart hook
         if (this.hookRunner.isEnabled()) {
             await this.hookRunner.runHook("SessionStart", {
@@ -478,6 +486,14 @@ export class QarinAgent extends EventEmitter {
         });
         this.emit("success", { message: "Chain orchestration complete" });
         return result;
+    }
+    /** Get the memory store */
+    getMemory() {
+        return this.memory;
+    }
+    /** Get the project context */
+    getProjectContext() {
+        return this.projectContext;
     }
     /** Build the default system prompt */
     buildDefaultSystemPrompt() {
