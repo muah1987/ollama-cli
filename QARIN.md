@@ -317,3 +317,19 @@ qarin-cli/
 - Duration: 3s
 - Messages: 1
 - Tokens: 2,128 (prompt: 2,120, completion: 8)
+
+
+<!-- session:summary-test -->
+### Session summary-test
+- Model: gpt-4 (openai)
+- Duration: 1m 0s
+- Messages: 5
+- Tokens: 750 (prompt: 500, completion: 250)
+
+
+<!-- session:3ac3c107-ec3 -->
+### Session 3ac3c107-ec3
+- Model: llama3.2 (ollama)
+- Duration: 0s
+- Messages: 2
+- Tokens: 0 (prompt: 0, completion: 0)

@@ -100,8 +100,9 @@ export default function QarinApp({ task, options }: QarinAppProps): React.ReactE
       }
 
       if (text === "/status") {
+        const timestamp = new Date().toLocaleString();
         const statusMsg = status
-          ? `Session: ${status.sessionId}\nModel: ${status.provider}/${status.model}\nMessages: ${status.messageCount}\nTokens: ${status.tokenUsage.totalTokens.toLocaleString()}\nContext: ${status.contextUsage.percent}%`
+          ? `Status snapshot at ${timestamp} (not updated automatically)\nSession: ${status.sessionId}\nModel: ${status.provider}/${status.model}\nMessages: ${status.messageCount}\nTokens: ${status.tokenUsage.totalTokens.toLocaleString()}\nContext: ${status.contextUsage.percent}%`
           : "No active session";
         setMessages((prev) => [...prev, { role: "system", content: statusMsg }]);
         return;
@@ -155,7 +156,7 @@ export default function QarinApp({ task, options }: QarinAppProps): React.ReactE
       {intent && intent.confidence > 0 && (
         <Box paddingX={1}>
           <Text dimColor>
-            Intent: {intent.agentType} ({(intent.confidence * 100).toFixed(0)}%)
+            Intent: {intent.agentType} ({Math.round(intent.confidence * 100)}%)
             {intent.matchedPatterns.length > 0 &&
               ` [${intent.matchedPatterns.slice(0, 3).join(", ")}]`}
           </Text>

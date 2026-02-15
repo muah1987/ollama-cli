@@ -130,6 +130,34 @@ export class TokenCounter {
     };
   }
 
+  /**
+   * Recreate a TokenCounter instance from a JSON representation produced by toJSON().
+   */
+  static fromJSON(json: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens?: number;
+    tokensPerSecond: number;
+    contextUsed: number;
+    contextMax: number;
+    costEstimate?: number;
+    provider: string;
+  }): TokenCounter {
+    const provider = (json.provider as Provider) ?? Provider.OLLAMA;
+    const counter = new this(provider, json.contextMax);
+
+    counter._promptTokens = Number.isFinite(json.promptTokens) ? json.promptTokens : 0;
+    counter._completionTokens = Number.isFinite(json.completionTokens) ? json.completionTokens : 0;
+    counter._tokensPerSecond = Number.isFinite(json.tokensPerSecond) ? json.tokensPerSecond : 0;
+    counter._contextUsed = Number.isFinite(json.contextUsed) ? json.contextUsed : 0;
+    counter._contextMax = Number.isFinite(json.contextMax) ? json.contextMax : 0;
+
+    // Recompute cost estimate from current pricing to keep behavior consistent.
+    counter._costEstimate = counter.estimateCost();
+
+    return counter;
+  }
+
   /** Reset all counters to zero */
   reset(): void {
     this._promptTokens = 0;
