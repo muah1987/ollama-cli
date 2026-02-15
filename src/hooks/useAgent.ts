@@ -1,9 +1,12 @@
 /**
  * React hook for managing the QarinAgent lifecycle.
+ *
+ * Provides reactive state for agent phases, streaming output,
+ * intent classification, token metrics, and session status.
  */
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import type { SessionStatus, ToolResult } from "../types/agent.js";
+import type { SessionStatus, ToolResult, IntentResult } from "../types/agent.js";
 import type { CLIOptions } from "../types/agent.js";
 import { OperationPhase } from "../types/theme.js";
 import { QarinAgent } from "../core/agent.js";
@@ -19,6 +22,10 @@ interface UseAgentReturn {
   streamOutput: string;
   /** Session status snapshot */
   status: SessionStatus | null;
+  /** Last classified intent */
+  intent: IntentResult | null;
+  /** Token display string */
+  tokenDisplay: string;
   /** Error if any */
   error: Error | null;
   /** Send a message to the agent */
@@ -36,6 +43,8 @@ export function useAgent(options: CLIOptions): UseAgentReturn {
   const [isProcessing, setIsProcessing] = useState(false);
   const [streamOutput, setStreamOutput] = useState("");
   const [status, setStatus] = useState<SessionStatus | null>(null);
+  const [intent, setIntent] = useState<IntentResult | null>(null);
+  const [tokenDisplay, setTokenDisplay] = useState("");
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
@@ -51,6 +60,10 @@ export function useAgent(options: CLIOptions): UseAgentReturn {
       setStreamOutput((prev) => prev + chunk);
     });
 
+    agent.on("intent", (intentResult: IntentResult) => {
+      setIntent(intentResult);
+    });
+
     agent.on("error", ({ error: err }: { error: Error }) => {
       setError(err);
       setIsProcessing(false);
@@ -59,6 +72,7 @@ export function useAgent(options: CLIOptions): UseAgentReturn {
     agent.on("success", () => {
       setIsProcessing(false);
       setStatus(agent.getStatus());
+      setTokenDisplay(agent.getTokenCounter().formatDisplay());
     });
 
     agent.start().catch((err: Error) => setError(err));
@@ -81,6 +95,7 @@ export function useAgent(options: CLIOptions): UseAgentReturn {
     try {
       await agent.executeTask(message);
       setStatus(agent.getStatus());
+      setTokenDisplay(agent.getTokenCounter().formatDisplay());
     } catch (err) {
       setError(err instanceof Error ? err : new Error(String(err)));
     } finally {
@@ -111,6 +126,8 @@ export function useAgent(options: CLIOptions): UseAgentReturn {
     isProcessing,
     streamOutput,
     status,
+    intent,
+    tokenDisplay,
     error,
     sendMessage,
     runTool,

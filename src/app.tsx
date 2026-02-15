@@ -2,7 +2,7 @@
  * Main Ink application component.
  *
  * Renders the full chat interface with status bar, messages,
- * themed progress, and input area.
+ * themed progress, intent badge, token display, and input area.
  */
 
 import React, { useState, useCallback } from "react";
@@ -30,6 +30,8 @@ export default function QarinApp({ task, options }: QarinAppProps): React.ReactE
     isProcessing,
     streamOutput,
     status,
+    intent,
+    tokenDisplay,
     error,
     sendMessage,
   } = useAgent(options);
@@ -48,13 +50,21 @@ export default function QarinApp({ task, options }: QarinAppProps): React.ReactE
         return;
       }
 
+      if (text === "/status") {
+        const statusMsg = status
+          ? `Session: ${status.sessionId}\nModel: ${status.provider}/${status.model}\nMessages: ${status.messageCount}\nTokens: ${status.tokenUsage.totalTokens.toLocaleString()}\nContext: ${status.contextUsage.percent}%`
+          : "No active session";
+        setMessages((prev) => [...prev, { role: "system", content: statusMsg }]);
+        return;
+      }
+
       // Add user message to display
       setMessages((prev) => [...prev, { role: "user", content: text }]);
 
       // Send to agent
       await sendMessage(text);
     },
-    [sendMessage, nextTheme, exit],
+    [sendMessage, nextTheme, exit, status],
   );
 
   // If a task was passed as an argument, execute it immediately
@@ -92,6 +102,17 @@ export default function QarinApp({ task, options }: QarinAppProps): React.ReactE
         )}
       </Box>
 
+      {/* Intent Badge */}
+      {intent && intent.confidence > 0 && (
+        <Box paddingX={1}>
+          <Text dimColor>
+            Intent: {intent.agentType} ({(intent.confidence * 100).toFixed(0)}%)
+            {intent.matchedPatterns.length > 0 &&
+              ` [${intent.matchedPatterns.slice(0, 3).join(", ")}]`}
+          </Text>
+        </Box>
+      )}
+
       {/* Progress Indicator */}
       {isProcessing && (
         <Box paddingX={1}>
@@ -99,17 +120,24 @@ export default function QarinApp({ task, options }: QarinAppProps): React.ReactE
         </Box>
       )}
 
+      {/* Token Display */}
+      {tokenDisplay && !isProcessing && (
+        <Box paddingX={1}>
+          <Text dimColor>{tokenDisplay}</Text>
+        </Box>
+      )}
+
       {/* Error Display */}
       {error && (
         <Box paddingX={1}>
-          <Text color="red">❌ {error.message}</Text>
+          <Text color="red">Error: {error.message}</Text>
         </Box>
       )}
 
       {/* Input Area */}
       <InputArea
         onSubmit={handleSubmit}
-        placeholder="Type a message... (/quit to exit, /theme to cycle)"
+        placeholder="Type a message... (/quit, /theme, /status)"
         disabled={isProcessing}
       />
     </Box>
