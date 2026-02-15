@@ -1,7 +1,7 @@
 [project]
 name = "qarin-cli"
 version = "0.2.0"
-description = "Full-featured AI coding assistant powered by Ai Models with multi-provider support (Ollama, llama.cpp, vLLM, Claude, Gemini, Codex/OpenAI, Hugging Face), 13 lifecycle hooks, MCP integration, tensor parallelism, and chain orchestration"
+description = "Full-featured AI coding assistant powered by AI models with multi-provider support (Ollama, llama.cpp, vLLM, Claude, Gemini, Codex/OpenAI, Hugging Face), 13 lifecycle hooks, MCP integration, tensor parallelism, and chain orchestration"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}

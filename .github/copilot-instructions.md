@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Qarin CLI is a full-featured AI coding assistant powered by Ai Models with multi-provider support (Ollama, Claude, Gemini, Codex/OpenAI, Hugging Face). It is a Python 3.11+ CLI tool built with `httpx`, `rich`, and `python-dotenv`, packaged via `hatchling`, and managed with `uv`.
+Qarin CLI is a full-featured AI coding assistant powered by AI models with multi-provider support (Ollama, Claude, Gemini, Codex/OpenAI, Hugging Face). It is a Python 3.11+ CLI tool built with `httpx`, `rich`, and `python-dotenv`, packaged via `hatchling`, and managed with `uv`.
 
 ## Repository Structure
 

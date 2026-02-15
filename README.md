@@ -24,7 +24,7 @@ An open-source AI coding assistant with Textual TUI interface that runs in your 
 curl -fsSL https://raw.githubusercontent.com/muah1987/qarin-cli/main/install.sh | bash
 ```
 
-This installs `qarin-cli` to `~/.local/bin/`, sets up dependencies, and installs Ollama if needed.
+This installs `qarin` to `~/.local/bin/`, sets up dependencies, and installs Ollama if needed.
 
 **Via PyPI:**
 
@@ -34,30 +34,30 @@ pip install qarin-cli
 pipx install qarin-cli
 ```
 
-This installs the `qarin-cli` command globally.
+This installs the `qarin` command globally.
 
 ### Start chatting
 
 ```bash
 # Start interactive session (default)
-qarin-cli
+qarin
 
 # Or with a direct prompt
-qarin-cli "Explain this codebase to me"
+qarin "Explain this codebase to me"
 
 # Non-interactive mode
-qarin-cli -p "Write a Python function that reverses a string"
+qarin -p "Write a Python function that reverses a string"
 
 # Resume last session
-qarin-cli --resume
+qarin --resume
 ```
 
 ### Pipe input
 
 ```bash
-echo "Fix the bug in this code" | qarin-cli
-cat error.log | qarin-cli -p "What went wrong?"
-git diff | qarin-cli -p "Review these changes"
+echo "Fix the bug in this code" | qarin
+cat error.log | qarin -p "What went wrong?"
+git diff | qarin -p "Review these changes"
 ```
 
 ---
@@ -65,7 +65,7 @@ git diff | qarin-cli -p "Review these changes"
 ## Usage
 
 ```
-Usage: qarin-cli [options] [command] [prompt]
+Usage: qarin [options] [command] [prompt]
 
 Options:
   -v, --version                   Show version
@@ -143,19 +143,19 @@ Seamlessly switch between providers — your conversation context is preserved:
 
 ```bash
 # Use Ollama (default, local)
-qarin-cli --provider ollama
+qarin --provider ollama
 
 # Use Claude
-qarin-cli --provider claude
+qarin --provider claude
 
 # Use Gemini
-qarin-cli --provider gemini
+qarin --provider gemini
 
 # Use OpenAI Codex
-qarin-cli --provider codex
+qarin --provider codex
 
 # Use Hugging Face
-qarin-cli --provider hf
+qarin --provider hf
 ```
 
 Switch mid-session with `/provider claude` in the REPL.
@@ -215,12 +215,12 @@ Available tools:
 **Tool permissions:** Use `--allowed-tools` to restrict which tools are available:
 
 ```bash
-qarin-cli --allowed-tools file_read,grep_search
+qarin --allowed-tools file_read,grep_search
 ```
 
 ### Project Memory (QARIN.md)
 
-Like Claude's `CLAUDE.md` and Gemini's `GEMINI.md`, qarin-cli reads `QARIN.md` from your project root to load persistent context:
+Like Claude's `CLAUDE.md` and Gemini's `GEMINI.md`, qarin reads `QARIN.md` from your project root to load persistent context:
 
 ```bash
 # View project memory
@@ -343,7 +343,7 @@ Save and resume conversations across sessions:
 >>> /load my-project
 
 # Or use the CLI flag
-qarin-cli --resume
+qarin --resume
 ```
 
 ### Agent Model Assignment
@@ -383,7 +383,7 @@ See [`.env.sample`](.env.sample) for the full template.
 
 ### Tested Ollama Cloud Models
 
-The following [Ollama Cloud](https://ollama.com) models have been tested and verified to work with qarin-cli. Set `OLLAMA_HOST=https://ollama.com` and provide your `OLLAMA_API_KEY` to use them:
+The following [Ollama Cloud](https://ollama.com) models have been tested and verified to work with qarin. Set `OLLAMA_HOST=https://ollama.com` and provide your `OLLAMA_API_KEY` to use them:
 
 | Model | Tag |
 |-------|-----|

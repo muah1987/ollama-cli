@@ -667,7 +667,7 @@ class Session:
 
                 # Append tool result following the Ollama API tool-call
                 # response format: {"role": "tool", "content": "<json_result>"}
-                # See https://docs.qarin.com/api/chat for the expected schema.
+                # See https://docs.ollama.com/api/chat for the expected schema.
                 messages.append(
                     {
                         "role": "tool",

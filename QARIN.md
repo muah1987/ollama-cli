@@ -5,7 +5,7 @@
 
 ## Project Overview
 
-Qarin CLI is a full-featured AI coding assistant powered by Ai Models with multi-provider support (Claude, Gemini, Codex). Built using the GOTCHA Framework and ATLAS Workflow from the ai-code-hooks ecosystem.
+Qarin CLI is a full-featured AI coding assistant powered by AI models with multi-provider support (Claude, Gemini, Codex). Built using the GOTCHA Framework and ATLAS Workflow from the ai-code-hooks ecosystem.
 
 ## Architecture
 
@@ -301,3 +301,11 @@ qarin-cli/
 - Duration: 3s
 - Messages: 1
 - Tokens: 2,048 (prompt: 2,040, completion: 8)
+
+
+<!-- session:57bc70a78c6c -->
+### Session 57bc70a78c6c
+- Model: llama3.2 (ollama)
+- Duration: 3s
+- Messages: 1
+- Tokens: 2,088 (prompt: 2,080, completion: 8)

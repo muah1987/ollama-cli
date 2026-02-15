@@ -1,6 +1,6 @@
 # Qarin CLI — Project Overview
 
-**A full-featured AI coding assistant powered by Ai Models with multi-provider support.**
+**A full-featured AI coding assistant powered by AI models with multi-provider support.**
 
 Qarin CLI gives you a local-first AI coding assistant that runs on your machine with Ollama, while optionally routing to cloud providers like Claude, Gemini, and Codex when you need them. Built with the GOTCHA Framework and ATLAS Workflow for reliable, deterministic execution.
 
